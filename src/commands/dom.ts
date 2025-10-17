@@ -18,7 +18,7 @@
 
 import type { InvokerManager } from '../core';
 import type { CommandCallback, CommandContext } from '../index';
-import { createInvokerError, ErrorSeverity, isInterpolationEnabled } from '../index';
+import { createInvokerError, ErrorSeverity, isInterpolationEnabled, logInvokerError } from '../index';
 import { interpolateString, setDataContext, getDataContext, updateDataContext } from '../advanced/interpolation';
 import { generateUid } from '../utils';
 
@@ -34,10 +34,11 @@ const domCommands: Record<string, CommandCallback> = {
    * `--dom:remove`: Removes the target element from the DOM.
    * @example `<button command="--dom:remove" commandfor="alert-1">&times;</button>`
    */
-  "--dom:remove": ({ targetElement }: CommandContext) => {
-    const updateDOM = () => targetElement.remove();
-    document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
-  },
+   "--dom:remove": ({ targetElement }: CommandContext) => {
+     if (!targetElement.isConnected) return; // Already removed
+     const updateDOM = () => targetElement.remove();
+     document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
+   },
 
   /**
    * `--dom:replace`: Replaces the target element with content from a `<template>`.
@@ -47,24 +48,31 @@ const domCommands: Record<string, CommandCallback> = {
    * @example `<button command="--dom:replace" commandfor="placeholder" data-template-id="content">Load</button>`
    * @example `<button command="--dom:replace:inner" commandfor="content-area" data-template-id="panel-2">Update Content</button>`
    */
-  "--dom:replace": ({ invoker, targetElement, params }: CommandContext) => {
-    const style = params[0] || 'outer';
-    let fragment = getSourceNode(invoker, 'replace').cloneNode(true) as DocumentFragment;
+   "--dom:replace": ({ invoker, targetElement, params }: CommandContext) => {
+     try {
+       const style = params[0] || 'outer';
+       let fragment = getSourceNode(invoker, 'replace').cloneNode(true) as DocumentFragment;
 
-    // Process the fragment for templating
-    fragment = processTemplateFragment(fragment, invoker);
+       // Process the fragment for templating
+       fragment = processTemplateFragment(fragment, invoker);
 
-    const updateDOM = () => {
-      if (style === 'inner') {
-        targetElement.replaceChildren(fragment);
-      } else {
-        // Default to 'outer'
-        targetElement.replaceWith(fragment);
-      }
-    };
+       const updateDOM = () => {
+         if (style === 'inner') {
+           targetElement.replaceChildren(fragment);
+         } else {
+           // Default to 'outer'
+           targetElement.replaceWith(fragment);
+         }
+       };
 
-    document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
-  },
+       document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
+     } catch (error) {
+       throw createInvokerError('Failed to replace element content', ErrorSeverity.ERROR, {
+         command: '--dom:replace', element: invoker, cause: error as Error,
+         recovery: 'Check template exists and target element is valid'
+       });
+     }
+   },
 
   /**
    * `--dom:swap`: Swaps content of the target with content from a `<template>`.
@@ -73,46 +81,53 @@ const domCommands: Record<string, CommandCallback> = {
    * @example `<button command="--dom:swap" commandfor="content-area" data-template-id="panel-2">Load Panel 2</button>`
    * @example `<button command="--dom:swap:outer" commandfor="content-area" data-template-id="panel-2">Replace Element</button>`
    */
-  "--dom:swap": ({ invoker, targetElement, params }: CommandContext) => {
-    const [swapType = 'inner'] = params;
-    let fragment = getSourceNode(invoker, 'swap').cloneNode(true) as DocumentFragment;
+   "--dom:swap": ({ invoker, targetElement, params }: CommandContext) => {
+     try {
+       const [swapType = 'inner'] = params;
+       let fragment = getSourceNode(invoker, 'swap').cloneNode(true) as DocumentFragment;
 
-    // Interpolate the template content if advanced events are enabled
-    if (isInterpolationEnabled()) {
-      const context = {
-        this: {
-          ...invoker,
-          dataset: { ...invoker.dataset },
-          value: (invoker as any).value || '',
-        },
-        data: document.body.dataset,
-        event: (invoker as any).triggeringEvent,
-      };
+       // Interpolate the template content if advanced events are enabled
+       if (isInterpolationEnabled()) {
+         const context = {
+           this: {
+             ...invoker,
+             dataset: { ...invoker.dataset },
+             value: (invoker as any).value || '',
+           },
+           data: document.body.dataset,
+           event: (invoker as any).triggeringEvent,
+         };
 
-      // Convert fragment to string, interpolate, then back to fragment
-      const tempDiv = document.createElement('div');
-      tempDiv.appendChild(fragment.cloneNode(true));
-      const html = tempDiv.innerHTML;
-      const interpolatedHtml = html.includes('{{') ? interpolateString(html, context) : html;
-      tempDiv.innerHTML = interpolatedHtml;
-      const interpolatedFragment = document.createDocumentFragment();
-      while (tempDiv.firstChild) {
-        interpolatedFragment.appendChild(tempDiv.firstChild);
-      }
-      fragment = processTemplateFragment(interpolatedFragment, invoker);
-    }
+         // Convert fragment to string, interpolate, then back to fragment
+         const tempDiv = document.createElement('div');
+         tempDiv.appendChild(fragment.cloneNode(true));
+         const html = tempDiv.innerHTML;
+         const interpolatedHtml = html.includes('{{') ? interpolateString(html, context) : html;
+         tempDiv.innerHTML = interpolatedHtml;
+         const interpolatedFragment = document.createDocumentFragment();
+         while (tempDiv.firstChild) {
+           interpolatedFragment.appendChild(tempDiv.firstChild);
+         }
+         fragment = processTemplateFragment(interpolatedFragment, invoker);
+       }
 
-    const updateDOM = () => {
-      if (swapType === 'outer') {
-        targetElement.replaceWith(fragment);
-      } else {
-        // Default to 'inner' behavior
-        targetElement.replaceChildren(fragment);
-      }
-    };
+       const updateDOM = () => {
+         if (swapType === 'outer') {
+           targetElement.replaceWith(fragment);
+         } else {
+           // Default to 'inner' behavior
+           targetElement.replaceChildren(fragment);
+         }
+       };
 
-    document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
-  },
+       document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
+     } catch (error) {
+       throw createInvokerError('Failed to swap element content', ErrorSeverity.ERROR, {
+         command: '--dom:swap', element: invoker, cause: error as Error,
+         recovery: 'Check template exists and target element is valid'
+       });
+     }
+   },
 
   /**
    * `--dom:append`: Appends content from a `<template>` to the target.
@@ -121,28 +136,35 @@ const domCommands: Record<string, CommandCallback> = {
    * @example `<button command="--dom:append" commandfor="item-list" data-template-id="new-item">Add</button>`
    * @example `<button command="--dom:append:outer" commandfor="#item-1" data-template-id="item-2">Load Next</button>`
    */
-  "--dom:append": async ({ invoker, targetElement, params }: CommandContext) => {
-    const style = params[0] || 'inner';
-    let fragment = getSourceNode(invoker, 'append').cloneNode(true) as DocumentFragment;
+   "--dom:append": async ({ invoker, targetElement, params }: CommandContext) => {
+     try {
+       const style = params[0] || 'inner';
+       let fragment = getSourceNode(invoker, 'append').cloneNode(true) as DocumentFragment;
 
-    // Process the fragment for templating
-    fragment = processTemplateFragment(fragment, invoker);
+       // Process the fragment for templating
+       fragment = processTemplateFragment(fragment, invoker);
 
-    const updateDOM = () => {
-      if (style === 'outer') {
-        targetElement.after(fragment);
-      } else {
-        // Default to 'inner'
-        targetElement.append(fragment);
-      }
-    };
+       const updateDOM = () => {
+         if (style === 'outer') {
+           targetElement.after(fragment);
+         } else {
+           // Default to 'inner'
+           targetElement.append(fragment);
+         }
+       };
 
-    if (document.startViewTransition) {
-      await document.startViewTransition(updateDOM).finished;
-    } else {
-      updateDOM();
-    }
-  },
+       if (document.startViewTransition) {
+         await document.startViewTransition(updateDOM).finished;
+       } else {
+         updateDOM();
+       }
+     } catch (error) {
+       throw createInvokerError('Failed to append content', ErrorSeverity.ERROR, {
+         command: '--dom:append', element: invoker, cause: error as Error,
+         recovery: 'Check template exists and target element is valid'
+       });
+     }
+   },
 
   /**
    * `--dom:prepend`: Prepends content from a `<template>` to the target.
@@ -151,24 +173,31 @@ const domCommands: Record<string, CommandCallback> = {
    * @example `<button command="--dom:prepend" commandfor="log" data-template-id="new-log">Log</button>`
    * @example `<button command="--dom:prepend:outer" commandfor="#item-2" data-template-id="item-1">Insert Before</button>`
    */
-  "--dom:prepend": ({ invoker, targetElement, params }: CommandContext) => {
-    const style = params[0] || 'inner';
-    let fragment = getSourceNode(invoker, 'prepend').cloneNode(true) as DocumentFragment;
+   "--dom:prepend": ({ invoker, targetElement, params }: CommandContext) => {
+     try {
+       const style = params[0] || 'inner';
+       let fragment = getSourceNode(invoker, 'prepend').cloneNode(true) as DocumentFragment;
 
-    // Process the fragment for templating
-    fragment = processTemplateFragment(fragment, invoker);
+       // Process the fragment for templating
+       fragment = processTemplateFragment(fragment, invoker);
 
-    const updateDOM = () => {
-      if (style === 'outer') {
-        targetElement.before(fragment);
-      } else {
-        // Default to 'inner'
-        targetElement.prepend(fragment);
-      }
-    };
+       const updateDOM = () => {
+         if (style === 'outer') {
+           targetElement.before(fragment);
+         } else {
+           // Default to 'inner'
+           targetElement.prepend(fragment);
+         }
+       };
 
-    document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
-  },
+       document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
+     } catch (error) {
+       throw createInvokerError('Failed to prepend content', ErrorSeverity.ERROR, {
+         command: '--dom:prepend', element: invoker, cause: error as Error,
+         recovery: 'Check template exists and target element is valid'
+       });
+     }
+   },
 
   /**
    * `--dom:wrap`: Wraps the target element with content from a `<template>` or a simple tag.
@@ -176,58 +205,74 @@ const domCommands: Record<string, CommandCallback> = {
    * @example `<button command="--dom:wrap" commandfor="#my-image" data-template-id="figure-tpl">Add Caption</button>`
    * @example `<button command="--dom:wrap:div" commandfor="#content" data-wrapper-class="card">Wrap in Card</button>`
    */
-  "--dom:wrap": ({ invoker, targetElement, params }: CommandContext) => {
-    const wrapperTag = params[0] || null;
-    let wrapperElement: HTMLElement;
+   "--dom:wrap": ({ invoker, targetElement, params }: CommandContext) => {
+     try {
+       if (!targetElement.isConnected) return; // Not in DOM
+       const wrapperTag = params[0] || null;
+       let wrapperElement: HTMLElement;
 
-    if (wrapperTag) {
-      // Simple tag wrapper like --dom:wrap:div
-      wrapperElement = document.createElement(wrapperTag);
-      const wrapperClass = invoker.dataset.wrapperClass;
-      const wrapperId = invoker.dataset.wrapperId;
-      if (wrapperClass) wrapperElement.className = wrapperClass;
-      if (wrapperId) wrapperElement.id = wrapperId;
-    } else {
-      // Template-based wrapper
-      let fragment = getSourceNode(invoker, 'wrap').cloneNode(true) as DocumentFragment;
+       if (wrapperTag) {
+         // Simple tag wrapper like --dom:wrap:div
+         wrapperElement = document.createElement(wrapperTag);
+         const wrapperClass = invoker.dataset.wrapperClass;
+         const wrapperId = invoker.dataset.wrapperId;
+         if (wrapperClass) wrapperElement.className = wrapperClass;
+         if (wrapperId) wrapperElement.id = wrapperId;
+       } else {
+         // Template-based wrapper
+         let fragment = getSourceNode(invoker, 'wrap').cloneNode(true) as DocumentFragment;
 
-      // Process the fragment if advanced templating is enabled
-      if (isInterpolationEnabled()) {
-        fragment = processTemplateFragment(fragment, invoker);
-      }
+         // Process the fragment if advanced templating is enabled
+         if (isInterpolationEnabled()) {
+           fragment = processTemplateFragment(fragment, invoker);
+         }
 
-      // Assume the fragment has a single root element
-      const children = Array.from(fragment.children);
-      if (children.length !== 1) {
-        throw createInvokerError('Wrap template must contain exactly one root element', ErrorSeverity.ERROR, {
-          command: '--dom:wrap', element: invoker
-        });
-      }
-      wrapperElement = children[0] as HTMLElement;
-    }
+         // Assume the fragment has a single root element
+         const children = Array.from(fragment.children);
+         if (children.length !== 1) {
+           throw createInvokerError('Wrap template must contain exactly one root element', ErrorSeverity.ERROR, {
+             command: '--dom:wrap', element: invoker
+           });
+         }
+         wrapperElement = children[0] as HTMLElement;
+       }
 
-    const updateDOM = () => {
-      targetElement.replaceWith(wrapperElement);
-      wrapperElement.appendChild(targetElement);
-    };
+       const updateDOM = () => {
+         targetElement.replaceWith(wrapperElement);
+         wrapperElement.appendChild(targetElement);
+       };
 
-    document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
-  },
+       document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
+     } catch (error) {
+       throw createInvokerError('Failed to wrap element', ErrorSeverity.ERROR, {
+         command: '--dom:wrap', element: invoker, cause: error as Error,
+         recovery: 'Check template exists and contains single root element'
+       });
+     }
+   },
 
   /**
    * `--dom:unwrap`: Removes the parent of the target element, promoting it up one level in the DOM tree.
    * @example `<button command="--dom:unwrap" commandfor="#content">Remove Wrapper</button>`
    */
-  "--dom:unwrap": ({ targetElement }: CommandContext) => {
-    const parent = targetElement.parentElement;
-    if (!parent) return; // Already at root level
+   "--dom:unwrap": ({ targetElement }: CommandContext) => {
+     try {
+       if (!targetElement.isConnected) return; // Not in DOM
+       const parent = targetElement.parentElement;
+       if (!parent) return; // Already at root level
 
-    const updateDOM = () => {
-      parent.replaceWith(targetElement);
-    };
+       const updateDOM = () => {
+         parent.replaceWith(targetElement);
+       };
 
-    document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
-  },
+       document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
+     } catch (error) {
+       throw createInvokerError('Failed to unwrap element', ErrorSeverity.ERROR, {
+         command: '--dom:unwrap', element: targetElement, cause: error as Error,
+         recovery: 'Ensure target element has a parent to unwrap'
+       });
+     }
+   },
 
   /**
    * `--dom:toggle-empty-class`: Adds or removes a class on the target based on whether it has child elements.
@@ -448,9 +493,273 @@ const domCommands: Record<string, CommandCallback> = {
         recovery: 'Check template structure and target element'
       });
     }
-  },
+   },
 
-  // --- Data Context Commands ---
+   /**
+    * `--dom:swap-visual`: Visually swaps two elements with smooth animation using View Transitions API.
+    * @example `<button command="--dom:swap-visual" commandfor="item1" data-swap-with="item2">Swap Elements</button>`
+    */
+   "--dom:swap-visual": ({ invoker, targetElement }: CommandContext) => {
+     const swapWith = invoker.dataset.swapWith || invoker.dataset.swap_with;
+      if (!swapWith) {
+        const error = createInvokerError('DOM swap visual command requires data-swap-with attribute', ErrorSeverity.ERROR, {
+          command: '--dom:swap-visual', element: invoker,
+          recovery: 'Add data-swap-with="#element-id" to specify element to swap with'
+        });
+        logInvokerError(error);
+        return;
+      }
+
+     const otherElement = document.querySelector(swapWith);
+      if (!otherElement) {
+        const error = createInvokerError(`Element with selector "${swapWith}" not found`, ErrorSeverity.ERROR, {
+          command: '--dom:swap-visual', element: invoker,
+          recovery: `Ensure element with selector "${swapWith}" exists`
+        });
+        logInvokerError(error);
+        return;
+      }
+
+     // Use View Transitions API for smooth animation
+     const updateDOM = () => {
+       const parent1 = targetElement.parentNode;
+       const parent2 = otherElement.parentNode;
+
+        if (!parent1 || !parent2) {
+          const error = createInvokerError('Cannot swap elements without parent nodes', ErrorSeverity.ERROR, {
+            command: '--dom:swap-visual', element: invoker
+          });
+          logInvokerError(error);
+          return;
+        }
+
+        if (parent1 === parent2) {
+          // Same parent - use placeholder swap
+          const placeholder = document.createComment('swap-placeholder');
+          parent1.replaceChild(placeholder, targetElement);
+          parent1.replaceChild(targetElement, otherElement);
+          parent1.replaceChild(otherElement, placeholder);
+        } else {
+          // Different parents - use insertBefore swap
+          const nextSibling1 = targetElement.nextSibling;
+          const nextSibling2 = otherElement.nextSibling;
+          parent1.insertBefore(otherElement, nextSibling1);
+          parent2.insertBefore(targetElement, nextSibling2);
+        }
+     };
+
+     if (document.startViewTransition) {
+       document.startViewTransition(updateDOM);
+     } else {
+       updateDOM();
+     }
+   },
+
+   /**
+    * `--dom:update-keyed`: Updates a list of elements using keyed updates for efficient DOM manipulation.
+    * Compares keys to determine which elements to add, remove, or update.
+    * @example `<button command="--dom:update-keyed" commandfor="list-container" data-key-prop="id" data-template-id="item-template">Update List</button>`
+    */
+   "--dom:update-keyed": ({ invoker, targetElement }: CommandContext) => {
+     const keyProp = invoker.dataset.keyProp || invoker.dataset.key_prop || 'id';
+     const templateId = invoker.dataset.templateId || invoker.dataset.template_id;
+     const dataSource = invoker.dataset.dataSource || invoker.dataset.data_source;
+
+      if (!templateId) {
+        const error = createInvokerError('DOM update keyed command requires data-template-id attribute', ErrorSeverity.ERROR, {
+          command: '--dom:update-keyed', element: invoker,
+          recovery: 'Add data-template-id="template-name" to specify item template'
+        });
+        logInvokerError(error);
+        return;
+      }
+
+      if (!dataSource) {
+        const error = createInvokerError('DOM update keyed command requires data-data-source attribute', ErrorSeverity.ERROR, {
+          command: '--dom:update-keyed', element: invoker,
+          recovery: 'Add data-data-source="array-key" to specify data source'
+        });
+        logInvokerError(error);
+        return;
+      }
+
+     // Get the data array
+     let dataArray: any[] = [];
+     try {
+       const dataJson = targetElement.dataset[dataSource] || document.body.dataset[dataSource];
+       if (dataJson) {
+         dataArray = JSON.parse(dataJson);
+       }
+      } catch (e) {
+        const error = createInvokerError('Invalid data source JSON', ErrorSeverity.ERROR, {
+          command: '--dom:update-keyed', element: invoker
+        });
+        logInvokerError(error);
+        return;
+      }
+
+     // Get existing keyed elements
+     const existingElements = new Map<string, Element>();
+     const childElements = Array.from(targetElement.children);
+
+     for (const child of childElements) {
+       const key = child.getAttribute('data-key') || child.id;
+       if (key) {
+         existingElements.set(key, child);
+       }
+     }
+
+     // Create document fragment for new elements
+     const fragment = document.createDocumentFragment();
+     const newKeys = new Set<string>();
+
+     // Process each data item
+     for (const item of dataArray) {
+       const key = String(item[keyProp]);
+       newKeys.add(key);
+
+       let element: Element;
+
+       if (existingElements.has(key)) {
+         // Reuse existing element
+         element = existingElements.get(key)!;
+          // Update element content if needed (simplified - could be more sophisticated)
+          updateElementWithData(element, item, dataArray.indexOf(item));
+       } else {
+         // Create new element from template
+         const template = document.getElementById(templateId) as HTMLTemplateElement;
+          if (!template) {
+            const error = createInvokerError(`Template "${templateId}" not found`, ErrorSeverity.ERROR, {
+              command: '--dom:update-keyed', element: invoker
+            });
+            logInvokerError(error);
+            return;
+          }
+
+          const clone = template.content.cloneNode(true) as DocumentFragment;
+
+          // Create context for template processing
+          const context = {
+            ...item,
+            __uid: generateId()
+          };
+
+          // Process advanced templating (data-tpl-* attributes)
+          processAdvancedTemplating(clone, context);
+
+          element = clone.firstElementChild as Element;
+
+          if (element) {
+            element.setAttribute('data-key', key);
+            updateElementWithData(element, item);
+            assignUniqueIds(clone);
+          }
+       }
+
+       if (element) {
+         fragment.appendChild(element);
+       }
+     }
+
+     // Remove elements that are no longer in the data
+     for (const [key, element] of existingElements) {
+       if (!newKeys.has(key)) {
+         element.remove();
+       }
+     }
+
+     // Update DOM with new order
+     const updateDOM = () => {
+       targetElement.replaceChildren(fragment);
+     };
+
+     if (document.startViewTransition) {
+       document.startViewTransition(updateDOM);
+     } else {
+       updateDOM();
+      }
+    },
+
+    /**
+     * `--dom:repeat-replace`: Repeats a template for each item in a data array, replacing the container contents.
+     * @example `<button command="--dom:repeat-replace:1000" commandfor="list-container" data-template-id="item-template" data-array-key="items" data-key="id">Render List</button>`
+     */
+    "--dom:repeat-replace": ({ invoker, targetElement, params }: CommandContext) => {
+      const count = parseInt(params[0] || '0', 10);
+      const templateId = invoker.dataset.templateId || invoker.dataset.template_id;
+      const arrayKey = invoker.dataset.arrayKey || invoker.dataset.array_key;
+      const keyProp = invoker.dataset.key || invoker.dataset.keyProp || 'id';
+
+      if (!templateId) {
+        throw createInvokerError('DOM repeat replace command requires data-template-id attribute', ErrorSeverity.ERROR, {
+          command: '--dom:repeat-replace', element: invoker,
+          recovery: 'Add data-template-id="template-name" to specify item template'
+        });
+      }
+
+      if (!arrayKey) {
+        throw createInvokerError('DOM repeat replace command requires data-array-key attribute', ErrorSeverity.ERROR, {
+          command: '--dom:repeat-replace', element: invoker,
+          recovery: 'Add data-array-key="array-name" to specify data source'
+        });
+      }
+
+      // Get the data array
+      let dataArray: any[] = [];
+      try {
+        const dataJson = targetElement.dataset[arrayKey];
+        if (dataJson) {
+          dataArray = JSON.parse(dataJson);
+        }
+      } catch (e) {
+        throw createInvokerError('Invalid data array JSON', ErrorSeverity.ERROR, {
+          command: '--dom:repeat-replace', element: invoker
+        });
+      }
+
+      // Limit to specified count if provided
+      if (count > 0 && dataArray.length > count) {
+        dataArray = dataArray.slice(0, count);
+      }
+
+      // Get template
+      const template = document.getElementById(templateId) as HTMLTemplateElement;
+      if (!template) {
+        throw createInvokerError(`Template "${templateId}" not found`, ErrorSeverity.ERROR, {
+          command: '--dom:repeat-replace', element: invoker
+        });
+      }
+
+      // Create document fragment
+      const fragment = document.createDocumentFragment();
+
+      // Process each data item
+      for (let i = 0; i < dataArray.length; i++) {
+        const item = dataArray[i];
+        const clone = template.content.cloneNode(true) as DocumentFragment;
+        const element = clone.firstElementChild as Element;
+
+        if (element) {
+          element.setAttribute('data-key', String(item[keyProp]));
+          updateElementWithData(element, item, i);
+          assignUniqueIds(clone);
+          fragment.appendChild(element);
+        }
+      }
+
+      // Replace container contents
+      const updateDOM = () => {
+        targetElement.replaceChildren(fragment);
+      };
+
+      if (document.startViewTransition) {
+        document.startViewTransition(updateDOM);
+      } else {
+        updateDOM();
+      }
+    },
+
+    // --- Data Context Commands ---
 
   /**
    * `--data:set:context`: Sets data in a named context for use in templates and expressions.
@@ -636,18 +945,28 @@ function processAdvancedTemplating(fragment: DocumentFragment, context: Record<s
   const elements = fragment.querySelectorAll('[data-tpl-attr], [data-tpl-text], [data-tpl-class], [data-tpl-value]');
   
   for (const element of elements) {
-    // Process data-tpl-attr (e.g., data-tpl-attr="id:id,class:status")
-    const tplAttr = element.getAttribute('data-tpl-attr');
-    if (tplAttr) {
-      const attrMappings = tplAttr.split(',');
-      for (const mapping of attrMappings) {
-        const [attrName, contextKey] = mapping.split(':').map(s => s.trim());
-        if (attrName && contextKey && context[contextKey]) {
-          element.setAttribute(attrName, String(context[contextKey]));
-        }
-      }
-      element.removeAttribute('data-tpl-attr');
-    }
+     // Process data-tpl-attr (e.g., data-tpl-attr="id:id,class:status" or data-tpl-attr="id:item-{{id}}")
+     const tplAttr = element.getAttribute('data-tpl-attr');
+     if (tplAttr) {
+       const attrMappings = tplAttr.split(',');
+       for (const mapping of attrMappings) {
+         const [attrName, expression] = mapping.split(':').map(s => s.trim());
+         if (attrName && expression) {
+           let value: string;
+           if (expression.includes('{{')) {
+             // Expression contains interpolation
+             value = interpolateString(expression, context);
+             element.setAttribute(attrName, value);
+           } else if (context[expression] !== undefined) {
+             // Simple context key exists
+             value = String(context[expression]);
+             element.setAttribute(attrName, value);
+           }
+           // Skip setting attribute if context key not found (graceful degradation)
+         }
+       }
+       element.removeAttribute('data-tpl-attr');
+     }
 
     // Process data-tpl-text
     const tplText = element.getAttribute('data-tpl-text');
@@ -825,6 +1144,70 @@ function assignUniqueIds(fragment: DocumentFragment): void {
     if (!element.id) {
       element.id = `invoker-${generateId()}`;
     }
+  }
+}
+
+/**
+ * Updates an element with data from an object
+ */
+function updateElementWithData(element: Element, data: Record<string, any>, index?: number): void {
+  // Create context with item and index
+  const context = {
+    item: data,
+    index: index || 0,
+    ...data // Also include data properties directly
+  };
+
+  // Interpolate all text content and attributes that contain {{...}}
+  const interpolateElement = (el: Element) => {
+    // Interpolate text content
+    if (el.textContent && el.textContent.includes('{{')) {
+      el.textContent = interpolateString(el.textContent, context);
+    } else if (el.children.length === 0 && data.name) {
+      // For simple elements without {{, set textContent to data.name
+      el.textContent = data.name;
+    }
+
+    // Interpolate attributes
+    for (const attr of el.attributes) {
+      if (attr.value.includes('{{')) {
+        attr.value = interpolateString(attr.value, context);
+      }
+    }
+
+    // Recursively process child elements
+    for (const child of el.children) {
+      interpolateElement(child);
+    }
+  };
+
+  interpolateElement(element);
+
+  // Legacy support for data-tpl-* attributes
+  const tplText = element.getAttribute('data-tpl-text');
+  if (tplText && data[tplText]) {
+    element.textContent = String(data[tplText]);
+  }
+
+  const tplAttr = element.getAttribute('data-tpl-attr');
+  if (tplAttr) {
+    const attrMappings = tplAttr.split(',');
+    for (const mapping of attrMappings) {
+      const [attrName, contextKey] = mapping.split(':').map(s => s.trim());
+      if (attrName && contextKey && data[contextKey]) {
+        element.setAttribute(attrName, String(data[contextKey]));
+      }
+    }
+  }
+
+  // Update input values
+  if ('value' in element && data.value !== undefined) {
+    (element as HTMLInputElement).value = String(data.value);
+  }
+
+  // Update classes
+  if (data.className || data.class) {
+    element.className = String(data.className || data.class);
   }
 }
 

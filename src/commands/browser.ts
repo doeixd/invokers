@@ -33,16 +33,35 @@ const browserCommands: Record<string, CommandCallback> = {
    * @example `<button command="--url:params-get:theme" commandfor="#theme-display">Show Theme</button>`
    */
   "--url:params-get": ({ targetElement, params }: CommandContext) => {
-    const key = params[0];
-    if (!key) {
-      throw createInvokerError('URL params-get command requires a parameter name', ErrorSeverity.ERROR, {
-        command: '--url:params-get', element: targetElement
+    try {
+      if (!targetElement || !targetElement.isConnected) {
+        throw createInvokerError('--url:params-get failed: Target element not connected to DOM', ErrorSeverity.ERROR, {
+          command: '--url:params-get', element: targetElement, recovery: 'Ensure the target element exists and is in the document.'
+        });
+      }
+
+      const key = params[0];
+      if (!key) {
+        console.error('URL params-get command requires a parameter name');
+        return;
+      }
+
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const value = urlParams.get(key);
+        if (targetElement.isConnected) {
+          targetElement.textContent = value || '';
+        }
+      } catch (error) {
+        throw createInvokerError('--url:params-get failed: Error parsing URL parameters', ErrorSeverity.ERROR, {
+          command: '--url:params-get', element: targetElement, cause: error as Error, recovery: 'Check URL format.'
+        });
+      }
+    } catch (error) {
+      throw createInvokerError('--url:params-get failed', ErrorSeverity.ERROR, {
+        command: '--url:params-get', element: targetElement, cause: error as Error, recovery: 'Check target element and parameter name.'
       });
     }
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const value = urlParams.get(key);
-    targetElement.textContent = value || '';
   },
 
   /**
@@ -50,38 +69,57 @@ const browserCommands: Record<string, CommandCallback> = {
    * @example `<button command="--url:params-set:theme:dark" commandfor="#content">Set Theme</button>`
    */
   "--url:params-set": ({ invoker, params, getTargets }: CommandContext) => {
-    let key = params[0];
-    let value = params[1] || invoker.dataset.value || '';
-    
-    // Handle dynamic parameter names (e.g., from data attributes)
-    if (!key && invoker.dataset.urlParamName) {
-      key = invoker.dataset.urlParamName;
-    }
-    
-    if (!key) {
-      throw createInvokerError('URL params-set command requires a parameter name', ErrorSeverity.ERROR, {
-        command: '--url:params-set', element: invoker
+    try {
+      if (!invoker || !invoker.isConnected) {
+        throw createInvokerError('--url:params-set failed: Invoker element not connected to DOM', ErrorSeverity.ERROR, {
+          command: '--url:params-set', element: invoker, recovery: 'Ensure the element is still in the document.'
+        });
+      }
+
+      let key = params[0];
+      let value = params[1] || invoker.dataset.value || '';
+
+      // Handle dynamic parameter names (e.g., from data attributes)
+      if (!key && invoker.dataset.urlParamName) {
+        key = invoker.dataset.urlParamName;
+      }
+
+      if (!key) {
+        console.error('URL params-set command requires a parameter name');
+        return;
+      }
+
+      // Interpolation is already handled in the core executeCustomCommand method
+
+      try {
+        const url = new URL(window.location.href);
+        if (value) {
+          url.searchParams.set(key, value);
+        } else {
+          // If no value provided, use target element's value or text content
+          const targets = getTargets();
+          if (targets.length > 0) {
+            const targetEl = targets[0];
+            if (targetEl && targetEl.isConnected) {
+              const inputValue = (targetEl as HTMLInputElement).value ||
+                                (targetEl as HTMLTextAreaElement).value ||
+                                targetEl.textContent;
+              url.searchParams.set(key, inputValue || '');
+            }
+          }
+        }
+
+        window.history.replaceState(null, '', url.toString());
+      } catch (error) {
+        throw createInvokerError('--url:params-set failed: Error updating URL parameters', ErrorSeverity.ERROR, {
+          command: '--url:params-set', element: invoker, cause: error as Error, recovery: 'Check URL format and parameter values.'
+        });
+      }
+    } catch (error) {
+      throw createInvokerError('--url:params-set failed', ErrorSeverity.ERROR, {
+        command: '--url:params-set', element: invoker, cause: error as Error, recovery: 'Check element connectivity and parameter format.'
       });
     }
-
-    // Interpolation is already handled in the core executeCustomCommand method
-
-    const url = new URL(window.location.href);
-    if (value) {
-      url.searchParams.set(key, value);
-    } else {
-      // If no value provided, use target element's value or text content
-      const targets = getTargets();
-      if (targets.length > 0) {
-        const targetEl = targets[0];
-        const inputValue = (targetEl as HTMLInputElement).value || 
-                         (targetEl as HTMLTextAreaElement).value || 
-                         targetEl.textContent;
-        url.searchParams.set(key, inputValue || '');
-      }
-    }
-    
-    window.history.replaceState(null, '', url.toString());
   },
 
   /**
@@ -377,70 +415,145 @@ const browserCommands: Record<string, CommandCallback> = {
 
   // --- Cookie Commands ---
 
-  /**
-   * `--cookie:set`: Sets a browser cookie.
-   * @example `<button command="--cookie:set:theme:dark" data-cookie-expires="365">Set Dark Theme</button>`
-   */
-  "--cookie:set": ({ invoker, params }: CommandContext) => {
-    const key = params[0];
-    const value = params[1];
-    if (!key) {
-      throw createInvokerError('Cookie set command requires a key parameter', ErrorSeverity.ERROR, {
-        command: '--cookie:set', element: invoker
-      });
-    }
+   /**
+    * `--cookie:set`: Sets a browser cookie.
+    * @example `<button command="--cookie:set:theme:dark" data-cookie-expires="365">Set Dark Theme</button>`
+    */
+   "--cookie:set": ({ invoker, params }: CommandContext) => {
+     try {
+       if (!invoker || !invoker.isConnected) {
+         throw createInvokerError('--cookie:set failed: Invoker element not connected to DOM', ErrorSeverity.ERROR, {
+           command: '--cookie:set', element: invoker, recovery: 'Ensure the element is still in the document.'
+         });
+       }
 
-    let cookieString = `${encodeURIComponent(key)}=${encodeURIComponent(value || '')}`;
-    const expires = invoker.dataset.cookieExpires;
-    if (expires) {
-      const days = parseInt(expires, 10);
-      if (!isNaN(days)) {
-        const date = new Date();
-        date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-        cookieString += `; expires=${date.toUTCString()}`;
-      }
-    }
-    cookieString += '; path=/';
-    document.cookie = cookieString;
-  },
+       const key = params[0];
+       const value = params[1];
+       if (!key) {
+         throw createInvokerError('Cookie set command requires a key parameter', ErrorSeverity.ERROR, {
+           command: '--cookie:set', element: invoker, recovery: 'Use format: --cookie:set:key:value'
+         });
+       }
 
-  /**
-   * `--cookie:get`: Gets a cookie value and sets it on the target element.
-   * @example `<button command="--cookie:get:theme" commandfor="#theme-display">Show Theme</button>`
-   */
-  "--cookie:get": ({ targetElement, params }: CommandContext) => {
-    const key = params[0];
-    if (!key) {
-      throw createInvokerError('Cookie get command requires a key parameter', ErrorSeverity.ERROR, {
-        command: '--cookie:get', element: targetElement
-      });
-    }
+       try {
+         let cookieString = `${encodeURIComponent(key)}=${encodeURIComponent(value || '')}`;
+         const expires = invoker.dataset.cookieExpires;
+         if (expires) {
+           const days = parseInt(expires, 10);
+           if (!isNaN(days)) {
+             const date = new Date();
+             date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+             cookieString += `; expires=${date.toUTCString()}`;
+           } else {
+             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+               console.warn('--cookie:set: Invalid expires value, ignoring:', expires);
+             }
+           }
+         }
+         cookieString += '; path=/';
+         document.cookie = cookieString;
 
-    const cookies = document.cookie.split(';');
-    for (const cookie of cookies) {
-      const [cookieKey, cookieValue] = cookie.trim().split('=');
-      if (decodeURIComponent(cookieKey) === key) {
-        targetElement.textContent = decodeURIComponent(cookieValue || '');
-        return;
-      }
-    }
-    targetElement.textContent = ''; // Not found
-  },
+         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+           console.log('--cookie:set: Cookie set successfully:', key, '=', value);
+         }
+       } catch (error) {
+         throw createInvokerError('--cookie:set failed: Error setting cookie', ErrorSeverity.ERROR, {
+           command: '--cookie:set', element: invoker, cause: error as Error, recovery: 'Check cookie key and value format.'
+         });
+       }
+     } catch (error) {
+       throw createInvokerError('--cookie:set failed', ErrorSeverity.ERROR, {
+         command: '--cookie:set', element: invoker, cause: error as Error, recovery: 'Check element connectivity and parameter format.'
+       });
+     }
+   },
 
-  /**
-   * `--cookie:remove`: Removes a browser cookie.
-   * @example `<button command="--cookie:remove:theme">Clear Theme</button>`
-   */
-  "--cookie:remove": ({ params }: CommandContext) => {
-    const key = params[0];
-    if (!key) {
-      throw createInvokerError('Cookie remove command requires a key parameter', ErrorSeverity.ERROR, {
-        command: '--cookie:remove'
-      });
-    }
+   /**
+    * `--cookie:get`: Gets a cookie value and sets it on the target element.
+    * @example `<button command="--cookie:get:theme" commandfor="#theme-display">Show Theme</button>`
+    */
+   "--cookie:get": ({ targetElement, params }: CommandContext) => {
+     try {
+       if (!targetElement || !targetElement.isConnected) {
+         throw createInvokerError('--cookie:get failed: Target element not connected to DOM', ErrorSeverity.ERROR, {
+           command: '--cookie:get', element: targetElement, recovery: 'Ensure the target element exists and is in the document.'
+         });
+       }
 
-    document.cookie = `${encodeURIComponent(key)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-  }
+       const key = params[0];
+       if (!key) {
+         throw createInvokerError('Cookie get command requires a key parameter', ErrorSeverity.ERROR, {
+           command: '--cookie:get', element: targetElement, recovery: 'Use format: --cookie:get:key'
+         });
+       }
+
+       try {
+         const cookies = document.cookie.split(';');
+         for (const cookie of cookies) {
+           const [cookieKey, cookieValue] = cookie.trim().split('=');
+           if (decodeURIComponent(cookieKey) === key) {
+             const decodedValue = decodeURIComponent(cookieValue || '');
+             if (targetElement.isConnected) {
+               targetElement.textContent = decodedValue;
+             }
+
+             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+               console.log('--cookie:get: Cookie retrieved:', key, '=', decodedValue);
+             }
+             return;
+           }
+         }
+
+         // Cookie not found
+         if (targetElement.isConnected) {
+           targetElement.textContent = '';
+         }
+
+         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+           console.log('--cookie:get: Cookie not found:', key);
+         }
+       } catch (error) {
+         throw createInvokerError('--cookie:get failed: Error retrieving cookie', ErrorSeverity.ERROR, {
+           command: '--cookie:get', element: targetElement, cause: error as Error, recovery: 'Check cookie key format.'
+         });
+       }
+     } catch (error) {
+       throw createInvokerError('--cookie:get failed', ErrorSeverity.ERROR, {
+         command: '--cookie:get', element: targetElement, cause: error as Error, recovery: 'Check target element and parameter format.'
+       });
+     }
+   },
+
+   /**
+    * `--cookie:remove`: Removes a browser cookie.
+    * @example `<button command="--cookie:remove:theme">Clear Theme</button>`
+    */
+   "--cookie:remove": ({ params }: CommandContext) => {
+     try {
+       const key = params[0];
+       if (!key) {
+         throw createInvokerError('Cookie remove command requires a key parameter', ErrorSeverity.ERROR, {
+           command: '--cookie:remove', recovery: 'Use format: --cookie:remove:key'
+         });
+       }
+
+       try {
+         document.cookie = `${encodeURIComponent(key)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+
+         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+           console.log('--cookie:remove: Cookie removed:', key);
+         }
+       } catch (error) {
+         throw createInvokerError('--cookie:remove failed: Error removing cookie', ErrorSeverity.ERROR, {
+           command: '--cookie:remove', cause: error as Error, recovery: 'Check cookie key format.'
+         });
+       }
+     } catch (error) {
+       throw createInvokerError('--cookie:remove failed', ErrorSeverity.ERROR, {
+         command: '--cookie:remove', cause: error as Error, recovery: 'Check parameter format.'
+       });
+     }
+   }
 };
 
 /**

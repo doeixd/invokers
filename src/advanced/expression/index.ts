@@ -45,7 +45,7 @@ const expressionCache = new ExpressionCache();
 
 // Rate limiting for expression evaluation
 class ExpressionRateLimiter {
-  private static readonly MAX_EVALUATIONS_PER_SECOND = 1000;
+  private static readonly MAX_EVALUATIONS_PER_SECOND = 10000;
   private static readonly WINDOW_SIZE_MS = 1000;
   private evaluations: number[] = [];
 
@@ -103,7 +103,7 @@ export function evaluateExpression(expression: string, context: Record<string, a
       ...context
     };
 
-    const evaluator = new ExpressionEvaluator(enhancedContext);
+    const evaluator = new ExpressionEvaluator(enhancedContext, true); // Allow functions for helpers
     return evaluator.evaluate(ast);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -164,6 +164,59 @@ export const expressionHelpers = {
     return `${count} ${word}`;
   },
 
+  // Additional String Functions (Phase 4)
+  concat: (...args: any[]): string => {
+    return args.map(arg => String(arg || '')).join('');
+  },
+
+  uppercase: (str: string): string => {
+    if (typeof str !== 'string') return '';
+    return str.toUpperCase();
+  },
+
+  lowercase: (str: string): string => {
+    if (typeof str !== 'string') return '';
+    return str.toLowerCase();
+  },
+
+  trim: (str: string): string => {
+    if (typeof str !== 'string') return '';
+    return str.trim();
+  },
+
+  replace: (str: string, search: string, replacement: string): string => {
+    if (typeof str !== 'string') return '';
+    if (typeof search !== 'string') return str;
+    return str.replace(new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), replacement || '');
+  },
+
+  substring: (str: string, start: number, end?: number): string => {
+    if (typeof str !== 'string') return '';
+    if (typeof start !== 'number' || isNaN(start)) return str;
+    return str.substring(start, end);
+  },
+
+  charAt: (str: string, index: number): string => {
+    if (typeof str !== 'string') return '';
+    if (typeof index !== 'number' || isNaN(index)) return '';
+    return str.charAt(index);
+  },
+
+  includes: (str: string, search: string): boolean => {
+    if (typeof str !== 'string' || typeof search !== 'string') return false;
+    return str.includes(search);
+  },
+
+  startsWith: (str: string, search: string): boolean => {
+    if (typeof str !== 'string' || typeof search !== 'string') return false;
+    return str.startsWith(search);
+  },
+
+  endsWith: (str: string, search: string): boolean => {
+    if (typeof str !== 'string' || typeof search !== 'string') return false;
+    return str.endsWith(search);
+  },
+
   // Array helpers
   join: (arr: any[], separator = ', '): string => {
     if (!Array.isArray(arr)) return '';
@@ -194,10 +247,110 @@ export const expressionHelpers = {
     });
   },
 
+  // Additional Array Functions (Phase 4)
+  randomChoice: (arr: any[]): any => {
+    if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+      console.log('Invokers: randomChoice called with:', arr);
+    }
+    if (!Array.isArray(arr) || arr.length === 0) {
+      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+        console.log('Invokers: randomChoice returning undefined - not array or empty');
+      }
+      return undefined;
+    }
+    const index = Math.floor(Math.random() * arr.length);
+    const result = arr[index];
+    if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+      console.log('Invokers: randomChoice result:', result, 'from index', index);
+    }
+    return result;
+  },
+
+  arrayGenerate: (count: number, generator?: (index: number) => any): any[] => {
+    if (typeof count !== 'number' || count < 0 || count > 1000) return [];
+    const result = [];
+    for (let i = 0; i < count; i++) {
+      result.push(generator ? generator(i) : i);
+    }
+    return result;
+  },
+
+  arrayMap: (arr: any[], mapper: (item: any, index: number) => any): any[] => {
+    if (!Array.isArray(arr)) return [];
+    if (typeof mapper !== 'function') return arr;
+    return arr.map(mapper);
+  },
+
+  arrayFilter: (arr: any[], predicate: (item: any, index: number) => boolean): any[] => {
+    if (!Array.isArray(arr)) return [];
+    if (typeof predicate !== 'function') return arr;
+    return arr.filter(predicate);
+  },
+
+  arraySlice: (arr: any[], start?: number, end?: number): any[] => {
+    if (!Array.isArray(arr)) return [];
+    return arr.slice(start, end);
+  },
+
+  arrayJoin: (arr: any[], separator = ','): string => {
+    if (!Array.isArray(arr)) return '';
+    return arr.join(separator);
+  },
+
+  arrayLength: (arr: any[]): number => {
+    if (!Array.isArray(arr)) return 0;
+    return arr.length;
+  },
+
+  arrayFirst: (arr: any[]): any => {
+    if (!Array.isArray(arr) || arr.length === 0) return undefined;
+    return arr[0];
+  },
+
+  arrayLast: (arr: any[]): any => {
+    if (!Array.isArray(arr) || arr.length === 0) return undefined;
+    return arr[arr.length - 1];
+  },
+
+  arrayIncludes: (arr: any[], item: any): boolean => {
+    if (!Array.isArray(arr)) return false;
+    return arr.includes(item);
+  },
+
+  arrayIndexOf: (arr: any[], item: any): number => {
+    if (!Array.isArray(arr)) return -1;
+    return arr.indexOf(item);
+  },
+
+  arrayReverse: (arr: any[]): any[] => {
+    if (!Array.isArray(arr)) return [];
+    return [...arr].reverse();
+  },
+
+  arraySort: (arr: any[], compareFn?: (a: any, b: any) => number): any[] => {
+    if (!Array.isArray(arr)) return [];
+    return [...arr].sort(compareFn);
+  },
+
+  arrayReduce: (arr: any[], reducer: (accumulator: any, current: any, index: number) => any, initialValue?: any): any => {
+    if (!Array.isArray(arr)) return initialValue;
+    if (typeof reducer !== 'function') return initialValue;
+    return arr.reduce(reducer, initialValue);
+  },
+
   // Date/time helpers
   formatDate: (date: Date | string | number, format = 'MM/dd/yyyy'): string => {
     try {
-      const d = new Date(date);
+      let d: Date;
+
+      // Handle string dates in YYYY-MM-DD format explicitly to avoid timezone issues
+      if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        const [y, m, day] = date.split('-').map(Number);
+        d = new Date(y, m - 1, day);
+      } else {
+        d = new Date(date);
+      }
+
       if (isNaN(d.getTime())) return '';
 
       const year = d.getFullYear();
@@ -205,9 +358,9 @@ export const expressionHelpers = {
       const day = String(d.getDate()).padStart(2, '0');
 
       return format
-        .replace('yyyy', String(year))
-        .replace('MM', month)
-        .replace('dd', day);
+        .replace(/yyyy/g, String(year))
+        .replace(/MM/g, month)
+        .replace(/dd/g, day);
     } catch {
       return '';
     }
@@ -235,6 +388,9 @@ export const expressionHelpers = {
     }
   },
 
+  // Additional Date Functions (Phase 4)
+  now: (): Date => new Date(),
+
   // Number helpers
   formatNumber: (num: number, options?: { locale?: string; minimumFractionDigits?: number; maximumFractionDigits?: number }): string => {
     if (typeof num !== 'number' || isNaN(num)) return '0';
@@ -260,6 +416,61 @@ export const expressionHelpers = {
     }
   },
 
+  // Math Functions (Phase 4)
+  random: (): number => Math.random(),
+
+  randomInt: (min: number, max: number): number => {
+    if (typeof min !== 'number' || typeof max !== 'number' || min >= max) return 0;
+    return Math.floor(Math.random() * (max - min)) + min;
+  },
+
+  floor: (num: number): number => {
+    if (typeof num !== 'number' || isNaN(num)) return 0;
+    return Math.floor(num);
+  },
+
+  ceil: (num: number): number => {
+    if (typeof num !== 'number' || isNaN(num)) return 0;
+    return Math.ceil(num);
+  },
+
+  round: (num: number): number => {
+    if (typeof num !== 'number' || isNaN(num)) return 0;
+    return Math.round(num);
+  },
+
+  min: (...args: number[]): number => {
+    const nums = args.filter(n => typeof n === 'number' && !isNaN(n));
+    return nums.length > 0 ? Math.min(...nums) : 0;
+  },
+
+  max: (...args: number[]): number => {
+    const nums = args.filter(n => typeof n === 'number' && !isNaN(n));
+    return nums.length > 0 ? Math.max(...nums) : 0;
+  },
+
+  abs: (num: number): number => {
+    if (typeof num !== 'number' || isNaN(num)) return 0;
+    return Math.abs(num);
+  },
+
+  pow: (base: number, exponent: number): number => {
+    if (typeof base !== 'number' || typeof exponent !== 'number' || isNaN(base) || isNaN(exponent)) return 0;
+    return Math.pow(base, exponent);
+  },
+
+  sqrt: (num: number): number => {
+    if (typeof num !== 'number' || isNaN(num) || num < 0) return 0;
+    return Math.sqrt(num);
+  },
+
+  clamp: (value: number, min: number, max: number): number => {
+    if (typeof value !== 'number' || isNaN(value)) return min || 0;
+    if (typeof min !== 'number' || isNaN(min)) min = 0;
+    if (typeof max !== 'number' || isNaN(max)) max = 1;
+    return Math.min(Math.max(value, min), max);
+  },
+
   // Utility helpers
   isEmpty: (value: any): boolean => {
     if (value == null) return true;
@@ -271,7 +482,136 @@ export const expressionHelpers = {
 
   isNotEmpty: (value: any): boolean => {
     return !expressionHelpers.isEmpty(value);
-  }
+  },
+
+  // Conditional Functions (Phase 4)
+  if: (condition: any, trueValue: any, falseValue: any): any => {
+    return condition ? trueValue : falseValue;
+  },
+
+  coalesce: (...args: any[]): any => {
+    for (const arg of args) {
+      if (arg != null && arg !== '') return arg;
+    }
+    return null;
+  },
+
+  nullish: (...args: any[]): any => {
+    for (const arg of args) {
+      if (arg != null) return arg;
+    }
+    return null;
+  },
+
+  // Type Functions (Phase 4)
+  typeof: (value: any): string => {
+    if (value === null) return 'null';
+    if (Array.isArray(value)) return 'array';
+    return typeof value;
+  },
+
+  isArray: (value: any): boolean => Array.isArray(value),
+
+  isObject: (value: any): boolean => {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+  },
+
+  isString: (value: any): boolean => typeof value === 'string',
+
+  isNumber: (value: any): boolean => typeof value === 'number' && !isNaN(value),
+
+  isBoolean: (value: any): boolean => typeof value === 'boolean',
+
+  isNull: (value: any): boolean => value === null,
+
+  isUndefined: (value: any): boolean => value === undefined,
+
+  // Object Functions (Phase 4)
+  keys: (obj: any): string[] => {
+    if (!obj || typeof obj !== 'object') return [];
+    return Object.keys(obj);
+  },
+
+  values: (obj: any): any[] => {
+    if (!obj || typeof obj !== 'object') return [];
+    return Object.values(obj);
+  },
+
+  entries: (obj: any): [string, any][] => {
+    if (!obj || typeof obj !== 'object') return [];
+    return Object.entries(obj);
+  },
+
+  hasProperty: (obj: any, prop: string): boolean => {
+    if (!obj || typeof obj !== 'object') return false;
+    return prop in obj;
+  },
+
+  getProperty: (obj: any, prop: string, defaultValue?: any): any => {
+    if (!obj || typeof obj !== 'object') return defaultValue;
+    return obj[prop] !== undefined ? obj[prop] : defaultValue;
+  },
+
+  setProperty: (obj: any, prop: string, value: any): any => {
+    if (!obj || typeof obj !== 'object') return obj;
+    obj[prop] = value;
+    return obj;
+  },
+
+  // Additional Utility Functions (Phase 4)
+  range: (start: number, end: number, step = 1): number[] => {
+    if (typeof start !== 'number' || typeof end !== 'number' || typeof step !== 'number') return [];
+    if (step === 0 || (start < end && step < 0) || (start > end && step > 0)) return [];
+
+    const result = [];
+    if (start < end) {
+      for (let i = start; i < end; i += step) {
+        result.push(i);
+      }
+    } else {
+      for (let i = start; i > end; i += step) {
+        result.push(i);
+      }
+    }
+    return result.slice(0, 1000); // Limit size
+  },
+
+  repeat: (value: any, count: number): any[] => {
+    if (typeof count !== 'number' || count < 0 || count > 1000) return [];
+    return new Array(count).fill(value);
+  },
+
+  pad: (str: string, length: number, char = ' '): string => {
+    if (typeof str !== 'string') str = String(str || '');
+    if (typeof length !== 'number' || length < 0) return str;
+    if (typeof char !== 'string' || char.length !== 1) char = ' ';
+
+    if (str.length >= length) return str;
+    const padding = char.repeat(length - str.length);
+    return str + padding;
+  },
+
+  parseJSON: (str: string): any => {
+    if (typeof str !== 'string') return null;
+    try {
+      return JSON.parse(str);
+    } catch {
+      return null;
+    }
+  },
+
+  stringify: (value: any, indent?: number): string => {
+    try {
+      return JSON.stringify(value, null, indent);
+    } catch {
+      return String(value);
+    }
+  },
+
+  sanitize: (str: string): string => {
+    if (typeof str !== 'string') return '';
+    return str.replace(/[<>]/g, '').trim();
+  },
 };
 
 /**

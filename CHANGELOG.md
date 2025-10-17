@@ -2,6 +2,113 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0](https://github.com/doeixd/invokers/compare/v1.9.0...v2.0.0) (2025-10-14)
+
+### 🚀 Major Features
+
+* **Expression Functions Engine**: Complete reactive computation system with 40+ built-in functions
+  - String functions: `concat`, `uppercase`, `lowercase`, `trim`, `replace`, `substring`, `charAt`, `includes`, `startsWith`, `endsWith`
+  - Array functions: `join`, `filter`, `sort`, `randomChoice`, `arrayGenerate`, `arrayMap`, `arrayFilter`, `arraySlice`, `arrayLength`, `arrayFirst`, `arrayLast`, `arrayReverse`, `arraySort`, `arrayReduce`
+  - Math functions: `random`, `randomInt`, `floor`, `ceil`, `round`, `min`, `max`, `abs`, `pow`, `sqrt`, `clamp`
+  - Date functions: `now`, `formatDate`, `timeAgo`
+  - Utility functions: `isEmpty`, `isNotEmpty`, `if`, `coalesce`, `nullish`, `typeof`, `isArray`, `isObject`, `isString`, `isNumber`, `isBoolean`, `isNull`, `isUndefined`
+  - Object functions: `keys`, `values`, `entries`, `hasProperty`, `getProperty`, `setProperty`
+  - Advanced functions: `range`, `repeat`, `pad`, `parseJSON`, `stringify`, `sanitize`
+
+* **Loop Commands Pack**: Declarative iteration and batch DOM operations
+  - `--dom:repeat-append`: Append template N times with loop variables
+  - `--dom:repeat-replace`: Replace content with N repetitions
+  - `--dom:repeat-prepend`: Prepend template N times
+  - `--dom:repeat-update`: Update every Nth element
+  - Batch processing for performance with large datasets
+  - Loop context variables: `index`, `index1`, `count`, `isFirst`, `isLast`, `isEven`, `isOdd`
+
+* **Random Commands Pack**: Declarative random data generation
+  - `--random:choice`: Pick random item from datalist/template
+  - `--random:concat`: Concatenate random choices
+  - `--random:number`: Generate random integers
+  - `--random:seed`: Set seed for reproducible randomness
+  - `--random:uuid`: Generate UUID v4
+  - `--random:store`: Store random choice in dataset
+
+* **Enhanced Data Commands**: Advanced array operations and reactive data binding
+  - `--data:render`: Render arrays using templates with interpolation
+  - `--data:array:toggle-selected`: Toggle selection state of array items
+  - `--data:array:remove-item`: Remove items from arrays by ID
+  - `--data:array:concat`: Concatenate multiple arrays
+  - `--data:array:clear`: Clear array data
+  - Template-based rendering with performance optimizations
+
+* **JS Framework Benchmark Implementation**: Complete declarative implementation
+  - Create 1,000/10,000 rows using random data generation
+  - Update every 10th row with expression functions
+  - Swap rows with array operations
+  - Clear table with data commands
+  - Select random rows with array manipulation
+  - Pure HTML implementation with competitive performance
+
+### 🎯 Performance Improvements
+
+* **Batch DOM Operations**: Optimized rendering for large datasets with chunked processing
+* **Expression Caching**: LRU cache for parsed expressions (100 entries)
+* **Rate Limiting**: 10,000 evaluations/second for expression engine
+* **Memory Management**: Efficient DOM fragment usage and cleanup
+* **Tree Shaking**: Modular architecture enables precise bundle size control
+
+### 🔧 Developer Experience
+
+* **Expression Function Registry**: Extensible system for custom functions
+* **Template Interpolation**: Seamless integration with existing interpolation system
+* **Error Handling**: Comprehensive error messages with recovery suggestions
+* **Debug Support**: Enhanced logging for expression evaluation and command execution
+* **Type Safety**: Full TypeScript support for all new features
+
+### 📚 Documentation
+
+* **Expression Functions Guide**: Complete reference for all 40+ built-in functions
+* **Loop Commands Tutorial**: Declarative iteration patterns and best practices
+* **Benchmark Implementation**: Step-by-step guide to the JS Framework Benchmark
+* **Performance Guide**: Optimization techniques and performance comparisons
+* **Migration Guide**: Upgrading from v1.x to v2.0.0
+
+### 🧪 Testing
+
+* **Expression Functions Tests**: Comprehensive test suite for all built-in functions
+* **Loop Commands Tests**: Performance and correctness tests for iteration
+* **Random Commands Tests**: Deterministic testing with seeded randomness
+* **Data Commands Tests**: Array operations and template rendering tests
+* **Benchmark Tests**: Automated performance regression testing
+
+### 🔄 Breaking Changes
+
+* **Advanced Features Opt-in**: Expression interpolation `{{...}}` now requires explicit `enableAdvancedEvents()` call
+* **Command Dependencies**: New commands require importing additional command packs
+* **Template Requirements**: Data rendering commands require explicit template elements
+
+### 📦 Bundle Size Impact
+
+* **Expression Engine**: ~26 kB (advanced/expressions)
+* **Loop Commands**: ~14 kB (commands/loop)
+* **Random Commands**: ~13 kB (commands/random)
+* **Data Commands**: ~16 kB (commands/data)
+* **Total v2.0.0**: ~69 kB (modular) vs ~330 kB (compatible)
+
+## [1.9.0](https://github.com/doeixd/invokers/compare/v1.8.0...v1.9.0) (2025-10-14)
+
+### Features
+
+* **Modular Architecture**: Split the monolithic flow command pack into four focused modules for better bundle size optimization:
+  - `invokers/commands/fetch` (~15 kB) - HTTP fetch operations
+  - `invokers/commands/websocket` (~12 kB) - WebSocket real-time communication
+  - `invokers/commands/sse` (~10 kB) - Server-Sent Events
+  - `invokers/commands/navigation` (~8 kB) - Navigation and flow control
+* **Backward Compatibility**: The original `invokers/commands/flow` entry point remains as a compatibility layer that imports all four new modules
+* **Improved Tree Shaking**: Developers can now import only the specific networking functionality they need, reducing bundle sizes
+
+### Breaking Changes
+
+* **Flow Module Split**: The `invokers/commands/flow` module now acts as a compatibility layer. For optimal bundle sizes, import the specific command packs directly.
+
 ## [1.8.0](https://github.com/doeixd/invokers/compare/v1.7.0...v1.8.0) (2025-10-02)
 
 

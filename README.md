@@ -2,11 +2,20 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/doeixd/invokers)
 
-# ✨ Invokers 
+# ✨ Invokers v2.0.0
 
 ### _Write Interactive HTML Without Writing JavaScript_
 
-**Invokers lets you write future-proof HTML interactions without custom JavaScript.** It's a polyfill for the upcoming HTML Invoker Commands API and Interest Invokers (hover cards, tooltips), with a comprehensive set of extended commands automatically included for real-world needs like toggling, fetching, media controls, and complex workflow chaining. 
+**Invokers lets you write future-proof HTML interactions without custom JavaScript.** It's a polyfill for the upcoming HTML Invoker Commands API and Interest Invokers (hover cards, tooltips), with a comprehensive set of extended commands automatically included for real-world needs like toggling, fetching, media controls, and complex workflow chaining.
+
+**🚀 v2.0.0 New Features:**
+- **Advanced Modules**: State management, control flow, components, and forms
+- **Expression Functions**: 40+ built-in functions for reactive computations (`{{concat("Hello", " ", "World")}}`)
+- **Loop Commands**: Declarative iteration and batch DOM operations
+- **Random Commands**: Generate random data without JavaScript
+- **Data Commands**: Advanced array operations and reactive data binding
+- **JS Framework Benchmark**: Complete declarative implementation of the JS Framework Benchmark
+- **Performance Optimizations**: Batch DOM operations and keyed rendering
 
 ## 📋 Table of Contents
 
@@ -46,6 +55,111 @@
 -   🚀 **Zero Dependencies & Tiny:** A featherlight addition to any project, framework-agnostic, and ready to use in seconds.
 -   🎨 **View Transitions:** Built-in, automatic support for the [View Transition API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API) for beautiful, animated UI changes with zero JS configuration.
 -   🔧 **Singleton Architecture:** Optimized internal architecture ensures consistent behavior and prevents duplicate registrations.
+
+## 🚀 v2.0.0: Declarative Reactive Engine
+
+**Invokers v2.0.0 introduces a complete declarative reactive engine that rivals modern JavaScript frameworks while maintaining zero-JavaScript philosophy.**
+
+### Expression Functions
+Use 40+ built-in functions in `{{...}}` expressions for reactive computations:
+
+```html
+<!-- String operations -->
+<div>{{concat("Hello", " ", "World")}}</div>
+<div>{{uppercase("hello world")}}</div>
+<div>{{truncate("Long text here", 10)}}</div>
+
+<!-- Math operations -->
+<span>{{min(10, 20, 30)}}</span>
+<span>{{round(3.14159)}}</span>
+
+<!-- Array operations -->
+<div>{{arrayLength(items)}}</div>
+<div>{{join(selectedItems, ", ")}}</div>
+
+<!-- Conditional logic -->
+<div class="{{if(isActive, 'active', 'inactive')}}">
+  {{if(userCount > 1, pluralize(userCount, 'user'), 'user')}}
+</div>
+```
+
+### Loop Commands
+Declarative iteration with performance optimizations:
+
+```html
+<!-- Basic looping -->
+<div command="--dom:repeat-append:5" commandfor="#container">
+  <template>
+    <div>Item {{index1}} of {{count}}</div>
+  </template>
+</div>
+
+<!-- Data-driven rendering -->
+<div command="--data:render:items" commandfor="#data-store">
+  <template data-loop-item="items">
+    <div class="{{selected ? 'selected' : ''}}">
+      <h3>{{title}}</h3>
+      <p>{{description}}</p>
+      <button command="--data:array:toggle-selected"
+              data-item-id="{{id}}">
+        {{selected ? 'Deselect' : 'Select'}}
+      </button>
+    </div>
+  </template>
+</div>
+```
+
+### Random Data Generation
+Generate random data without JavaScript:
+
+```html
+<datalist id="colors">
+  <option value="red,blue,green,yellow,purple,orange">
+</datalist>
+
+<button command="--random:choice:colors" commandfor="#result">
+  Pick Random Color
+</button>
+
+<div id="result"></div>
+```
+
+### JS Framework Benchmark
+**Complete declarative implementation** of the JS Framework Benchmark:
+
+```html
+<!-- Create 1,000 rows -->
+<button command="--benchmark:create:1000" commandfor="#data">Create 1,000 rows</button>
+
+<!-- Update every 10th row -->
+<button command="--benchmark:update" commandfor="#data">Update every 10th row</button>
+
+<!-- Swap rows -->
+<button command="--benchmark:swap" commandfor="#data">Swap rows</button>
+
+<!-- Clear table -->
+<button command="--benchmark:clear" commandfor="#data">Clear</button>
+
+<!-- Declarative table rendering -->
+<table>
+  <tbody command="--data:render:benchmarkRows" commandfor="#data">
+    <template data-loop-item="benchmarkRows">
+      <tr class="{{selected ? 'selected' : ''}}">
+        <td>{{id}}</td>
+        <td>{{label}}</td>
+        <td>{{status}}</td>
+        <td>
+          <button command="--data:array:toggle-selected" data-item-id="{{id}}">
+            {{selected ? 'Deselect' : 'Select'}}
+          </button>
+        </td>
+      </tr>
+    </template>
+  </tbody>
+</table>
+```
+
+**Performance Results:** Invokers v2.0.0 achieves competitive performance with modern JS frameworks while maintaining pure HTML declarations.
 
 ## Quick Demo
 
@@ -461,7 +575,7 @@ Invokers has a built-in `--clipboard:copy` command. The UI feedback is handled d
 - **🏗️ Tier 0**: Core polyfill (25.8 kB) - Standards-compliant foundation
 - **⚡ Tier 1**: Essential commands (~30 kB) - Basic UI interactions  
 - **🔧 Tier 2**: Specialized packs (25-47 kB each) - Advanced functionality
-- **🌟 Tier 3**: Reactive engine (26-42 kB) - Dynamic templating & events
+- **🌟 Tier 3**: Reactive engine (26-58 kB) - Dynamic templating & events
 
 ## 📦 Installation & Basic Usage
 
@@ -502,6 +616,21 @@ registerFormCommands(invokers);
 <button command="--toggle" commandfor="sidebar">Toggle Sidebar</button>
 <button command="--class:toggle:dark-mode" commandfor="body">Dark Mode</button>
 <button command="--text:set:Hello World!" commandfor="output">Set Text</button>
+```
+
+### Advanced Applications (+140 kB)
+
+For complex applications with reactive state, advanced control flow, and comprehensive form handling, import the additional modules:
+
+```javascript
+import 'invokers'; // Core polyfill
+import { enableState } from 'invokers/state';
+import { enableControl } from 'invokers/control';
+import { enableForms } from 'invokers/forms';
+
+enableState();    // Reactive state management
+enableControl();  // Advanced control flow
+enableForms();    // Enterprise form handling
 ```
 
 ## 🎛️ Command Packs
@@ -824,8 +953,14 @@ These commands are built into modern browsers and work without any JavaScript fr
 | `--on:interval:ms`     | Execute command at intervals      | `command-on="load" command="--on:interval:5000" data-interval-command="--fetch:get"` |
 | `--bind:prop`          | Bind data between elements        | `command="--bind:value" data-bind-to="#output"` |
 | `--text:copy`          | Copy text between elements        | `command="--text:copy" data-copy-from="#source"` |
-| `--fetch:get`          | Fetch HTML and update element     | `command="--fetch:get" data-url="/api/data"` |
-| `--fetch:send`         | Send form data via fetch          | `command="--fetch:send"`                     |
+| `--fetch:get`          | GET request (HTML/JSON/text)      | `command="--fetch:get" data-url="/api/data" data-response-type="json"` |
+| `--fetch:post`         | POST request with body            | `command="--fetch:post" data-url="/api/users" data-body='{"name":"John"}'` |
+| `--fetch:put`          | PUT request for full updates      | `command="--fetch:put" data-url="/api/users/1" data-body='{...}'` |
+| `--fetch:patch`        | PATCH request for partial updates | `command="--fetch:patch" data-url="/api/users/1" data-body='{...}'` |
+| `--fetch:delete`       | DELETE request                    | `command="--fetch:delete" data-url="/api/users/1"`     |
+| `--fetch:head`         | HEAD request (headers only)       | `command="--fetch:head" data-url="/api/resource"`      |
+| `--fetch:options`      | OPTIONS request (CORS checks)     | `command="--fetch:options" data-url="/api/users"`      |
+| `--fetch:send`         | Send form data via fetch          | `command="--fetch:send" commandfor="my-form"`          |
 | `--navigate:to:url`    | Navigate using History API        | `command="--navigate:to:/new-page"`          |
 
 ### Native/Polyfilled Commands (No -- Prefix)
@@ -855,6 +990,23 @@ These commands are built into modern browsers and work without any JavaScript fr
 | `open-openable`        | Openable elements    | Open element                                 |
 | `close-openable`       | Openable elements    | Close element                                |
 
+### Real-time Communication Commands
+| Command                | Purpose                                      | Example                                      |
+| ---------------------- | -------------------------------------------- | -------------------------------------------- |
+| `--websocket:connect`  | Establish WebSocket connection               | `command="--websocket:connect" data-url="wss://api.example.com"` |
+| `--websocket:disconnect`| Close WebSocket connection                  | `command="--websocket:disconnect"`          |
+| `--websocket:send:message`| Send message via WebSocket              | `command="--websocket:send:Hello World"`    |
+| `--websocket:status`   | Get WebSocket connection status             | `command="--websocket:status"`              |
+| `--websocket:on:message`| Handle incoming WebSocket messages         | `command="--websocket:on:message" data-message-command="--text:append"` |
+| `--websocket:on:open`  | Handle WebSocket connection opened          | `command="--websocket:on:open" data-open-command="--class:add:connected"` |
+| `--websocket:on:close` | Handle WebSocket connection closed          | `command="--websocket:on:close" data-close-command="--class:remove:connected"` |
+| `--websocket:on:error` | Handle WebSocket connection errors          | `command="--websocket:on:error" data-error-command="--text:set:Connection failed"` |
+| `--sse:connect`        | Establish Server-Sent Events connection     | `command="--sse:connect" data-url="/api/events"` |
+| `--sse:disconnect`     | Close SSE connection                        | `command="--sse:disconnect"`                |
+| `--sse:status`         | Get SSE connection status                   | `command="--sse:status"`                    |
+| `--sse:on:message`     | Handle incoming SSE messages                | `command="--sse:on:message" data-message-command="--text:append"` |
+| `--sse:on:event:type`  | Handle specific SSE event types             | `command="--sse:on:event:user-joined" data-event-command="--text:append"` |
+
 ### Pipeline Commands
 | Command                | Purpose                                      | Example                                      |
 | ---------------------- | -------------------------------------------- | -------------------------------------------- |
@@ -881,16 +1033,81 @@ Commands use colon (`:`) separated parameters:
 Many commands support additional configuration via `data-*` attributes:
 
 #### Fetch Commands
+All HTTP verbs are supported with comprehensive configuration options:
+
 ```html
+<!-- GET request with HTML response -->
 <button type="button"
   command="--fetch:get"
   data-url="/api/data"
+  data-response-type="html"
+  data-replace-strategy="innerHTML"
   data-loading-template="spinner"
   data-error-template="error-msg"
   data-response-target="#result"
   commandfor="content-area">
-  Load Data
+  Load HTML
 </button>
+
+<!-- POST request with JSON body and headers -->
+<button type="button"
+  command="--fetch:post"
+  data-url="/api/users"
+  data-body='{"name":"John","email":"john@example.com"}'
+  data-header-content-type="application/json"
+  data-header-authorization="Bearer token123"
+  data-response-type="json"
+  commandfor="result">
+  Create User
+</button>
+
+<!-- PUT request with body from form -->
+<form id="user-form">
+  <input name="name" value="Jane">
+  <input name="email" value="jane@example.com">
+</form>
+<button type="button"
+  command="--fetch:put"
+  data-url="/api/users/123"
+  data-body-from="#user-form"
+  commandfor="result">
+  Update User
+</button>
+
+<!-- DELETE request with CORS credentials -->
+<button type="button"
+  command="--fetch:delete"
+  data-url="/api/users/123"
+  data-credentials="include"
+  data-mode="cors"
+  data-header-authorization="Bearer token123"
+  data-after-success="--dom:remove"
+  commandfor="user-123">
+  Delete User
+</button>
+
+<!-- HEAD request to check resource -->
+<button type="button"
+  command="--fetch:head"
+  data-url="/api/large-file"
+  commandfor="file-info">
+  Check File
+</button>
+```
+
+**Fetch Data Attributes:**
+- `data-url` - Request URL (required)
+- `data-response-type` - Response format: `html`, `json`, `text`, `headers` (default: `html`)
+- `data-replace-strategy` - Where to insert: `innerHTML`, `outerHTML`, `beforebegin`, `afterbegin`, `beforeend`, `afterend` (default: `innerHTML`)
+- `data-body` - Inline request body (for POST/PUT/PATCH)
+- `data-body-from` - Selector to get body from form/input/element
+- `data-header-*` - Custom headers (e.g., `data-header-authorization="Bearer token"`)
+- `data-response-target` - Alternative target for response
+- `data-loading-template` - Template to show while loading
+- `data-error-template` - Template to show on error
+- `data-credentials` - CORS credentials: `omit`, `same-origin`, `include`
+- `data-mode` - CORS mode: `cors`, `no-cors`, `same-origin`
+- `data-timeout` - Request timeout in milliseconds (default: 30000)
 ```
 
 #### Animation Commands
@@ -964,12 +1181,12 @@ enableEventTriggers();
 <input command-on="input:debounce:300" command="--text:set:{{this.value}}" commandfor="preview">
 ```
 
-#### Expression Engine (`invokers/advanced/expressions`) - 26.2 kB
-Dynamic templating with `{{expression}}` syntax.
+#### Expression Engine (`invokers/advanced/expressions`) - 58.3 kB
+Dynamic templating with `{{expression}}` syntax and 40+ built-in helper functions.
 
 ```javascript
 import { enableExpressionEngine } from 'invokers/advanced/expressions';
-enableExpressionEngine();
+enableExpressionEngine(); // Full expressions with all helpers
 ```
 
 ```html
@@ -977,6 +1194,130 @@ enableExpressionEngine();
 <button command="--text:set:Hello {{user.name}}!" commandfor="greeting">Greet</button>
 <button command="--class:toggle:{{this.dataset.theme}}-mode" commandfor="body">Theme</button>
 ```
+
+### 🎯 Modular Expression Helpers - Optimize Bundle Size
+
+Import only the expression helpers you need to reduce bundle size by up to 7.7 kB:
+
+#### Core Expressions Only (50.6 kB)
+For applications that only need basic expressions without helper functions:
+
+```javascript
+import 'invokers'; // 25.8 kB
+import { enableExpressionEngine } from 'invokers/advanced/expressions/core'; // +50.6 kB
+// Total: 76.4 kB (vs 84.1 kB with full expressions)
+
+enableExpressionEngine();
+```
+
+```html
+<!-- Basic expressions work -->
+<button command="--text:set:{{1 + 2 * 3}}" commandfor="result">Calculate</button>
+<button command="--class:toggle:{{active ? 'enabled' : 'disabled'}}" commandfor="button">Toggle</button>
+```
+
+#### Selective Helper Categories
+Add only the helper functions you need:
+
+```javascript
+import 'invokers'; // 25.8 kB
+import { enableExpressionEngine } from 'invokers/advanced/expressions/core'; // +50.6 kB
+import { enableStringHelpers } from 'invokers/advanced/expressions/helpers/string'; // +1.22 kB
+import { enableMathHelpers } from 'invokers/advanced/expressions/helpers/math'; // +859 B
+// Total: 78.48 kB (vs 84.1 kB with all helpers)
+
+enableExpressionEngine();
+enableStringHelpers();
+enableMathHelpers();
+```
+
+**Available Helper Categories:**
+- **String Helpers** (`1.22 kB`): `concat`, `uppercase`, `lowercase`, `trim`, `capitalize`, `replace`, `substring`, `truncate`, `pluralize`
+- **Array Helpers** (`1.94 kB`): `randomChoice`, `arrayLength`, `arrayMap`, `arrayFilter`, `join`, `filter`, `sort`
+- **Math Helpers** (`859 B`): `random`, `randomInt`, `floor`, `ceil`, `round`, `min`, `max`, `pow`, `sqrt`, `clamp`
+- **Date Helpers** (`741 B`): `now`, `formatDate`, `timeAgo`
+- **Utility Helpers** (`1.62 kB`): `formatNumber`, `formatCurrency`, `isEmpty`, `typeof`, `isArray`, `coalesce`
+
+#### Real-World Examples
+
+**String-Heavy Application:**
+```javascript
+import { enableExpressionEngine } from 'invokers/advanced/expressions/core';
+import { enableStringHelpers } from 'invokers/advanced/expressions/helpers/string';
+
+enableExpressionEngine();
+enableStringHelpers();
+```
+
+```html
+<!-- String manipulation -->
+<div>{{concat(firstName, " ", lastName)}}</div>
+<div>{{uppercase(jobTitle)}}</div>
+<div>{{truncate(description, 100)}}</div>
+```
+
+**Math/Data Application:**
+```javascript
+import { enableExpressionEngine } from 'invokers/advanced/expressions/core';
+import { enableMathHelpers } from 'invokers/advanced/expressions/helpers/math';
+import { enableArrayHelpers } from 'invokers/advanced/expressions/helpers/array';
+
+enableExpressionEngine();
+enableMathHelpers();
+enableArrayHelpers();
+```
+
+```html
+<!-- Math and array operations -->
+<span>{{round(price * 1.08)}}</span>
+<div>{{arrayLength(items)}} items</div>
+<div>{{join(selectedTags, ", ")}}</div>
+```
+
+**Form Validation Application:**
+```javascript
+import { enableExpressionEngine } from 'invokers/advanced/expressions/core';
+import { enableUtilityHelpers } from 'invokers/advanced/expressions/helpers/utility';
+import { enableStringHelpers } from 'invokers/advanced/expressions/helpers/string';
+
+enableExpressionEngine();
+enableUtilityHelpers();
+enableStringHelpers();
+```
+
+```html
+<!-- Validation and formatting -->
+<div class="{{isEmpty(email) ? 'error' : 'valid'}}">
+  {{isEmpty(email) ? 'Email required' : 'Valid email'}}
+</div>
+<div>{{formatCurrency(total)}}</div>
+```
+
+#### Advanced: Direct Helper Import
+For maximum control, import helpers directly:
+
+```javascript
+import { stringHelpers } from 'invokers/advanced/expressions/helpers/string';
+import { mathHelpers } from 'invokers/advanced/expressions/helpers/math';
+
+// Register only specific functions
+registerExpressionFunction({
+  name: 'customConcat',
+  implementation: (...args) => args.join('-')
+});
+```
+
+#### Bundle Size Comparison
+
+| Configuration | Bundle Size | Savings |
+|---------------|-------------|---------|
+| Full expressions | 84.1 kB | - |
+| Core only | 76.4 kB | 7.7 kB |
+| + String helpers | 77.62 kB | 6.48 kB |
+| + Math helpers | 77.26 kB | 6.84 kB |
+| + Array helpers | 78.34 kB | 5.76 kB |
+| + Date helpers | 77.14 kB | 6.96 kB |
+| + Utility helpers | 78.02 kB | 6.08 kB |
 
 #### Complete Advanced Features (`invokers/advanced`) - 42.4 kB
 Both event triggers and expressions in one import.
@@ -1565,7 +1906,7 @@ window.Invoker.instance.registerPlugin(myPlugin);
 Invokers includes a comprehensive set of extended commands that are automatically available when you import the library. These provide advanced features for real-world applications:
 
 ### Automatically Included Commands:
-- **Server Communication**: `--fetch:get`, `--fetch:send` - Load and send data to servers
+- **Server Communication**: `--fetch:get`, `--fetch:post`, `--fetch:put`, `--fetch:patch`, `--fetch:delete`, `--fetch:head`, `--fetch:options`, `--fetch:send` - Full HTTP verb support with headers and request bodies
 - **Media Controls**: `--media:toggle`, `--media:seek`, `--media:mute` - Full media player controls
 - **DOM Manipulation**: `--dom:remove`, `--dom:replace`, `--dom:swap`, `--dom:append`, `--dom:prepend` - Dynamic content updates
 - **Form Handling**: `--form:reset`, `--form:submit` - Form interactions
@@ -1584,6 +1925,89 @@ Invokers includes a comprehensive set of extended commands that are automaticall
 - **Navigation**: `--navigate:to` - Programmatic navigation
 - **Text Operations**: `--text:copy` - Copy element text content
 - **Carousel Controls**: `--carousel:nav` - Image carousel navigation
+
+### Command Composition
+
+Invokers provides a powerful `composeCommands()` method that allows you to create composite commands by combining multiple existing commands into a single, reusable command. This enables complex workflows and reduces code duplication.
+
+#### Basic Composition
+
+```javascript
+import invokers from 'invokers';
+import { registerBaseCommands } from 'invokers/commands/base';
+
+registerBaseCommands(invokers);
+
+// Create a composite command that toggles visibility and adds a success class
+const toggleAndSuccess = invokers.composeCommands(
+  ['--toggle', '--class:add:success'],
+  { name: '--toggle-and-success' }
+);
+
+// Now use it in HTML
+<button command="--toggle-and-success" commandfor="panel">Toggle Panel</button>
+<div id="panel" hidden>Panel content</div>
+```
+
+#### Advanced Workflows
+
+```javascript
+// Complex workflow with error handling
+const saveWorkflow = invokers.composeCommands([
+  '--text:set:Saving...', // Show loading state
+  '--class:add:loading',  // Add loading class
+  '--fetch:post',         // Send data to server
+  '--class:remove:loading', // Remove loading class
+  '--text:set:Saved!'      // Show success message
+], {
+  name: '--save-data',
+  stopOnError: true // Stop if any command fails
+});
+
+// Use in HTML with data attributes
+<button command="--save-data"
+        data-url="/api/save"
+        data-body='{"data": "value"}'
+        commandfor="result">
+  Save Data
+</button>
+```
+
+#### Sequential Operations
+
+```javascript
+// Create a multi-step form submission workflow
+const submitForm = invokers.composeCommands([
+  '--form:submit',           // Submit the form
+  '--text:set:Processing...', // Show processing message
+  '--class:add:processing',   // Add processing class
+  '--fetch:send',            // Send form data
+  '--class:remove:processing', // Remove processing class
+  '--text:set:Submitted!'     // Show success message
+], { name: '--submit-form-workflow' });
+```
+
+#### Error Handling
+
+```javascript
+// Workflow with conditional error handling
+const robustSave = invokers.composeCommands([
+  '--storage:local:set:backup', // Backup current state
+  '--fetch:put',                // Attempt to save
+  '--storage:local:remove:backup' // Clean up on success
+], {
+  name: '--robust-save',
+  stopOnError: false // Continue even if commands fail
+});
+```
+
+#### Benefits
+
+- **Code Reusability**: Create reusable command combinations
+- **Maintainability**: Centralize complex workflows
+- **Performance**: Reduce HTML attribute complexity
+- **Error Handling**: Built-in error recovery and logging
+- **Debugging**: Detailed execution logs for composite commands
 
 ### Selective Command Registration (Advanced)
 
@@ -2428,6 +2852,292 @@ This creates a fully functional todo list where:
 - Delete buttons remove items
 - Each item has a unique ID for proper scoping
 
+### Real-time Communication Commands
+
+Invokers provides comprehensive support for real-time communication through WebSocket and Server-Sent Events (SSE), enabling bidirectional and server-push communication patterns without JavaScript.
+
+#### WebSocket Commands
+
+WebSocket commands enable full-duplex communication with servers, perfect for real-time applications like chat, live updates, and collaborative editing.
+
+##### Connection Management
+
+```html
+<!-- Establish WebSocket connection -->
+<button type="button"
+  command="--websocket:connect"
+  data-url="wss://echo.websocket.org"
+  commandfor="connection-status"
+  data-after-success="--text:set:Connected!"
+  data-after-error="--text:set:Connection Failed">
+  Connect to WebSocket
+</button>
+
+<!-- Close connection -->
+<button type="button"
+  command="--websocket:disconnect"
+  commandfor="websocket-target">
+  Disconnect
+</button>
+
+<!-- Check connection status -->
+<button type="button"
+  command="--websocket:status"
+  commandfor="status-display">
+  Check Status
+</button>
+<div id="status-display"></div>
+```
+
+##### Sending Messages
+
+```html
+<!-- Send text message -->
+<button type="button"
+  command="--websocket:send:Hello WebSocket!"
+  commandfor="websocket-target">
+  Send Message
+</button>
+
+<!-- Send message from input -->
+<input type="text" id="message-input" placeholder="Type message...">
+<button type="button"
+  command="--websocket:send"
+  data-message=""
+  commandfor="websocket-target">
+  Send Input Message
+</button>
+
+<!-- Send JSON data -->
+<button type="button"
+  command="--websocket:send"
+  data-message='{"type":"update","data":{"key":"value"}}'
+  commandfor="websocket-target">
+  Send JSON Update
+</button>
+```
+
+##### Handling Incoming Messages
+
+```html
+<!-- Display incoming messages -->
+<div command="--websocket:on:message"
+     data-message-command="--text:append"
+     commandfor="message-log"
+     hidden>
+</div>
+<div id="message-log"></div>
+
+<!-- Handle connection events -->
+<div command="--websocket:on:open"
+     data-open-command="--class:add:connected"
+     commandfor="connection-indicator"
+     hidden>
+</div>
+
+<div command="--websocket:on:close"
+     data-close-command="--class:remove:connected --text:set:Disconnected"
+     commandfor="connection-indicator"
+     hidden>
+</div>
+
+<div command="--websocket:on:error"
+     data-error-command="--text:set:Connection error occurred"
+     commandfor="error-display"
+     hidden>
+</div>
+```
+
+##### Complete Chat Example
+
+```html
+<!-- WebSocket connection setup -->
+<div command="--websocket:connect"
+     data-url="wss://chat.example.com"
+     commandfor="chat-connection"
+     hidden>
+</div>
+
+<!-- Message input form -->
+<form command-on="submit.prevent"
+      command="--websocket:send"
+      data-message=""
+      commandfor="chat-connection">
+  <input type="text" id="chat-input" placeholder="Type your message...">
+  <button type="submit">Send</button>
+</form>
+
+<!-- Message display -->
+<div id="chat-messages"></div>
+
+<!-- Message handler -->
+<div command="--websocket:on:message"
+     data-message-command="--dom:append --text:set"
+     commandfor="chat-messages"
+     hidden>
+</div>
+
+<!-- Connection status -->
+<div id="chat-status">Connecting...</div>
+<div command="--websocket:on:open"
+     data-open-command="--text:set:Connected"
+     commandfor="chat-status"
+     hidden>
+</div>
+```
+
+#### Server-Sent Events Commands
+
+Server-Sent Events provide a simple way to receive server-push notifications, perfect for live updates, notifications, and real-time dashboards.
+
+##### Connection Management
+
+```html
+<!-- Establish SSE connection -->
+<button type="button"
+  command="--sse:connect"
+  data-url="/api/events"
+  commandfor="event-stream"
+  data-after-success="--text:set:Connected to events"
+  data-after-error="--text:set:Connection failed">
+  Connect to Event Stream
+</button>
+
+<!-- Close connection -->
+<button type="button"
+  command="--sse:disconnect"
+  commandfor="event-stream">
+  Disconnect
+</button>
+
+<!-- Check status -->
+<button type="button"
+  command="--sse:status"
+  commandfor="status-display">
+  Check SSE Status
+</button>
+```
+
+##### Handling Events
+
+```html
+<!-- Handle all messages -->
+<div command="--sse:on:message"
+     data-message-command="--text:append"
+     commandfor="event-log"
+     hidden>
+</div>
+
+<!-- Handle specific event types -->
+<div command="--sse:on:event:user-joined"
+     data-event-command="--text:append: User joined the chat!"
+     commandfor="activity-log"
+     hidden>
+</div>
+
+<div command="--sse:on:event:new-post"
+     data-event-command="--fetch:get --text:set"
+     commandfor="latest-posts"
+     hidden>
+</div>
+
+<div command="--sse:on:event:price-update"
+     data-event-command="--data:update"
+     commandfor="price-display"
+     hidden>
+</div>
+```
+
+##### Real-time Dashboard Example
+
+```html
+<!-- SSE connection -->
+<div command="--sse:connect"
+     data-url="/api/dashboard-updates"
+     commandfor="dashboard-stream"
+     hidden>
+</div>
+
+<!-- Metrics display -->
+<div id="metrics">
+  <div id="user-count">Users: <span id="user-count-value">0</span></div>
+  <div id="revenue">Revenue: $<span id="revenue-value">0</span></div>
+</div>
+
+<!-- Update handlers -->
+<div command="--sse:on:event:user-count-update"
+     data-event-command="--text:set"
+     commandfor="user-count-value"
+     hidden>
+</div>
+
+<div command="--sse:on:event:revenue-update"
+     data-event-command="--text:set"
+     commandfor="revenue-value"
+     hidden>
+</div>
+
+<!-- Activity log -->
+<div id="activity-log"></div>
+<div command="--sse:on:event:activity"
+     data-event-command="--dom:append --text:set"
+     commandfor="activity-log"
+     hidden>
+</div>
+```
+
+#### Event Dispatching
+
+Both WebSocket and SSE commands dispatch custom events that you can listen to with JavaScript:
+
+```javascript
+// Listen for WebSocket messages
+document.addEventListener('websocket:message', (event) => {
+  console.log('Received:', event.detail.data);
+  console.log('From:', event.detail.origin);
+});
+
+// Listen for SSE messages
+document.addEventListener('sse:message', (event) => {
+  console.log('SSE Event:', event.detail.data);
+  console.log('Type:', event.detail.type);
+  console.log('From:', event.detail.origin);
+});
+```
+
+#### Error Handling
+
+```html
+<!-- WebSocket error handling -->
+<div command="--websocket:on:error"
+     data-error-command="--class:add:error --text:set:WebSocket connection failed"
+     commandfor="connection-status"
+     hidden>
+</div>
+
+<!-- SSE error handling -->
+<div command="--sse:connect"
+     data-url="/api/events"
+     commandfor="event-stream"
+     data-after-error="--text:set:Failed to connect to event stream"
+     hidden>
+</div>
+```
+
+#### Security Considerations
+
+- **WebSocket URLs**: Always use `wss://` (secure WebSocket) in production
+- **Origin Validation**: WebSocket connections are subject to CORS-like origin restrictions
+- **Authentication**: Include authentication tokens in the WebSocket URL or initial handshake
+- **Data Sanitization**: Always sanitize incoming message data before displaying
+- **Connection Limits**: Implement reconnection logic with exponential backoff
+
+#### Browser Support
+
+- **WebSocket**: Supported in all modern browsers (IE 10+)
+- **Server-Sent Events**: Supported in all modern browsers (IE/Edge 79+)
+- **Automatic Fallback**: Commands gracefully fail in unsupported browsers
+
 ## 🎯 Advanced `commandfor` Selectors
 
 Invokers supports powerful contextual selectors that go beyond simple IDs, enabling complex DOM targeting patterns without JavaScript.
@@ -2580,7 +3290,8 @@ window.Invoker.executeCommand(command, targetId, source);
 
 ### Bundle Size Comparison
 - **Core only**: 25.8 kB (polyfill + engine)
-- **Essential UI**: ~60 kB (core + base + form)  
+- **Essential UI**: ~60 kB (core + base + form)
+- **Advanced features**: ~178 kB (core + state + control + forms + components)
 - **Full power**: ~200 kB (all packs + advanced)
 - **Original v1.4**: 160 kB (everything forced)
 
@@ -2600,10 +3311,45 @@ window.Invoker.executeCommand(command, targetId, source);
 ### Commands
 ```bash
 npm run build     # Build all modules
-npm run test      # Run tests  
+npm run build:production  # Build production bundles (removes debug logging)
+npm run test      # Run tests
 npm run dev       # Development mode
 npm run clean     # Clean build artifacts
 ```
+
+### Production Builds
+
+Invokers includes a production build process that automatically removes debug logging code to optimize bundle size for deployment. The production build script processes all TypeScript source files and removes debug logging statements that use the pattern:
+
+```typescript
+if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+  console.log(...);
+}
+```
+
+#### Usage
+```bash
+# Build production bundles (recommended for deployment)
+npm run build:production
+
+# Regular development build (includes debug logging)
+npm run build
+```
+
+#### Benefits
+- **Reduced bundle size**: Removes debug overhead from production builds
+- **Cleaner production output**: No debug console messages in production
+- **Development flexibility**: Full debugging available during development
+- **Automatic processing**: Script processes entire `src/` directory automatically
+
+#### Build Output Differences
+
+| Build Type | Debug Logging | Bundle Size | Use Case |
+|------------|---------------|-------------|----------|
+| `npm run build` | ✅ Included | Larger | Development, debugging |
+| `npm run build:production` | ❌ Removed | Smaller | Production deployment |
+
+The production build maintains all functionality while removing only the debug logging code, ensuring optimal performance for end users.
 
 ### Testing with Modules
 ```javascript

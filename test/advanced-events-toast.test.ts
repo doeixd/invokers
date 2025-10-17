@@ -51,7 +51,7 @@ import '../src/compatible';
 import { enableAdvancedEvents, rescanCommandOnElements } from '../src/advanced/index';
 import { registerBaseCommands } from '../src/commands/base';
 import { registerFormCommands } from '../src/commands/form';
-import { registerFlowCommands } from '../src/commands/flow';
+import { registerNavigationCommands } from '../src/commands/navigation';
 
 describe('Advanced Events Toast Notification', () => {
   beforeEach(async () => {

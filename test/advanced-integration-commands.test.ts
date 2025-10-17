@@ -1,4 +1,5 @@
-import { InvokerManager } from '../src/compatible';
+import { InvokerManager } from '../src/core';
+import { InvokerManager } from '../src/core';
 import { enableAdvancedEvents } from '../src/advanced';
 import { registerBaseCommands } from '../src/commands/base';
 import { registerFormCommands } from '../src/commands/form';
@@ -12,10 +13,13 @@ describe('Advanced Integration Commands (--text, --attr, --dom)', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
     invokerManager = InvokerManager.getInstance();
-    // NOTE: Don't call reset() when using compatible module as it clears pre-registered commands
-    // invokerManager.reset();
+    invokerManager.reset();
     enableAdvancedEvents();
-    // Commands are already registered in compatible module, no need to re-register
+    // Ensure all necessary commands are registered
+    registerBaseCommands(invokerManager);
+    registerFormCommands(invokerManager);
+    registerDomCommands(invokerManager);
+    registerBrowserCommands(invokerManager);
   });
 
   afterEach(() => {
@@ -269,12 +273,8 @@ describe('Advanced Integration Commands (--text, --attr, --dom)', () => {
 
       const btn = document.getElementById('missing-target-btn')!;
 
-      // This should not throw, just log a warning
-      await invokerManager.executeCommand('--text:set:Hello', 'nonexistent', btn);
-      await new Promise(resolve => setTimeout(resolve, 0));
-
-      // Test passes if no exception is thrown
-      expect(true).toBe(true);
+      // Direct API calls log errors but don't throw for missing targets (unlike button clicks which create dummy targets)
+      await expect(invokerManager.executeCommand('--text:set:Hello', 'nonexistent', btn)).resolves.toBeUndefined();
     });
 
     it('should handle invalid command parameters', async () => {
@@ -285,12 +285,10 @@ describe('Advanced Integration Commands (--text, --attr, --dom)', () => {
 
       const btn = document.getElementById('invalid-btn')!;
 
-      // This should not throw, just log an error
-      await invokerManager.executeCommand('--text:invalid', 'target', btn);
-      await new Promise(resolve => setTimeout(resolve, 0));
-
-      // Test passes if no exception is thrown
-      expect(true).toBe(true);
+      // Invalid commands should throw in test environments for better testability
+      await expect(invokerManager.executeCommand('--text:invalid', 'target', btn)).rejects.toThrow(
+        'Invalid text action "invalid". Must be one of: set, append, prepend, clear'
+      );
     });
 
     it('should work with multiple targets', async () => {
@@ -871,6 +869,165 @@ describe('Advanced Integration Commands (--text, --attr, --dom)', () => {
         window.location.pathname = '/current-page';
         await invokerManager.executeCommand('--url:pathname-get', 'pathname-display', getBtn);
         expect(pathnameDisplay.textContent).toBe('/current-page');
+      });
+    });
+  });
+
+  describe('New DOM Integration Commands', () => {
+    describe('--dom:swap-visual command', () => {
+      it('should visually swap two elements with animation', async () => {
+        document.body.innerHTML = `
+          <div id="container">
+            <div id="item1" class="item">First</div>
+            <div id="item2" class="item">Second</div>
+          </div>
+          <button id="swap-btn" command="--dom:swap-visual" commandfor="item1" data-swap-with="#item2">Swap</button>
+        `;
+
+        const container = document.getElementById('container')!;
+        const item1 = document.getElementById('item1')!;
+        const item2 = document.getElementById('item2')!;
+        const swapBtn = document.getElementById('swap-btn')!;
+
+        // Initial order
+        expect(container.children[0]).toBe(item1);
+        expect(container.children[1]).toBe(item2);
+
+        await invokerManager.executeCommand('--dom:swap-visual', 'item1', swapBtn);
+
+        // Elements should be swapped
+        expect(container.children[0]).toBe(item2);
+        expect(container.children[1]).toBe(item1);
+      });
+
+     it('should not swap when data-swap-with is missing', async () => {
+       document.body.innerHTML = `
+         <div id="item1" class="item">First</div>
+         <div id="item2" class="item">Second</div>
+         <button id="swap-btn" command="--dom:swap-visual" commandfor="item1">Swap</button>
+       `;
+
+       const item1 = document.getElementById('item1')!;
+       const item2 = document.getElementById('item2')!;
+       const swapBtn = document.getElementById('swap-btn')!;
+
+       const initialItem1Text = item1.textContent;
+       const initialItem2Text = item2.textContent;
+
+       await invokerManager.executeCommand('--dom:swap-visual', 'item1', swapBtn);
+
+       // Elements should not be swapped
+       expect(item1.textContent).toBe(initialItem1Text);
+       expect(item2.textContent).toBe(initialItem2Text);
+     });
+
+     it('should not swap when swap target does not exist', async () => {
+       document.body.innerHTML = `
+         <div id="item1" class="item">First</div>
+         <button id="swap-btn" command="--dom:swap-visual" commandfor="item1" data-swap-with="#nonexistent">Swap</button>
+       `;
+
+       const item1 = document.getElementById('item1')!;
+       const swapBtn = document.getElementById('swap-btn')!;
+
+       const initialItem1Text = item1.textContent;
+
+       await invokerManager.executeCommand('--dom:swap-visual', 'item1', swapBtn);
+
+       // Element should not be swapped
+       expect(item1.textContent).toBe(initialItem1Text);
+     });
+    });
+
+    describe('--dom:update-keyed command', () => {
+      it('should update list with keyed updates', async () => {
+        document.body.innerHTML = `
+          <template id="item-template">
+            <div class="item" data-tpl-attr="id:item-{{id}}" data-tpl-text="name">{{name}}</div>
+          </template>
+          <div id="list">
+            <div class="item" id="item-1" data-key="1">Old Item 1</div>
+            <div class="item" id="item-2" data-key="2">Old Item 2</div>
+          </div>
+          <button id="update-btn" command="--dom:update-keyed" commandfor="list"
+                  data-template-id="item-template" data-data-source="items" data-key-prop="id">Update</button>
+        `;
+
+        // Set up data
+        const listElement = document.getElementById('list')!;
+        listElement.dataset.items = JSON.stringify([
+          { id: 1, name: 'Updated Item 1' },
+          { id: 3, name: 'New Item 3' }
+        ]);
+
+        const updateBtn = document.getElementById('update-btn')!;
+
+        await invokerManager.executeCommand('--dom:update-keyed', 'list', updateBtn);
+
+        // Should have updated item 1, removed item 2, added item 3
+        const items = listElement.querySelectorAll('.item');
+        expect(items).toHaveLength(2);
+        expect(items[0].id).toBe('item-1');
+        expect(items[0].textContent).toBe('Updated Item 1');
+        expect(items[1].id).toBe('item-3');
+        expect(items[1].textContent).toBe('New Item 3');
+      });
+
+     it('should not update when template is missing', async () => {
+       document.body.innerHTML = `
+         <div id="list"></div>
+         <button id="update-btn" command="--dom:update-keyed" commandfor="list" data-data-source="items">Update</button>
+       `;
+
+       const list = document.getElementById('list')!;
+       const updateBtn = document.getElementById('update-btn')!;
+
+       const initialListContent = list.innerHTML;
+
+       await invokerManager.executeCommand('--dom:update-keyed', 'list', updateBtn);
+
+       // List should not be updated
+       expect(list.innerHTML).toBe(initialListContent);
+     });
+
+     it('should not update when data source is missing', async () => {
+       document.body.innerHTML = `
+         <template id="item-template"><div class="item">{{name}}</div></template>
+         <div id="list"></div>
+         <button id="update-btn" command="--dom:update-keyed" commandfor="list" data-template-id="item-template">Update</button>
+       `;
+
+       const list = document.getElementById('list')!;
+       const updateBtn = document.getElementById('update-btn')!;
+
+       const initialListContent = list.innerHTML;
+
+       await invokerManager.executeCommand('--dom:update-keyed', 'list', updateBtn);
+
+       // List should not be updated
+       expect(list.innerHTML).toBe(initialListContent);
+     });
+
+      it('should handle empty data array', async () => {
+        document.body.innerHTML = `
+          <template id="item-template"><div class="item">{{name}}</div></template>
+          <div id="list">
+            <div class="item" data-key="1">Item 1</div>
+          </div>
+          <button id="update-btn" command="--dom:update-keyed" commandfor="list"
+                  data-template-id="item-template" data-data-source="items">Update</button>
+        `;
+
+        const listElement = document.getElementById('list')!;
+        listElement.dataset.items = JSON.stringify([]);
+
+        const updateBtn = document.getElementById('update-btn')!;
+
+        await invokerManager.executeCommand('--dom:update-keyed', 'list', updateBtn);
+
+        // Should clear all items
+        const items = listElement.querySelectorAll('.item');
+        expect(items).toHaveLength(0);
       });
     });
   });

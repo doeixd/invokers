@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { InvokerManager, InvokerPlugin, HookPoint, MiddlewareFunction, CommandContext } from '../src/compatible';
+import { InvokerManager, InvokerPlugin, HookPoint, MiddlewareFunction, CommandContext } from '../src/core';
 
 // Mock DOM elements for testing
 let mockButton: HTMLButtonElement;

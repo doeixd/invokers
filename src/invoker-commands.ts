@@ -20,6 +20,7 @@ import type { CommandContext, CommandCallback } from "./index";
 import { createInvokerError, ErrorSeverity, validateElement, sanitizeHTML, isInterpolationEnabled } from "./index";
 import { interpolateString, setDataContext, getDataContext, updateDataContext } from "./advanced/interpolation";
 import { resolveTargets } from "./target-resolver";
+import { generateUid } from "./utils";
 
 type CommandRegistry = Record<string, CommandCallback>;
 
@@ -396,10 +397,11 @@ export const commands: CommandRegistry = {
    * `--dom:remove`: Removes the target element from the DOM.
    * @example `<button command="--dom:remove" commandfor="alert-1">&times;</button>`
    */
-  "--dom:remove": ({ targetElement }: CommandContext) => {
-    const updateDOM = () => targetElement.remove();
-    document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
-  },
+   "--dom:remove": ({ targetElement }: CommandContext) => {
+     if (!targetElement.isConnected) return; // Already removed
+     const updateDOM = () => targetElement.remove();
+     document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
+   },
 
     /**
      * `--dom:replace`: Replaces the target element with content from a `<template>`.
@@ -540,9 +542,10 @@ export const commands: CommandRegistry = {
      * @example `<button command="--dom:wrap" commandfor="#my-image" data-template-id="figure-tpl">Add Caption</button>`
      * @example `<button command="--dom:wrap:div" commandfor="#content" data-wrapper-class="card">Wrap in Card</button>`
      */
-    "--dom:wrap": ({ invoker, targetElement, params }: CommandContext) => {
-      const wrapperTag = params[0] || null;
-      let wrapperElement: HTMLElement;
+     "--dom:wrap": ({ invoker, targetElement, params }: CommandContext) => {
+       if (!targetElement.isConnected) return; // Not in DOM
+       const wrapperTag = params[0] || null;
+       let wrapperElement: HTMLElement;
 
       if (wrapperTag) {
         // Simple tag wrapper like --dom:wrap:div
@@ -582,13 +585,14 @@ export const commands: CommandRegistry = {
      * `--dom:unwrap`: Removes the parent of the target element, promoting it up one level in the DOM tree.
      * @example `<button command="--dom:unwrap" commandfor="#content">Remove Wrapper</button>`
      */
-    "--dom:unwrap": ({ targetElement }: CommandContext) => {
-      const parent = targetElement.parentElement;
-      if (!parent) return; // Already at root level
+     "--dom:unwrap": ({ targetElement }: CommandContext) => {
+       if (!targetElement.isConnected) return; // Not in DOM
+       const parent = targetElement.parentElement;
+       if (!parent) return; // Already at root level
 
-      const updateDOM = () => {
-        parent.replaceWith(targetElement);
-      };
+       const updateDOM = () => {
+         parent.replaceWith(targetElement);
+       };
 
       document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
     },
@@ -978,13 +982,21 @@ export const commands: CommandRegistry = {
       * `--data:set:new-todo`: Adds a new todo item to the todos array.
       * @example `<form command="--data:set:new-todo" data-bind-to="#form-data" data-bind-as="data:new-todo-json">`
       */
-       "--data:set:new-todo": ({ invoker, targetElement }: CommandContext) => {
-         // Get the form data
-         const formData = getFormData(invoker as unknown as HTMLFormElement);
+      "--data:set:new-todo": ({ invoker, targetElement }: CommandContext) => {
+        // Validate that invoker is a form element
+        if (!(invoker instanceof HTMLFormElement)) {
+          throw createInvokerError('New todo command must be triggered from a form element', ErrorSeverity.ERROR, {
+            command: '--data:set:new-todo', element: invoker,
+            recovery: 'Use this command on a <form> element'
+          });
+        }
+
+        // Get the form data
+        const formData = getFormData(invoker);
 
         // Generate unique ID and add metadata
         const newTodo = {
-          id: generateId(),
+          id: generateUid(),
           title: formData.title || '',
           description: formData.description || '',
           priority: formData.priority || 'medium',
@@ -1012,8 +1024,14 @@ export const commands: CommandRegistry = {
       * `--data:set:filter:status`: Sets the status filter for todos.
       * @example `<select command="--data:set:filter:status" data-bind-to="body" data-bind-as="data:filter-status">`
       */
-     "--data:set:filter:status": ({ invoker, targetElement }: CommandContext) => {
-       const filterValue = (invoker as unknown as HTMLSelectElement).value;
+      "--data:set:filter:status": ({ invoker, targetElement }: CommandContext) => {
+        if (!(invoker instanceof HTMLSelectElement)) {
+          throw createInvokerError('Filter status command must be triggered from a select element', ErrorSeverity.ERROR, {
+            command: '--data:set:filter:status', element: invoker,
+            recovery: 'Use this command on a <select> element'
+          });
+        }
+        const filterValue = (invoker as HTMLSelectElement).value;
        targetElement.dataset.filterStatus = filterValue;
        // Trigger re-render
        targetElement.dispatchEvent(new CustomEvent('filter-changed', { bubbles: true }));
@@ -1023,8 +1041,14 @@ export const commands: CommandRegistry = {
       * `--data:set:filter:priority`: Sets the priority filter for todos.
       * @example `<select command="--data:set:filter:priority" data-bind-to="body" data-bind-as="data:filter-priority">`
       */
-     "--data:set:filter:priority": ({ invoker, targetElement }: CommandContext) => {
-       const filterValue = (invoker as unknown as HTMLSelectElement).value;
+      "--data:set:filter:priority": ({ invoker, targetElement }: CommandContext) => {
+        if (!(invoker instanceof HTMLSelectElement)) {
+          throw createInvokerError('Filter priority command must be triggered from a select element', ErrorSeverity.ERROR, {
+            command: '--data:set:filter:priority', element: invoker,
+            recovery: 'Use this command on a <select> element'
+          });
+        }
+        const filterValue = (invoker as HTMLSelectElement).value;
        targetElement.dataset.filterPriority = filterValue;
        // Trigger re-render
        targetElement.dispatchEvent(new CustomEvent('filter-changed', { bubbles: true }));
@@ -1034,8 +1058,14 @@ export const commands: CommandRegistry = {
       * `--data:set:search`: Sets the search term for todos.
       * @example `<input command="--data:set:search" data-bind-to="body" data-bind-as="data:search-term">`
       */
-     "--data:set:search": ({ invoker, targetElement }: CommandContext) => {
-       const searchTerm = (invoker as unknown as HTMLInputElement).value;
+      "--data:set:search": ({ invoker, targetElement }: CommandContext) => {
+        if (!(invoker instanceof HTMLInputElement)) {
+          throw createInvokerError('Search command must be triggered from an input element', ErrorSeverity.ERROR, {
+            command: '--data:set:search', element: invoker,
+            recovery: 'Use this command on an <input> element'
+          });
+        }
+        const searchTerm = (invoker as HTMLInputElement).value;
        targetElement.dataset.searchTerm = searchTerm;
        // Trigger re-render
        targetElement.dispatchEvent(new CustomEvent('filter-changed', { bubbles: true }));
@@ -1045,8 +1075,14 @@ export const commands: CommandRegistry = {
       * `--data:set:sort:by`: Sets the sort field for todos.
       * @example `<select command="--data:set:sort:by" data-bind-to="body" data-bind-as="data:sort-by">`
       */
-     "--data:set:sort:by": ({ invoker, targetElement }: CommandContext) => {
-       const sortBy = (invoker as unknown as HTMLSelectElement).value;
+      "--data:set:sort:by": ({ invoker, targetElement }: CommandContext) => {
+        if (!(invoker instanceof HTMLSelectElement)) {
+          throw createInvokerError('Sort by command must be triggered from a select element', ErrorSeverity.ERROR, {
+            command: '--data:set:sort:by', element: invoker,
+            recovery: 'Use this command on a <select> element'
+          });
+        }
+        const sortBy = (invoker as HTMLSelectElement).value;
        targetElement.dataset.sortBy = sortBy;
        // Trigger re-render
        targetElement.dispatchEvent(new CustomEvent('filter-changed', { bubbles: true }));
@@ -1056,8 +1092,14 @@ export const commands: CommandRegistry = {
       * `--data:set:sort:order`: Sets the sort order for todos.
       * @example `<select command="--data:set:sort:order" data-bind-to="body" data-bind-as="data:sort-order">`
       */
-     "--data:set:sort:order": ({ invoker, targetElement }: CommandContext) => {
-       const sortOrder = (invoker as unknown as HTMLSelectElement).value;
+      "--data:set:sort:order": ({ invoker, targetElement }: CommandContext) => {
+        if (!(invoker instanceof HTMLSelectElement)) {
+          throw createInvokerError('Sort order command must be triggered from a select element', ErrorSeverity.ERROR, {
+            command: '--data:set:sort:order', element: invoker,
+            recovery: 'Use this command on a <select> element'
+          });
+        }
+        const sortOrder = (invoker as HTMLSelectElement).value;
        targetElement.dataset.sortOrder = sortOrder;
        // Trigger re-render
        targetElement.dispatchEvent(new CustomEvent('filter-changed', { bubbles: true }));
@@ -1466,8 +1508,8 @@ export const commands: CommandRegistry = {
           } else {
             dest.dataset[dataName] = sourceValue;
           }
-        } else if (destinationProperty === 'class:add') {
-          if (sourceValue) dest.classList.add(sourceValue);
+         } else if (destinationProperty === 'class:add') {
+           if (sourceValue) dest.classList.add(sourceValue);
          } else if (destinationProperty === 'class:remove') {
            if (sourceValue) dest.classList.remove(sourceValue);
          }
@@ -2119,9 +2161,7 @@ function getFormData(form: HTMLFormElement): Record<string, string> {
   return data;
 }
 
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
-}
+
 
 function parseHTML(html: string): DocumentFragment {
   const sanitizedHTML = sanitizeHTML(html);
@@ -2355,7 +2395,7 @@ function assignUniqueIds(fragment: DocumentFragment): void {
   const elementsNeedingIds = fragment.querySelectorAll('[commandfor]');
   for (const element of elementsNeedingIds) {
     if (!element.id) {
-      element.id = `invoker-${generateId()}`;
+      element.id = `invoker-${generateUid()}`;
     }
   }
 }

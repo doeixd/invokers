@@ -1,6 +1,6 @@
 // src/advanced-events.ts
 
-import { InvokerManager } from '../index';
+import { InvokerManager } from '../core';
 import { EventTriggerManager } from './event-trigger-manager';
 import { interpolateString } from './interpolation';
 import { generateUid } from '../utils';

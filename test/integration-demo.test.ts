@@ -11,7 +11,7 @@ import { InvokerManager } from '../src/compatible';
 import { registerBaseCommands } from '../src/commands/base';
 import { registerFormCommands } from '../src/commands/form';
 import { registerDomCommands } from '../src/commands/dom';
-import { registerFlowCommands } from '../src/commands/flow';
+import { registerNavigationCommands } from '../src/commands/navigation';
 import { registerDataCommands } from '../src/commands/data';
 import { enableAdvancedEvents, rescanCommandOnElements } from '../src/advanced/index';
 

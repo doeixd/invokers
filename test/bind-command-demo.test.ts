@@ -17,7 +17,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { InvokerManager } from '../src/compatible';
 import { enableAdvancedEvents, rescanCommandOnElements } from '../src/advanced/index';
 import { registerBaseCommands } from '../src/commands/base';
-import { registerFlowCommands } from '../src/commands/flow';
+import { registerNavigationCommands } from '../src/commands/navigation';
 import { registerDomCommands } from '../src/commands/dom';
 
 describe('Bind Command Demo Integration Tests', () => {
@@ -347,7 +347,7 @@ describe('Bind Command Demo Integration Tests', () => {
 
       // Click edit button
       editBtn.click();
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Check that template was swapped
       const profileEdit = document.getElementById('profile-edit');

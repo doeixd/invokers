@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { InvokerManager } from '../src/compatible';
+import { InvokerManager } from '../src/core';
+import { registerStorageCommands } from '../src/commands/storage';
 import { EventTriggerManager } from '../src/advanced/event-trigger-manager';
 
 describe('Storage Commands', () => {
@@ -11,11 +12,13 @@ describe('Storage Commands', () => {
        window.Invoker.debug = true;
      }
 
-     document.body.innerHTML = '';
-     invokerManager = InvokerManager.getInstance();
-     // Clear storage before each test
-     localStorage.clear();
-     sessionStorage.clear();
+      document.body.innerHTML = '';
+      invokerManager = InvokerManager.getInstance();
+      invokerManager.reset();
+      registerStorageCommands(invokerManager);
+      // Clear storage before each test
+      localStorage.clear();
+      sessionStorage.clear();
    });
 
   afterEach(() => {
@@ -412,46 +415,24 @@ describe('Storage Commands', () => {
     });
 
     it('should handle storage with expiration and cleanup', async () => {
-      document.body.innerHTML = `
-        <button command="--storage:local:set:tempData:expires:50:temp value" id="set-temp">Set Temp</button>
-        <button command="--storage:local:get:tempData" commandfor="output" id="get-temp">Get Temp</button>
-        <div id="output"></div>
-      `;
+      const target = document.createElement('div');
+      target.id = 'target';
+      document.body.appendChild(target);
 
-      const setButton = document.querySelector('#set-temp')!;
-      const getButton = document.querySelector('#get-temp')!;
-      const output = document.querySelector('#output')!;
-
-      // Set data with short expiration
-      const setCommandEvent = new (window as any).CommandEvent('command', {
-        command: setButton.getAttribute('command')!,
-        source: setButton,
-        cancelable: true,
-        bubbles: true,
-        composed: true,
-      });
-      output.dispatchEvent(setCommandEvent); // Dispatch to output since no commandfor
+      // Set data with short expiration (50ms)
+      await invokerManager.executeCommand('--storage:local:set:tempData:expires:50:temp value', 'target');
       await new Promise(resolve => setTimeout(resolve, 0));
 
       // Should work immediately
-      const getCommandEvent = new (window as any).CommandEvent('command', {
-        command: getButton.getAttribute('command')!,
-        source: getButton,
-        cancelable: true,
-        bubbles: true,
-        composed: true,
-      });
-      output.dispatchEvent(getCommandEvent);
-      await new Promise(resolve => setTimeout(resolve, 0));
-      expect(output.textContent).toBe('temp value');
+      await invokerManager.executeCommand('--storage:local:get:tempData', 'target');
+      expect(target.textContent).toBe('temp value');
 
       // Wait for expiration
       await new Promise(resolve => setTimeout(resolve, 100));
 
       // Should be expired now
-      output.dispatchEvent(getCommandEvent);
-      await new Promise(resolve => setTimeout(resolve, 0));
-      expect(output.textContent).toBe('');
+      await invokerManager.executeCommand('--storage:local:get:tempData', 'target');
+      expect(target.textContent).toBe('');
     });
   });
 });

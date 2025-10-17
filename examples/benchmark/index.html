@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invokers JS Framework Benchmark</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .benchmark-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007bff;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .action-btn {
+            padding: 4px 8px;
+            font-size: 12px;
+            margin-right: 5px;
+            border-radius: 3px;
+        }
+
+        .select-btn {
+            background: #28a745;
+        }
+
+        .select-btn:hover {
+            background: #218838;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .selected {
+            background: #fff3cd !important;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Invokers JS Framework Benchmark</h1>
+
+        <div class="benchmark-info">
+            <strong>Declarative Performance Test:</strong> This benchmark demonstrates Invokers' ability to handle complex UI operations using only HTML attributes and declarative commands. All operations (create, update, swap, clear) are performed without JavaScript code.
+        </div>
+
+        <div class="controls">
+             <button command="--data:clear:benchmarkRows"
+                     commandfor="benchmark-data"
+                     data-and-then="--data:generate:array:1000"
+                     data-array="benchmarkRows"
+                     data-template='{"id": "{{index+1}}", "label": "{{concat(randomChoice(benchmarkContext.adjectives), \" \", randomChoice(benchmarkContext.colors), \" \", randomChoice(benchmarkContext.nouns))}}", "status": "{{if(random() > 0.5, \"active\", \"inactive\")}}", "selected": false}'
+                     data-and-then="--dom:repeat-replace:1000"
+                     data-then-target="table-body"
+                     data-template-id="row-template"
+                     data-key="id"
+                     id="create-1k">
+                 Create 1,000 rows
+             </button>
+             <button command="--data:clear:benchmarkRows"
+                     commandfor="benchmark-data"
+                     data-and-then="--data:generate:array:10000"
+                     data-array="benchmarkRows"
+                     data-template='{"id": "{{index+1}}", "label": "{{concat(randomChoice(benchmarkContext.adjectives), \" \", randomChoice(benchmarkContext.colors), \" \", randomChoice(benchmarkContext.nouns))}}", "status": "{{if(random() > 0.5, \"active\", \"inactive\")}}", "selected": false}'
+                     data-and-then="--dom:repeat-replace:10000"
+                     data-then-target="table-body"
+                     data-template-id="row-template"
+                     data-key="id"
+                     id="create-10k">
+                 Create 10,000 rows
+             </button>
+            <button command="--data:map:benchmarkRows"
+                    commandfor="benchmark-data"
+                    data-map-expression='{"label": "{{if(index % 10 === 0, concat(item.label, \" !!!\"), item.label)}}"}'
+                    data-and-then="--dom:update-keyed"
+                    data-then-target="table-body"
+                    data-array-key="benchmarkRows"
+                    data-template-id="row-template"
+                    data-key="id"
+                    id="update-btn"
+                    disabled>
+                Update every 10th row
+            </button>
+            <button command="--data:swap:benchmarkRows:0:999"
+                    commandfor="benchmark-data"
+                    data-and-then="--dom:swap-visual:0:999"
+                    data-then-target="table-body"
+                    id="swap-btn"
+                    disabled>
+                Swap rows
+            </button>
+            <button command="--data:clear:benchmarkRows"
+                    commandfor="benchmark-data"
+                    data-and-then="--dom:clear"
+                    data-then-target="table-body"
+                    id="clear-btn"
+                    disabled>
+                Clear
+            </button>
+            <button onclick="selectRandomRow()" id="select-btn" disabled>
+                Select random row
+            </button>
+        </div>
+
+        <div class="performance-metrics">
+            <div class="metric">
+                <div class="metric-value" id="row-count">0</div>
+                <div class="metric-label">Total Rows</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="selected-count">0</div>
+                <div class="metric-label">Selected</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="last-op-time">0ms</div>
+                <div class="metric-label">Last Operation</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="memory-usage">0MB</div>
+                <div class="metric-label">Memory Usage</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="benchmark-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Label</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                 <tbody id="table-body">
+                     <!-- Rows will be rendered here by the --dom:repeat commands -->
+                 </tbody>
+
+                 <!-- Template for row rendering -->
+                 <template id="row-template">
+                     <tr class="{{item.selected ? 'selected' : ''}}">
+                         <td>{{item.id}}</td>
+                         <td>{{item.label}}</td>
+                         <td><span class="status-{{item.status}}">{{item.status}}</span></td>
+                         <td>
+                             <button class="action-btn select-btn"
+                                     command="--data:index:set:benchmarkRows:{{index}}"
+                                     commandfor="benchmark-data"
+                                     data-value='{"selected": "{{!item.selected}}"}'>
+                                 {{item.selected ? 'Deselect' : 'Select'}}
+                             </button>
+                             <button class="action-btn delete-btn"
+                                     command="--data:index:remove:benchmarkRows:{{index}}"
+                                     commandfor="benchmark-data"
+                                     data-and-then="--dom:update-keyed"
+                                     data-then-target="table-body"
+                                     data-array-key="benchmarkRows"
+                                     data-template-id="row-template"
+                                     data-key="id">
+                                 Delete
+                             </button>
+                         </td>
+                     </tr>
+                 </template>
+            </table>
+        </div>
+
+        <div class="status" id="status">
+            Ready to start benchmark. Click "Create 1,000 rows" to begin.
+        </div>
+    </div>
+
+    <!-- Word lists for random label generation -->
+    <datalist id="adjectives">
+        pretty,large,big,small,tall,short,long,handsome,plain,quaint,clean,elegant,fancy,nasty,brave,calm,delightful,eager,faithful,gentle,happy,jolly,kind,lively,nice,proud,relieved,silly,thankful,victorious,witty,wonderful,zealous
+    </datalist>
+    <datalist id="colors">
+        red,yellow,blue,green,pink,brown,purple,orange,white,black,gray,silver,gold,violet,indigo,magenta,cyan,turquoise,tan,beige,maroon,navy,teal,olive,lime
+    </datalist>
+    <datalist id="nouns">
+        table,chair,house,bbq,desk,car,pony,cookie,sandwich,burger,pizza,mouse,keyboard,screen,phone,tablet,laptop,camera,watch,book,pen,paper,bottle,cup,plate,fork,knife,spoon,bowl,box
+    </datalist>
+
+    <!-- Hidden data storage for benchmark state -->
+    <div id="benchmark-data" data-benchmarkRows="[]" style="display: none;"></div>
+
+    <!-- Import Invokers with all features -->
+    <script type="module">
+        import invokers from '../../dist/esm/production/index.js';
+        import { registerBaseCommands } from '../../dist/esm/production/commands/base.js';
+        import { registerFormCommands } from '../../dist/esm/production/commands/form.js';
+        import { registerDataCommands } from '../../dist/esm/production/commands/data.js';
+        import { registerLoopCommands } from '../../dist/esm/production/commands/loop.js';
+        import { registerRandomCommands } from '../../dist/esm/production/commands/random.js';
+        import { enableExpressionEngine } from '../../dist/esm/production/advanced/expressions.js';
+        import { setDataContext } from '../../dist/esm/production/advanced/interpolation.js';
+
+        // Enable debug mode
+        window.Invoker = { debug: true };
+
+        // Register all command packs
+        const manager = invokers.InvokerManager.getInstance();
+        registerBaseCommands(manager);
+        registerFormCommands(manager);
+        registerDataCommands(manager);
+        registerLoopCommands(manager);
+        registerRandomCommands(manager);
+        enableExpressionEngine();
+
+        // Set up data context for randomChoice arrays
+        const adjectives = document.getElementById('adjectives').textContent.split(',');
+        const colors = document.getElementById('colors').textContent.split(',');
+        const nouns = document.getElementById('nouns').textContent.split(',');
+
+        setDataContext('benchmarkContext', {
+            adjectives,
+            colors,
+            nouns
+        });
+
+        // Register benchmark-specific commands
+        const benchmarkCommands = {
+            '--benchmark:create': ({ targetElement, params }) => {
+                const count = parseInt(params[0]) || 1000;
+                const startTime = performance.now();
+
+                // Generate random data using declarative commands
+                const rows = [];
+                for (let i = 0; i < count; i++) {
+                    rows.push({
+                        id: i + 1,
+                        label: `Item ${i + 1}`,
+                        status: Math.random() > 0.5 ? 'active' : 'inactive',
+                        selected: false
+                    });
+                }
+
+                // Store data
+                targetElement.dataset.rows = JSON.stringify(rows);
+                targetElement.dataset.selected = JSON.stringify([]);
+
+                // Update UI
+                updateTable(rows);
+                updateMetrics(rows.length, 0);
+                updateButtons(true);
+
+                const endTime = performance.now();
+                updateStatus(`Created ${count} rows in ${(endTime - startTime).toFixed(2)}ms`);
+                updateLastOpTime(endTime - startTime);
+            },
+
+            '--benchmark:update': ({ targetElement }) => {
+                const startTime = performance.now();
+                const rows = JSON.parse(targetElement.dataset.rows || '[]');
+
+                // Update every 10th row
+                for (let i = 9; i < rows.length; i += 10) {
+                    rows[i].label = `${rows[i].label} !!!`;
+                }
+
+                targetElement.dataset.rows = JSON.stringify(rows);
+                updateTable(rows);
+
+                const endTime = performance.now();
+                updateStatus(`Updated every 10th row in ${(endTime - startTime).toFixed(2)}ms`);
+                updateLastOpTime(endTime - startTime);
+            },
+
+            '--benchmark:swap': ({ targetElement }) => {
+                const startTime = performance.now();
+                const rows = JSON.parse(targetElement.dataset.rows || '[]');
+
+                if (rows.length >= 2) {
+                    // Swap first and last rows
+                    [rows[0], rows[rows.length - 1]] = [rows[rows.length - 1], rows[0]];
+                }
+
+                targetElement.dataset.rows = JSON.stringify(rows);
+                updateTable(rows);
+
+                const endTime = performance.now();
+                updateStatus(`Swapped rows in ${(endTime - startTime).toFixed(2)}ms`);
+                updateLastOpTime(endTime - startTime);
+            },
+
+            '--benchmark:clear': ({ targetElement }) => {
+                const startTime = performance.now();
+
+                targetElement.dataset.rows = '[]';
+                targetElement.dataset.selected = '[]';
+
+                updateTable([]);
+                updateMetrics(0, 0);
+                updateButtons(false);
+
+                const endTime = performance.now();
+                updateStatus(`Cleared all rows in ${(endTime - startTime).toFixed(2)}ms`);
+                updateLastOpTime(endTime - startTime);
+            },
+
+            '--benchmark:select': ({ targetElement }) => {
+                const rows = JSON.parse(targetElement.dataset.rows || '[]');
+                const selected = JSON.parse(targetElement.dataset.selected || '[]');
+
+                if (rows.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * rows.length);
+                    const rowId = rows[randomIndex].id;
+
+                    // Toggle selection
+                    const isSelected = selected.includes(rowId);
+                    if (isSelected) {
+                        const index = selected.indexOf(rowId);
+                        selected.splice(index, 1);
+                    } else {
+                        selected.push(rowId);
+                    }
+
+                    targetElement.dataset.selected = JSON.stringify(selected);
+                    updateTable(rows);
+                    updateMetrics(rows.length, selected.length);
+                }
+            }
+        };
+
+        // Performance timing for operations
+        let operationStartTime = 0;
+
+        // Track operation timing
+        document.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON' && e.target.hasAttribute('command')) {
+                operationStartTime = performance.now();
+            }
+        });
+
+        // Listen for data changes to update metrics
+        document.getElementById('benchmark-data').addEventListener('data:changed', (e) => {
+            if (e.detail && e.detail.key === 'benchmarkRows') {
+                const rows = JSON.parse(document.getElementById('benchmark-data').dataset.benchmarkRows || '[]');
+                const selectedCount = rows.filter(row => row.selected).length;
+
+                updateMetrics(rows.length, selectedCount);
+                updateButtons(rows.length > 0);
+
+                if (operationStartTime > 0) {
+                    const endTime = performance.now();
+                    updateLastOpTime(endTime - operationStartTime);
+                    operationStartTime = 0;
+                }
+            }
+        });
+
+        // UI update functions
+        function updateMetrics(rowCount, selectedCount) {
+            document.getElementById('row-count').textContent = rowCount.toLocaleString();
+            document.getElementById('selected-count').textContent = selectedCount;
+        }
+
+        function updateButtons(enabled) {
+            ['update-btn', 'swap-btn', 'clear-btn', 'select-btn'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.disabled = !enabled;
+            });
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+
+        function updateLastOpTime(time) {
+            document.getElementById('last-op-time').textContent = `${time.toFixed(2)}ms`;
+        }
+
+        // Update status when operations complete
+        document.addEventListener('command:completed', (e) => {
+            const command = e.detail?.command || '';
+            if (command.includes('create')) {
+                const count = command.includes('1000') ? '1,000' : '10,000';
+                updateStatus(`Created ${count} rows declaratively using Invokers commands`);
+            } else if (command.includes('update')) {
+                updateStatus('Updated every 10th row using data mapping expressions');
+            } else if (command.includes('swap')) {
+                updateStatus('Swapped first and last rows with visual transitions');
+            } else if (command.includes('clear')) {
+                updateStatus('Cleared all rows and reset state');
+            }
+        });
+
+        // Simple JavaScript function for random row selection (not the focus of the demo)
+        window.selectRandomRow = function() {
+            const benchmarkData = document.getElementById('benchmark-data');
+            const rows = JSON.parse(benchmarkData.dataset.benchmarkRows || '[]');
+
+            if (rows.length > 0) {
+                const randomIndex = Math.floor(Math.random() * rows.length);
+                rows[randomIndex].selected = !rows[randomIndex].selected;
+
+                benchmarkData.dataset.benchmarkRows = JSON.stringify(rows);
+                document.getElementById('table-body').dispatchEvent(new CustomEvent('data-changed'));
+            }
+        };
+
+        // Update memory usage periodically
+        setInterval(() => {
+            if ('memory' in performance) {
+                const memInfo = (performance as any).memory;
+                const usedMB = (memInfo.usedJSHeapSize / 1024 / 1024).toFixed(2);
+                document.getElementById('memory-usage').textContent = `${usedMB}MB`;
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 {
   "name": "invokers",
-  "version": "1.8.0",
-  "description": "A powerful, platform-first JavaScript library for creating modern user interfaces with declarative HTML. Features universal command chaining, conditional execution, and declarative workflow orchestration via `data-and-then` attributes and `<and-then>` elements. Use the native `command` attribute to build accessible, interactive UIs with sophisticated multi-step workflows, all with zero custom JavaScript. Includes View Transition API support and Interest Invokers (hover cards, tooltips) polyfill.",
+  "version": "2.0.0",
+  "description": "A powerful, platform-first JavaScript library for creating modern user interfaces with declarative HTML. Features universal command chaining, conditional execution, and declarative workflow orchestration via `data-and-then` attributes and `<and-then>` elements. Use the native `command` attribute to build accessible, interactive UIs with sophisticated multi-step workflows, all with zero custom JavaScript. Includes View Transition API support, Interest Invokers (hover cards, tooltips) polyfill, and 40+ built-in expression functions for reactive computations.",
   "author": "Patrick Glenn",
   "license": "MIT",
   "private": false,
@@ -104,6 +104,42 @@
       "require": "./dist/cjs/production/commands/dom.js",
       "import": "./dist/esm/production/commands/dom.js"
     },
+    "./commands/fetch": {
+      "types": "./dist/types/commands/fetch.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/commands/fetch.js",
+        "import": "./dist/esm/development/commands/fetch.js"
+      },
+      "require": "./dist/cjs/production/commands/fetch.js",
+      "import": "./dist/esm/production/commands/fetch.js"
+    },
+    "./commands/websocket": {
+      "types": "./dist/types/commands/websocket.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/commands/websocket.js",
+        "import": "./dist/esm/development/commands/websocket.js"
+      },
+      "require": "./dist/cjs/production/commands/websocket.js",
+      "import": "./dist/esm/production/commands/websocket.js"
+    },
+    "./commands/sse": {
+      "types": "./dist/types/commands/sse.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/commands/sse.js",
+        "import": "./dist/esm/development/commands/sse.js"
+      },
+      "require": "./dist/cjs/production/commands/sse.js",
+      "import": "./dist/esm/production/commands/sse.js"
+    },
+    "./commands/navigation": {
+      "types": "./dist/types/commands/navigation.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/commands/navigation.js",
+        "import": "./dist/esm/development/commands/navigation.js"
+      },
+      "require": "./dist/cjs/production/commands/navigation.js",
+      "import": "./dist/esm/production/commands/navigation.js"
+    },
     "./commands/flow": {
       "types": "./dist/types/commands/flow.d.ts",
       "development": {
@@ -167,6 +203,24 @@
       "require": "./dist/cjs/production/commands/storage.js",
       "import": "./dist/esm/production/commands/storage.js"
     },
+    "./commands/random": {
+      "types": "./dist/types/commands/random.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/commands/random.js",
+        "import": "./dist/esm/development/commands/random.js"
+      },
+      "require": "./dist/cjs/production/commands/random.js",
+      "import": "./dist/esm/production/commands/random.js"
+    },
+    "./commands/loop": {
+      "types": "./dist/types/commands/loop.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/commands/loop.js",
+        "import": "./dist/esm/development/commands/loop.js"
+      },
+      "require": "./dist/cjs/production/commands/loop.js",
+      "import": "./dist/esm/production/commands/loop.js"
+    },
     "./compatible": {
       "types": "./dist/types/compatible.d.ts",
       "development": {
@@ -220,12 +274,112 @@
       },
       "require": "./dist/cjs/production/advanced/expressions.js",
       "import": "./dist/esm/production/advanced/expressions.js"
+    },
+    "./advanced/expressions/core": {
+      "types": "./dist/types/advanced/expression/core.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/advanced/expressions/core.js",
+        "import": "./dist/esm/development/advanced/expressions/core.js"
+      },
+      "require": "./dist/cjs/production/advanced/expressions/core.js",
+      "import": "./dist/esm/production/advanced/expressions/core.js"
+    },
+    "./advanced/expressions/helpers": {
+      "types": "./dist/types/advanced/expression/helpers/index.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/advanced/expressions/helpers.js",
+        "import": "./dist/esm/development/advanced/expressions/helpers.js"
+      },
+      "require": "./dist/cjs/production/advanced/expressions/helpers.js",
+      "import": "./dist/esm/production/advanced/expressions/helpers.js"
+    },
+    "./advanced/expressions/helpers/string": {
+      "types": "./dist/types/advanced/expression/helpers/string.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/advanced/expressions/helpers/string.js",
+        "import": "./dist/esm/development/advanced/expressions/helpers/string.js"
+      },
+      "require": "./dist/cjs/production/advanced/expressions/helpers/string.js",
+      "import": "./dist/esm/production/advanced/expressions/helpers/string.js"
+    },
+    "./advanced/expressions/helpers/array": {
+      "types": "./dist/types/advanced/expression/helpers/array.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/advanced/expressions/helpers/array.js",
+        "import": "./dist/esm/development/advanced/expressions/helpers/array.js"
+      },
+      "require": "./dist/cjs/production/advanced/expressions/helpers/array.js",
+      "import": "./dist/esm/production/advanced/expressions/helpers/array.js"
+    },
+    "./advanced/expressions/helpers/math": {
+      "types": "./dist/types/advanced/expression/helpers/math.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/advanced/expressions/helpers/math.js",
+        "import": "./dist/esm/development/advanced/expressions/helpers/math.js"
+      },
+      "require": "./dist/cjs/production/advanced/expressions/helpers/math.js",
+      "import": "./dist/esm/production/advanced/expressions/helpers/math.js"
+    },
+    "./advanced/expressions/helpers/date": {
+      "types": "./dist/types/advanced/expression/helpers/date.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/advanced/expressions/helpers/date.js",
+        "import": "./dist/esm/development/advanced/expressions/helpers/date.js"
+      },
+      "require": "./dist/cjs/production/advanced/expressions/helpers/date.js",
+      "import": "./dist/esm/production/advanced/expressions/helpers/date.js"
+    },
+    "./advanced/expressions/helpers/utility": {
+      "types": "./dist/types/advanced/expression/helpers/utility.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/advanced/expressions/helpers/utility.js",
+        "import": "./dist/esm/development/advanced/expressions/helpers/utility.js"
+      },
+      "require": "./dist/cjs/production/advanced/expressions/helpers/utility.js",
+      "import": "./dist/esm/production/advanced/expressions/helpers/utility.js"
+    },
+    "./state": {
+      "types": "./dist/types/power-packs/state/index.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/state.js",
+        "import": "./dist/esm/development/state.js"
+      },
+      "require": "./dist/cjs/production/state.js",
+      "import": "./dist/esm/production/state.js"
+    },
+    "./control": {
+      "types": "./dist/types/power-packs/control/index.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/control.js",
+        "import": "./dist/esm/development/control.js"
+      },
+      "require": "./dist/cjs/production/control.js",
+      "import": "./dist/esm/production/control.js"
+    },
+    "./components": {
+      "types": "./dist/types/power-packs/components/index.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/components.js",
+        "import": "./dist/esm/development/components.js"
+      },
+      "require": "./dist/cjs/production/components.js",
+      "import": "./dist/esm/production/components.js"
+    },
+    "./forms": {
+      "types": "./dist/types/power-packs/forms/index.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/forms.js",
+        "import": "./dist/esm/development/forms.js"
+      },
+      "require": "./dist/cjs/production/forms.js",
+      "import": "./dist/esm/production/forms.js"
     }
   },
   "scripts": {
     "release": "standard-version && git push --follow-tags origin main",
     "prepublishOnly": "pridepack clean && pridepack build",
     "build": "pridepack build",
+    "build:production": "node scripts/build-production.js",
     "type-check": "pridepack check",
     "clean": "pridepack clean",
     "watch": "pridepack watch",
@@ -261,6 +415,18 @@
       "commands/dom": [
         "./dist/types/commands/dom.d.ts"
       ],
+      "commands/fetch": [
+        "./dist/types/commands/fetch.d.ts"
+      ],
+      "commands/websocket": [
+        "./dist/types/commands/websocket.d.ts"
+      ],
+      "commands/sse": [
+        "./dist/types/commands/sse.d.ts"
+      ],
+      "commands/navigation": [
+        "./dist/types/commands/navigation.d.ts"
+      ],
       "commands/flow": [
         "./dist/types/commands/flow.d.ts"
       ],
@@ -282,6 +448,12 @@
       "commands/storage": [
         "./dist/types/commands/storage.d.ts"
       ],
+      "commands/random": [
+        "./dist/types/commands/random.d.ts"
+      ],
+      "commands/loop": [
+        "./dist/types/commands/loop.d.ts"
+      ],
       "compatible": [
         "./dist/types/compatible.d.ts"
       ],
@@ -299,6 +471,39 @@
       ],
       "advanced/expressions": [
         "./dist/types/advanced/expressions.d.ts"
+      ],
+      "advanced/expressions/core": [
+        "./dist/types/advanced/expression/core.d.ts"
+      ],
+      "advanced/expressions/helpers": [
+        "./dist/types/advanced/expression/helpers/index.d.ts"
+      ],
+      "advanced/expressions/helpers/string": [
+        "./dist/types/advanced/expression/helpers/string.d.ts"
+      ],
+      "advanced/expressions/helpers/array": [
+        "./dist/types/advanced/expression/helpers/array.d.ts"
+      ],
+      "advanced/expressions/helpers/math": [
+        "./dist/types/advanced/expression/helpers/math.d.ts"
+      ],
+      "advanced/expressions/helpers/date": [
+        "./dist/types/advanced/expression/helpers/date.d.ts"
+      ],
+      "advanced/expressions/helpers/utility": [
+        "./dist/types/advanced/expression/helpers/utility.d.ts"
+      ],
+      "state": [
+        "./dist/types/power-packs/state/index.d.ts"
+      ],
+      "control": [
+        "./dist/types/power-packs/control/index.d.ts"
+      ],
+      "components": [
+        "./dist/types/power-packs/components/index.d.ts"
+      ],
+      "forms": [
+        "./dist/types/power-packs/forms/index.d.ts"
       ]
     }
   }

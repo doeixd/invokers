@@ -72,7 +72,9 @@ export function registerFormCommands(manager: InvokerManager): void {
           recovery: 'Ensure commandfor points to a valid element id'
         }
       );
-      console.warn(error.message);
+      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+        console.warn(error.message);
+      }
       return;
     }
 
@@ -93,7 +95,9 @@ export function registerFormCommands(manager: InvokerManager): void {
     try {
       targets.forEach(target => {
         if (!target.isConnected) {
-          console.warn('Invokers: Skipping disconnected target element', target);
+          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+            console.warn('Invokers: Skipping disconnected target element', target);
+          }
           return;
         }
 
@@ -142,7 +146,9 @@ export function registerFormCommands(manager: InvokerManager): void {
           recovery: 'Ensure commandfor points to a valid form input element'
         }
       );
-      console.warn(error.message);
+      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+        console.warn(error.message);
+      }
       return;
     }
 
@@ -193,7 +199,9 @@ export function registerFormCommands(manager: InvokerManager): void {
           recovery: 'Ensure commandfor points to a focusable element'
         }
       );
-      console.warn(error.message);
+      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+        console.warn(error.message);
+      }
       return;
     }
 
@@ -202,7 +210,9 @@ export function registerFormCommands(manager: InvokerManager): void {
       if (typeof targets[0].focus === 'function') {
         targets[0].focus();
       } else {
-        console.warn('Invokers: Target element does not support focus', targets[0]);
+        if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+          console.warn('Invokers: Target element does not support focus', targets[0]);
+        }
       }
     } catch (error) {
       throw createInvokerError(
@@ -233,7 +243,9 @@ export function registerFormCommands(manager: InvokerManager): void {
           recovery: 'Ensure commandfor points to an element that supports the disabled property'
         }
       );
-      console.warn(error.message);
+      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+        console.warn(error.message);
+      }
       return;
     }
 
@@ -254,10 +266,14 @@ export function registerFormCommands(manager: InvokerManager): void {
               element.disabled = true;
               break;
             default:
-              console.warn(`Invokers: Unknown action "${action}" for --disabled command. Use "toggle", "true", "false", "enable", or "disable".`);
+              if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+                console.warn(`Invokers: Unknown action "${action}" for --disabled command. Use "toggle", "true", "false", "enable", or "disable".`);
+              }
           }
         } else {
-          console.warn('Invokers: --disabled command target does not support disabled property', target);
+          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+            console.warn('Invokers: --disabled command target does not support disabled property', target);
+          }
         }
       });
     } catch (error) {
@@ -302,7 +318,9 @@ export function registerFormCommands(manager: InvokerManager): void {
           recovery: 'Ensure commandfor points to a form element'
         }
       );
-      console.warn(error.message);
+      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+        console.warn(error.message);
+      }
       return;
     }
 
@@ -332,7 +350,9 @@ export function registerFormCommands(manager: InvokerManager): void {
               break;
           }
         } else {
-          console.warn('Invokers: --form command target is not a form element', target);
+          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+            console.warn('Invokers: --form command target is not a form element', target);
+          }
         }
       });
     } catch (error) {
@@ -364,7 +384,9 @@ export function registerFormCommands(manager: InvokerManager): void {
           recovery: 'Ensure commandfor points to a valid input[type="number"] element'
         }
       );
-      console.warn(error.message);
+      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+        console.warn(error.message);
+      }
       return;
     }
 
@@ -385,7 +407,9 @@ export function registerFormCommands(manager: InvokerManager): void {
     try {
       targets.forEach(target => {
         if (!(target instanceof HTMLInputElement) || target.type !== "number") {
-          console.warn('Invokers: --input:step target must be an input[type="number"] element', target);
+          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+            console.warn('Invokers: --input:step target must be an input[type="number"] element', target);
+          }
           return;
         }
 
@@ -428,7 +452,9 @@ export function registerFormCommands(manager: InvokerManager): void {
           recovery: 'Ensure commandfor points to a valid element'
         }
       );
-      console.warn(error.message);
+      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+        console.warn(error.message);
+      }
       return;
     }
 
@@ -481,7 +507,9 @@ export function registerFormCommands(manager: InvokerManager): void {
       if ('value' in target) {
         (target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value = '';
       } else {
-        console.warn('Invokers: --value:clear command target does not support value property', target);
+        if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+          console.warn('Invokers: --value:clear command target does not support value property', target);
+        }
       }
     });
   });

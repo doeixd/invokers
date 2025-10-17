@@ -1,0 +1,8 @@
+
+> invokers@2.0.0 test
+> vitest --run --reporter=json --outputFile=./test-results.json
+
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+(node:7188) [DEP0129] DeprecationWarning: _channel is deprecated. Use ChildProcess.channel instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+JSON report written to C:/Users/Patrick/invokers/test-results.json

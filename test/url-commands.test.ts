@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { InvokerManager } from '../src/compatible';
+import { InvokerManager } from '../src/core';
+import { registerBrowserCommands } from '../src/commands/browser';
 
 // Use real window.location and window.history for testing
 // The URL command should work with real browser APIs
@@ -96,8 +97,8 @@ describe('URL Commands (--url)', () => {
 
     // Get singleton InvokerManager instance
     invokerManager = InvokerManager.getInstance();
-    // NOTE: Don't call reset() when using compatible module as it clears pre-registered commands
-    // invokerManager.reset();
+    invokerManager.reset();
+    registerBrowserCommands(invokerManager);
   });
 
   describe('URL Parameter Commands', () => {

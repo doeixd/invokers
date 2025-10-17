@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { InvokerManager } from '../src/compatible';
-import { registerFlowCommands } from '../src/commands/flow';
+import { registerNavigationCommands } from '../src/commands/navigation';
 
 describe('--emit command demo functionality', () => {
   let manager: InvokerManager;

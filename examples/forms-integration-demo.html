@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invokers Forms & Control Integration Demo</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'self' blob: data: gap:; style-src * 'self' 'unsafe-inline' blob: data: gap:; script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; object-src * 'self' blob: data: gap:; img-src * 'self' 'unsafe-inline' blob: data: gap:; connect-src * 'self' 'unsafe-inline' blob: data: gap:; frame-src * 'self' blob: data: gap:;">
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .demo-section {
+      margin: 40px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    .form-group {
+      margin: 10px 0;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    input.invalid, textarea.invalid, select.invalid {
+      border-color: #e74c3c;
+    }
+
+    .error-message {
+      color: #e74c3c;
+      font-size: 0.9em;
+      margin-top: 5px;
+    }
+
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .submitting button[type="submit"] {
+      background: #ffc107;
+    }
+
+    .task-list {
+      margin: 20px 0;
+    }
+
+    .task-item {
+      padding: 10px;
+      border: 1px solid #eee;
+      margin: 5px 0;
+      border-radius: 4px;
+    }
+
+    .status-message {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+
+    .status-message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status-message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+  </style>
+</head>
+<body>
+  <h1>Invokers Forms & Control Integration Demo</h1>
+
+  <div class="demo-section">
+    <h2>Task Management Form with Dynamic Lists</h2>
+
+    <!-- State initialization -->
+    <script type="application/json" data-state="app">
+      {
+        "tasks": ["Review code", "Write tests"],
+        "newTask": "",
+        "showCompleted": false,
+        "maxTasks": 5
+      }
+    </script>
+
+    <!-- Task Form -->
+    <form data-form-state="taskForm" data-submit-handler="handleTaskSubmit">
+      <div class="form-group">
+        <label for="newTask">New Task:</label>
+        <input
+          type="text"
+          id="newTask"
+          name="newTask"
+          data-validate='{"required": true, "maxlength": {"length": 100}}'
+          data-bind="app.newTask"
+          placeholder="Enter a new task"
+        >
+        <div class="error-message" data-error-for="newTask"></div>
+      </div>
+
+      <button type="submit" command="--form:submit:taskForm">Add Task</button>
+      <button type="button" command="--form:reset:taskForm">Reset Form</button>
+    </form>
+
+    <!-- Dynamic Task List using loops -->
+    <div class="task-list">
+      <h3>Tasks (using data-for-each):</h3>
+      <div data-for-each="task in app.tasks">
+        <div class="task-item">
+          <span>{{task}}</span>
+          <button command="--state:array:remove:app.tasks:{{task}}">Remove</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conditional display -->
+    <div data-if="app.tasks.length > 0">
+      <p>You have {{app.tasks.length}} task(s) remaining.</p>
+    </div>
+    <div data-else>
+      <p>No tasks yet. Add one above!</p>
+    </div>
+
+    <!-- Repeat demonstration -->
+    <div data-if="app.tasks.length < app.maxTasks">
+      <h3>Available Slots (using data-repeat):</h3>
+      <div data-repeat="app.maxTasks - app.tasks.length">
+        <div class="task-item" style="opacity: 0.5;">
+          Empty slot {{index + 1}}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-section">
+    <h2>Async Operations Demo</h2>
+
+    <!-- Parallel execution demo -->
+    <div data-parallel>
+      <button command="--text:set:Operation 1 Complete" commandfor="#op1-result">Start Operation 1</button>
+      <button command="--text:set:Operation 2 Complete" commandfor="#op2-result">Start Operation 2</button>
+    </div>
+
+    <div id="op1-result"></div>
+    <div id="op2-result"></div>
+  </div>
+
+  <div class="demo-section">
+    <h2>Error Boundary Demo</h2>
+
+    <div data-try="#error-demo">
+      <div id="error-demo">
+        <button command="--invalid:command">Trigger Error</button>
+      </div>
+    </div>
+    <div data-catch="error-demo-boundary" style="display: none;">
+      <div class="status-message error">
+        An error occurred while processing the command!
+      </div>
+    </div>
+  </div>
+
+  <!-- Status messages -->
+  <div id="status-messages"></div>
+
+  <!-- Load Invokers -->
+  <script type="module">
+    import { enableStatePowerPack } from './dist/esm/production/state.js';
+    import { enableControlPowerPack } from './dist/esm/production/control.js';
+    import { enableFormsPowerPack } from './dist/esm/production/forms.js';
+
+    // Enable all power packs
+    enableStatePowerPack();
+    enableControlPowerPack();
+    enableFormsPowerPack();
+
+    // Custom form submit handler
+    window.handleTaskSubmit = async function(formData, formName) {
+      console.log('Submitting form:', formName, formData);
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Add task to state
+      const taskText = formData.get('newTask');
+      if (taskText) {
+        // This would normally be handled by state commands
+        const stateStore = window.Invoker?.stateStore;
+        if (stateStore) {
+          const currentTasks = stateStore.get('app.tasks') || [];
+          stateStore.set('app.tasks', [...currentTasks, taskText]);
+          stateStore.set('app.newTask', ''); // Clear form
+        }
+      }
+
+      return { success: true, task: taskText };
+    };
+
+    // Show success message
+    document.addEventListener('form:success', (event) => {
+      const { detail } = event;
+      showMessage(`Form "${detail.formName}" submitted successfully!`, 'success');
+    });
+
+    // Show error message
+    document.addEventListener('form:error', (event) => {
+      const { detail } = event;
+      showMessage(`Form submission failed: ${detail.error.message}`, 'error');
+    });
+
+    function showMessage(text, type) {
+      const container = document.getElementById('status-messages');
+      const message = document.createElement('div');
+      message.className = `status-message ${type}`;
+      message.textContent = text;
+      container.appendChild(message);
+
+      // Auto-remove after 5 seconds
+      setTimeout(() => message.remove(), 5000);
+    }
+  </script>
+</body>
+</html>

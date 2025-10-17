@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invokers Compose Commands Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .demo-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .panel {
+            padding: 20px;
+            margin: 10px 0;
+            background: #e9ecef;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        .panel.hidden {
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <h1>Invokers Compose Commands Demo</h1>
+
+    <div class="demo-section">
+        <h2>Basic Composite Command</h2>
+        <p>This button uses a composite command that toggles visibility and adds a success class.</p>
+
+        <button command="--toggle-and-success" commandfor="panel1">Toggle & Add Success Class</button>
+
+        <div id="panel1" class="panel hidden">
+            <h3>Panel Content</h3>
+            <p>This panel can be toggled and styled with a single command!</p>
+        </div>
+
+        <div class="status" id="status1">Panel is hidden</div>
+    </div>
+
+    <div class="demo-section">
+        <h2>Complex Workflow</h2>
+        <p>This button runs a sequence: toggle → add class → show status → add another class.</p>
+
+        <button command="--complex-workflow" commandfor="panel2">Run Complex Workflow</button>
+
+        <div id="panel2" class="panel hidden">
+            <h3>Workflow Panel</h3>
+            <p>This panel goes through multiple transformations!</p>
+        </div>
+
+        <div class="status" id="status2">Click to start workflow</div>
+    </div>
+
+    <div class="demo-section">
+        <h2>Error Handling Demo</h2>
+        <p>This demonstrates graceful error handling - if one command fails, others continue.</p>
+
+        <button command="--error-handling-demo" commandfor="panel3">Test Error Handling</button>
+
+        <div id="panel3" class="panel hidden">
+            <h3>Error Handling Panel</h3>
+            <p>This panel should still work even if some commands fail!</p>
+        </div>
+
+        <div class="status" id="status3">Test error handling</div>
+    </div>
+
+    <script type="module">
+        import invokers from './dist/esm/production/index.js';
+        import { registerBaseCommands } from './dist/esm/production/commands/base.js';
+
+        // Register base commands
+        registerBaseCommands(invokers);
+
+        // Create composite commands
+        const toggleAndSuccess = invokers.composeCommands(
+            ['--toggle', '--class:add:success'],
+            { name: '--toggle-and-success' }
+        );
+
+        const complexWorkflow = invokers.composeCommands(
+            ['--toggle', '--class:add:processing', '--text:set:Workflow running...', '--class:add:completed'],
+            { name: '--complex-workflow' }
+        );
+
+        // Register a failing command for demo
+        invokers.register('--failing-demo', () => {
+            throw new Error('Demo error - this is expected!');
+        });
+
+        const errorHandlingDemo = invokers.composeCommands(
+            ['--class:add:started', '--failing-demo', '--toggle', '--class:add:finished'],
+            {
+                name: '--error-handling-demo',
+                stopOnError: false // Continue even if commands fail
+            }
+        );
+
+        console.log('Registered composite commands:', toggleAndSuccess, complexWorkflow, errorHandlingDemo);
+
+        // Update status displays when panels change
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const target = mutation.target;
+                    const statusId = `status${target.id.slice(-1)}`;
+
+                    if (target.classList.contains('hidden')) {
+                        document.getElementById(statusId).textContent = 'Panel is hidden';
+                    } else {
+                        let status = 'Panel is visible';
+                        if (target.classList.contains('success')) {
+                            status += ' (success styling applied)';
+                        }
+                        if (target.classList.contains('processing')) {
+                            status += ' (processing...)';
+                        }
+                        if (target.classList.contains('completed')) {
+                            status += ' (completed!)';
+                        }
+                        if (target.classList.contains('started')) {
+                            status += ' (started)';
+                        }
+                        if (target.classList.contains('finished')) {
+                            status += ' (finished)';
+                        }
+                        document.getElementById(statusId).textContent = status;
+                    }
+                }
+            });
+        });
+
+        // Observe all panels
+        document.querySelectorAll('.panel').forEach(panel => {
+            observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
+        });
+    </script>
+</body>
+</html>

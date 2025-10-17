@@ -26,7 +26,10 @@ import { InvokerManager, HookPoint } from './core';
 import { registerBaseCommands } from './commands/base';
 import { registerFormCommands } from './commands/form';
 import { registerDomCommands } from './commands/dom';
-import { registerFlowCommands } from './commands/flow';
+import { registerFetchCommands } from './commands/fetch';
+import { registerWebSocketCommands } from './commands/websocket';
+import { registerSSECommands } from './commands/sse';
+import { registerNavigationCommands } from './commands/navigation';
 import { registerMediaCommands } from './commands/media';
 import { registerBrowserCommands } from './commands/browser';
 import { registerDataCommands } from './commands/data';
@@ -57,16 +60,33 @@ if (typeof window !== 'undefined') {
 const invokerInstance = InvokerManager.getInstance();
 
 // Auto-register all command packs to recreate monolithic behavior
-registerBaseCommands(invokerInstance);
-registerFormCommands(invokerInstance);
-registerDomCommands(invokerInstance);
-registerFlowCommands(invokerInstance);
-registerMediaCommands(invokerInstance);
-registerBrowserCommands(invokerInstance);
-registerDataCommands(invokerInstance);
-registerDeviceCommands(invokerInstance);
-registerAccessibilityCommands(invokerInstance);
-registerStorageCommands(invokerInstance);
+const commandPacks = [
+  { name: 'base', register: registerBaseCommands },
+  { name: 'form', register: registerFormCommands },
+  { name: 'dom', register: registerDomCommands },
+  { name: 'fetch', register: registerFetchCommands },
+  { name: 'websocket', register: registerWebSocketCommands },
+  { name: 'sse', register: registerSSECommands },
+  { name: 'navigation', register: registerNavigationCommands },
+  { name: 'media', register: registerMediaCommands },
+  { name: 'browser', register: registerBrowserCommands },
+  { name: 'data', register: registerDataCommands },
+  { name: 'device', register: registerDeviceCommands },
+  { name: 'accessibility', register: registerAccessibilityCommands },
+  { name: 'storage', register: registerStorageCommands }
+];
+
+let registeredCount = 0;
+for (const pack of commandPacks) {
+  try {
+    pack.register(invokerInstance);
+    registeredCount++;
+  } catch (error) {
+    if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+      console.error(`Invokers: Failed to register ${pack.name} commands:`, error);
+    }
+  }
+}
 
 
 
@@ -96,7 +116,13 @@ if (typeof window !== 'undefined') {
 }
 
 // Enable all advanced features by default - AFTER window setup
-enableAdvancedEvents();
+try {
+  enableAdvancedEvents();
+} catch (error) {
+  if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+    console.warn('Invokers: Failed to enable advanced events:', error);
+  }
+}
 
 // Interest invokers are loaded separately when needed
 
@@ -107,6 +133,9 @@ export default invokerInstance;
 export { InvokerManager };
 
 if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-  console.log('Invokers: Compatibility layer loaded with all commands registered');
-  console.log(`Commands available: ${Array.from((invokerInstance as any).commands.keys()).length}`);
+  const totalCommands = (invokerInstance as any).commands?.size || 0;
+  console.log('Invokers: Compatibility layer loaded');
+  console.log(`Command packs registered: ${registeredCount}/${commandPacks.length}`);
+  console.log(`Total commands available: ${totalCommands}`);
+  console.log('Advanced features: enabled');
 }

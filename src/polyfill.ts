@@ -32,11 +32,27 @@ function enumerate(obj: object, key: PropertyKey, enumerable: boolean = true) {
 }
 
 function getRootNode(node: Node): Node {
-  if (node && typeof node.getRootNode === "function") {
-    return node.getRootNode();
+  // Validate input
+  if (!node) {
+    return node;
   }
+
+  if (typeof node.getRootNode === "function") {
+    try {
+      return node.getRootNode();
+    } catch (error) {
+      // getRootNode can throw in some edge cases
+      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+        console.warn('Invokers: getRootNode() threw an error:', error);
+      }
+    }
+  }
+
   // Fallback for older environments or unusual node types
-  if (node && node.parentNode) return getRootNode(node.parentNode);
+  if (node.parentNode) {
+    return getRootNode(node.parentNode);
+  }
+
   return node;
 }
 
@@ -63,20 +79,33 @@ class CommandEventPolyfill extends Event {
   constructor(type: string, invokeEventInit: CommandEventInit = {}) {
     super(type, invokeEventInit);
     const { source, command, target } = invokeEventInit;
-    if (source != null && typeof source !== 'object') {
-      throw new TypeError(`source must be an element`);
+
+    // Validate source element
+    if (source != null) {
+      if (typeof source !== 'object') {
+        throw new TypeError(`CommandEvent source must be an element or null, got ${typeof source}`);
+      }
+      // Check if it has element-like properties
+      if (!source.nodeType || !source.tagName) {
+        throw new TypeError(`CommandEvent source must be a DOM element with nodeType and tagName properties`);
+      }
+      // Additional validation for connected elements
+      if (!source.isConnected && typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+        console.warn('Invokers: CommandEvent source element is not connected to DOM');
+      }
     }
-    // Additional validation: check if it has element-like properties
-    if (source != null && (!source.nodeType || !source.tagName)) {
-      throw new TypeError(`source must be an element`);
-    }
+
     commandEventSourceElements.set(this, source || null);
     commandEventActions.set(
       this,
       command !== undefined ? String(command) : "",
     );
+
     // Store target for later retrieval
     if (target) {
+      if (typeof target !== 'object' || !target.nodeType || !target.tagName) {
+        throw new TypeError(`CommandEvent target must be a DOM element`);
+      }
       (this as any)._commandEventTarget = target;
     }
   }
@@ -92,17 +121,35 @@ class CommandEventPolyfill extends Event {
    */
   get source(): Element | null {
     if (!commandEventSourceElements.has(this)) {
-      throw new TypeError("illegal invocation");
+      throw new TypeError("CommandEvent.source accessed illegally - this CommandEvent was not properly constructed");
     }
+
     const source = commandEventSourceElements.get(this);
     if (!source) return null;
-    // In polyfill environment, trust that source is an element if set
+
+    // Check if source is still connected to DOM
+    if (!source.isConnected) {
+      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+        console.warn('Invokers: CommandEvent source element is no longer connected to DOM');
+      }
+      return source; // Still return it, but warn
+    }
+
     const invokerRoot = getRootNode(source);
+    const eventTarget = this.target as Node || (typeof document !== 'undefined' ? document : null);
+
+    if (!eventTarget) {
+      return source;
+    }
+
+    const eventRoot = getRootNode(eventTarget);
+
     // Ensure the source element is within the same document or shadow root context
-    if (invokerRoot !== getRootNode(this.target as Node || document)) {
+    if (invokerRoot !== eventRoot) {
       // If cross-root, return the shadow host for encapsulation
       return invokerRoot instanceof ShadowRoot ? invokerRoot.host : null;
     }
+
     return source;
   }
 
@@ -237,7 +284,11 @@ function applyInvokerMixin(ElementClass: typeof HTMLElement) {
           if (targetElement.isConnected) {
             return targetElement;
           } else {
-            invokerAssociatedElements.delete(this); // Clean up disconnected elements
+            // Clean up disconnected elements
+            invokerAssociatedElements.delete(this);
+            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+              console.warn('Invokers: Cleaning up reference to disconnected element');
+            }
             return null;
           }
         }
@@ -253,42 +304,73 @@ function applyInvokerMixin(ElementClass: typeof HTMLElement) {
         if (selector.startsWith('#')) {
           idToLookup = selector.slice(1);
         }
-        
-        // Try direct ID lookup first (most common case)
-        if (/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(idToLookup)) {
+
+        // Validate ID format (HTML5 spec: IDs must not contain whitespace)
+        if (idToLookup && !/\s/.test(idToLookup)) {
+          // Try direct ID lookup first (most common case)
           if (root && typeof root.getElementById === "function") {
-            const element = root.getElementById(idToLookup);
-            if (element) return element;
+            try {
+              const element = root.getElementById(idToLookup);
+              if (element) return element;
+            } catch (error) {
+              // getElementById can throw in some edge cases
+              if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+                console.warn('Invokers: getElementById threw an error:', error);
+              }
+            }
           }
+
           if (doc && typeof doc.getElementById === "function") {
-            const element = doc.getElementById(idToLookup);
-            if (element) return element;
+            try {
+              const element = doc.getElementById(idToLookup);
+              if (element) return element;
+            } catch (error) {
+              if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+                console.warn('Invokers: document.getElementById threw an error:', error);
+              }
+            }
           }
         }
 
         // Fallback to CSS selector lookup for complex selectors
         try {
-          const cssSelector = selector.startsWith('#') ? selector : '#' + selector;
-          if (root && typeof root.querySelector === "function") {
-            const element = root.querySelector(cssSelector);
-            if (element) return element;
-          }
-          if (doc && typeof doc.querySelector === "function") {
-            const element = doc.querySelector(cssSelector);
-            if (element) return element;
-          }
-          
-          // Try as-is in case it's a class or other selector
-          if (root && typeof root.querySelector === "function") {
-            const element = root.querySelector(selector);
-            if (element) return element;
-          }
-          if (doc && typeof doc.querySelector === "function") {
-            const element = doc.querySelector(selector);
-            if (element) return element;
+          // Try different selector variations
+          const selectorVariations = [
+            selector.startsWith('#') ? selector : '#' + selector, // #id format
+            selector // as-is (for class selectors, etc.)
+          ];
+
+          for (const sel of selectorVariations) {
+            // Try root first (for shadow DOM)
+            if (root && typeof root.querySelector === "function") {
+              try {
+                const element = root.querySelector(sel);
+                if (element) return element;
+              } catch (error) {
+                // Invalid selector for this context, continue to next variation
+                if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+                  console.warn(`Invokers: querySelector failed on root for selector "${sel}":`, error);
+                }
+              }
+            }
+
+            // Try document
+            if (doc && typeof doc.querySelector === "function") {
+              try {
+                const element = doc.querySelector(sel);
+                if (element) return element;
+              } catch (error) {
+                if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+                  console.warn(`Invokers: querySelector failed on document for selector "${sel}":`, error);
+                }
+              }
+            }
           }
         } catch (e) {
-          // Invalid selector, return null
+          // Invalid selector syntax, return null
+          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+            console.warn('Invokers: Invalid CSS selector:', selector, e);
+          }
         }
 
         return null;
@@ -536,8 +618,14 @@ const oncommandObserver = new MutationObserver((records) => {
 function handleInvokerActivation(event: MouseEvent | KeyboardEvent) {
   // Respect defaultPrevented (e.g., if another handler already stopped it)
   if (event.defaultPrevented) return;
+
   // Only process click events (or key events, if extending)
   if (event.type !== "click") return;
+
+  // Validate event target
+  if (!event.target || !(event.target instanceof HTMLElement)) {
+    return;
+  }
 
   // Check for deprecated attributes and warn
   const oldInvoker = (event.target as HTMLElement).closest(
@@ -551,9 +639,20 @@ function handleInvokerActivation(event: MouseEvent | KeyboardEvent) {
     }
   }
 
-   // Find the actual invoker element (button, input, or textarea)
-   const source = (event.target as HTMLElement).closest<HTMLButtonElement | HTMLInputElement | HTMLTextAreaElement>("button[command], input[command], textarea[command]");
-   if (!source) return; // Not an invoker element
+    // Find the actual invoker element (button, input, or textarea)
+    const source = (event.target as HTMLElement).closest<HTMLButtonElement | HTMLInputElement | HTMLTextAreaElement>(
+      "button[command], input[command], textarea[command]"
+    );
+
+    if (!source) return; // Not an invoker element
+
+    // Additional validation: ensure the element is still connected
+    if (!source.isConnected) {
+      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+        console.warn('Invokers: Invoker element is not connected to DOM');
+      }
+      return;
+    }
 
    // Validate element type and attributes for forms
    if (source.form && source.localName === "button" && source.getAttribute("type") !== "button") {
@@ -582,31 +681,43 @@ function handleInvokerActivation(event: MouseEvent | KeyboardEvent) {
       return;
     }
 
-   // Validate command value based on spec
-   // Note: source.command getter already normalizes built-in values and validates `--` prefix
-   if (source.command === "") {
-     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-       console.warn(
-         `Invokers Polyfill: "${source.getAttribute("command")}" is not a valid command value for element:`,
-         source,
-         `Custom commands must begin with --`
-       );
-     }
-     return;
-   }
-
-    let invokee = source.commandForElement;
-    if (!invokee) {
-      // For custom commands without commandfor, dispatch to document.body
-      if (isCustomCommand) {
-        invokee = document.body;
-      } else {
-         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.warn("Invokers Polyfill: commandfor target not found for invoker:", source);
-         }
-        return;
+    // Validate command value based on spec
+    // Note: source.command getter already normalizes built-in values and validates `--` prefix
+    const commandValue = source.command;
+    if (!commandValue || commandValue.trim() === "") {
+      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+        console.warn(
+          `Invokers Polyfill: Empty or invalid command value "${source.getAttribute("command")}" for element:`,
+          source,
+          `Custom commands must begin with "--"`
+        );
       }
+      return;
     }
+
+     let invokee = source.commandForElement;
+     if (!invokee) {
+       // For custom commands without commandfor, dispatch to document.body
+       if (isCustomCommand) {
+         invokee = document.body;
+         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+           console.log('Invokers: Custom command without target, dispatching to document.body');
+         }
+       } else {
+          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+            console.warn("Invokers Polyfill: commandfor target not found for built-in command:", source);
+          }
+         return;
+       }
+     }
+
+     // Final validation: ensure target is still connected
+     if (!invokee.isConnected) {
+       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+         console.warn('Invokers: Target element is not connected to DOM:', invokee);
+       }
+       return;
+     }
 
     // Helper function to check if a command is built-in
     function isBuiltInCommand(command: string): boolean {
@@ -638,6 +749,10 @@ function handleInvokerActivation(event: MouseEvent | KeyboardEvent) {
 
     // Helper function to split commands on commas, respecting escaped commas
     function splitCommands(commandString: string): string[] {
+      if (!commandString || typeof commandString !== 'string') {
+        return [];
+      }
+
       const commands: string[] = [];
       let currentCommand = '';
       let i = 0;
@@ -656,11 +771,15 @@ function handleInvokerActivation(event: MouseEvent | KeyboardEvent) {
           i++;
         } else if (char === '}') {
           braceDepth--;
+          // Prevent negative brace depth
+          if (braceDepth < 0) {
+            braceDepth = 0;
+          }
           currentCommand += char;
           i++;
         } else if (char === ',' && braceDepth === 0) {
           // Unescaped comma outside braces - split here
-          if (currentCommand.trim().length > 0) {
+          if (currentCommand.trim()) {
             commands.push(currentCommand.trim());
           }
           currentCommand = '';
@@ -672,7 +791,7 @@ function handleInvokerActivation(event: MouseEvent | KeyboardEvent) {
       }
 
       // Add the last command if any
-      if (currentCommand.trim().length > 0) {
+      if (currentCommand.trim()) {
         commands.push(currentCommand.trim());
       }
 
@@ -685,28 +804,49 @@ function handleInvokerActivation(event: MouseEvent | KeyboardEvent) {
     const commands = splitCommands(rawCommandValue);
 
     for (const command of commands) {
-      // Validate each individual command
-      if (!command.startsWith('--') && !isBuiltInCommand(command)) {
-        if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.warn(
-            `Invokers Polyfill: "${command}" is not a valid command value. Custom commands must begin with --`
-          );
-        }
-        continue; // Skip invalid commands but continue with others
-      }
-
-      // 1. Dispatch the CommandEvent for each command
-       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-         console.log('Polyfill dispatching CommandEvent for command:', command);
+       // Validate each individual command
+       const trimmedCommand = command.trim();
+       if (!trimmedCommand) {
+         continue; // Skip empty commands
        }
-      const commandEvent = new CommandEventPolyfill("command", {
-        command: command,
-        source,
-        cancelable: true,
-        bubbles: true, // Should bubble to be caught by document listeners
-        composed: true, // Allow crossing shadow boundaries
-      });
-      invokee.dispatchEvent(commandEvent);
+
+       if (!trimmedCommand.startsWith('--') && !isBuiltInCommand(trimmedCommand)) {
+         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+           console.warn(
+             `Invokers Polyfill: "${trimmedCommand}" is not a valid command value. Custom commands must begin with "--"`
+           );
+         }
+         continue; // Skip invalid commands but continue with others
+       }
+
+       // 1. Dispatch the CommandEvent for each command
+        if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+          console.log('Polyfill dispatching CommandEvent for command:', trimmedCommand);
+        }
+
+       const commandEvent = new CommandEventPolyfill("command", {
+         command: trimmedCommand,
+         source,
+         target: invokee,
+         cancelable: true,
+         bubbles: true, // Should bubble to be caught by document listeners
+         composed: true, // Allow crossing shadow boundaries
+       });
+
+       // Dispatch and check for errors
+       let dispatchSuccessful = false;
+       try {
+         dispatchSuccessful = invokee.dispatchEvent(commandEvent);
+       } catch (error) {
+         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+           console.error('Invokers: Error dispatching CommandEvent:', error);
+         }
+         continue; // Skip to next command if dispatch fails
+       }
+
+       if (!dispatchSuccessful && typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+         console.warn('Invokers: CommandEvent was cancelled by a handler');
+       }
 
       // If the event was prevented, stop default behavior for this command
       if (commandEvent.defaultPrevented) continue;
@@ -776,27 +916,37 @@ function handleInvokerActivation(event: MouseEvent | KeyboardEvent) {
         }
       }
 
-      // Handle media element commands
-      if (invokee.localName === "video" || invokee.localName === "audio") {
-        const media = invokee as HTMLMediaElement;
-        if (normalizedCommand === "play-pause") {
-          if (media.paused) {
-            media.play().catch(() => {
-              // Autoplay policy might prevent play, fail silently
-            });
-          } else {
-            media.pause();
-          }
-        } else if (normalizedCommand === "play" && media.paused) {
-          media.play().catch(() => {
-            // Autoplay policy might prevent play, fail silently
-          });
-        } else if (normalizedCommand === "pause" && !media.paused) {
-          media.pause();
-        } else if (normalizedCommand === "toggle-muted") {
-          media.muted = !media.muted;
-        }
-      }
+       // Handle media element commands
+       if (invokee.localName === "video" || invokee.localName === "audio") {
+         const media = invokee as HTMLMediaElement;
+         try {
+           if (normalizedCommand === "play-pause") {
+             if (media.paused) {
+               media.play().catch((error) => {
+                 if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+                   console.warn('Invokers: Media play failed (likely autoplay policy):', error);
+                 }
+               });
+             } else {
+               media.pause();
+             }
+           } else if (normalizedCommand === "play" && media.paused) {
+             media.play().catch((error) => {
+               if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+                 console.warn('Invokers: Media play failed (likely autoplay policy):', error);
+               }
+             });
+           } else if (normalizedCommand === "pause" && !media.paused) {
+             media.pause();
+           } else if (normalizedCommand === "toggle-muted") {
+             media.muted = !media.muted;
+           }
+         } catch (error) {
+           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+             console.warn('Invokers: Media command failed:', error);
+           }
+         }
+       }
 
       // Handle fullscreen commands
       if (normalizedCommand.includes("fullscreen")) {
@@ -813,30 +963,82 @@ function handleInvokerActivation(event: MouseEvent | KeyboardEvent) {
         }
       }
 
-      // Handle clipboard commands
-      if (normalizedCommand === "copy-text" && typeof navigator.clipboard !== "undefined") {
-        // For form elements, prefer value attribute over text content
-        const textToCopy = (invokee as HTMLInputElement | HTMLButtonElement | HTMLTextAreaElement).value || invokee.textContent || "";
-        navigator.clipboard.writeText(textToCopy).catch(() => {
-          // Clipboard access might be denied, fail silently
-        });
-      }
+       // Handle clipboard commands
+       if (normalizedCommand === "copy-text" && typeof navigator.clipboard !== "undefined") {
+         try {
+           // For form elements, prefer value attribute over text content
+           const textToCopy = (invokee as HTMLInputElement | HTMLButtonElement | HTMLTextAreaElement).value ||
+                             invokee.textContent ||
+                             invokee.getAttribute('data-copy-text') ||
+                             "";
+           if (textToCopy.trim()) {
+             navigator.clipboard.writeText(textToCopy).catch((error) => {
+               if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+                 console.warn('Invokers: Clipboard write failed:', error);
+               }
+             });
+           } else if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+             console.warn('Invokers: No text content found to copy');
+           }
+         } catch (error) {
+           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+             console.warn('Invokers: Clipboard command failed:', error);
+           }
+         }
+       }
 
-      // Handle share commands
-      if (normalizedCommand === "share" && typeof navigator.share !== "undefined") {
-        const content = invokee.textContent || "";
-        // Check if content looks like a URL
-        const urlPattern = /^https?:\/\/[^\s]+$/i;
-        const shareData: any = {};
-        if (urlPattern.test(content.trim())) {
-          shareData.url = content.trim();
-        } else {
-          shareData.text = content;
+        // Handle share commands
+        if (normalizedCommand === "share" && typeof navigator.share !== "undefined") {
+          try {
+            // Resolve target element if commandfor is specified
+            let targetElement: HTMLElement | null = null;
+            const commandfor = invokee.getAttribute('commandfor') || invokee.getAttribute('aria-controls');
+            if (commandfor) {
+              targetElement = document.getElementById(commandfor) || document.querySelector(`[id="${commandfor}"]`);
+            }
+
+            // Get content from target element or invokee
+            const contentElement = targetElement || invokee;
+            const content = contentElement.textContent ||
+                           contentElement.getAttribute('data-share-text') ||
+                           contentElement.getAttribute('value') ||
+                           "";
+            const title = invokee.getAttribute('data-share-title') ||
+                         invokee.getAttribute('title');
+            const url = invokee.getAttribute('data-share-url') ||
+                       (invokee instanceof HTMLAnchorElement ? invokee.href : null) ||
+                       window.location.href;
+
+            // Check if content looks like a URL
+            const urlPattern = /^https?:\/\/[^\s]+$/i;
+            const shareData: ShareData = {};
+
+            if (title && title.trim()) {
+              shareData.title = title.trim();
+            }
+
+            if (urlPattern.test(content.trim())) {
+              shareData.url = content.trim();
+            } else if (content && content.trim()) {
+              shareData.text = content.trim();
+            }
+
+            // Fallback to current URL if no content
+            if (!shareData.url && !shareData.text) {
+              shareData.url = url;
+            }
+
+            navigator.share(shareData).catch((error) => {
+              if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+                console.warn('Invokers: Share failed:', error);
+              }
+            });
+          } catch (error) {
+            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+              console.warn('Invokers: Share command failed:', error);
+            }
+          }
         }
-        navigator.share(shareData).catch(() => {
-          // Share might not be supported or user cancelled, fail silently
-        });
-      }
 
       // Handle number input commands
       if (invokee.localName === "input" && (invokee as HTMLInputElement).type === "number") {
@@ -981,53 +1183,64 @@ function applyToTarget(target: any) {
   // Set up listeners for the main document
   setupInvokeListeners(target.document);
   
-  // Fallback: ensure listeners are attached even if there were issues above
-  if (typeof window !== 'undefined') {
-    // Use setTimeout to ensure this runs after all initialization
-    setTimeout(() => {
-      // Double-check that click listeners are actually attached
-      if (!(window as any).__invokerClickListenerVerified) {
-        if ((window as any).Invoker?.debug) {
-          console.warn('Invokers: Click listener verification failed, adding fallback listener');
-        }
-        // Add a fallback click listener to ensure functionality
-        document.addEventListener("click", (event: MouseEvent) => {
-          if (event.defaultPrevented) return;
-          if (event.type !== "click") return;
+   // Fallback: ensure listeners are attached even if there were issues above
+   if (typeof window !== 'undefined') {
+     // Use setTimeout to ensure this runs after all initialization
+     setTimeout(() => {
+       // Double-check that click listeners are actually attached
+       if (!(window as any).__invokerClickListenerVerified) {
+         if ((window as any).Invoker?.debug) {
+           console.warn('Invokers: Click listener verification failed, adding fallback listener');
+         }
 
-          const source = (event.target as HTMLElement).closest('button[command], input[command], textarea[command]');
-          if (!source) return;
+         // Add a fallback click listener to ensure functionality
+         const fallbackListener = (event: MouseEvent) => {
+           if (event.defaultPrevented) return;
+           if (event.type !== "click") return;
 
-          const command = source.getAttribute('command');
-          if (!command) return;
+           const source = (event.target as HTMLElement)?.closest?.('button[command], input[command], textarea[command]');
+           if (!source || !source.isConnected) return;
 
-          let target = null;
-          const commandfor = source.getAttribute('commandfor');
-          if (commandfor) {
-            target = document.getElementById(commandfor) || document.querySelector(commandfor);
-          }
+           const command = source.getAttribute('command');
+           if (!command?.trim()) return;
 
-          if (!target && command.startsWith('--')) {
-            target = document.body;
-          }
+           let target: Element | null = null;
+           const commandfor = source.getAttribute('commandfor');
+           if (commandfor?.trim()) {
+             target = document.getElementById(commandfor) ||
+                     document.querySelector(commandfor) ||
+                     null;
+           }
 
-          if (!target) return;
+           if (!target && command.startsWith('--')) {
+             target = document.body;
+           }
 
-          const commandEvent = new (window as any).CommandEvent("command", {
-            command: command,
-            source: source,
-            cancelable: true,
-            bubbles: true,
-            composed: true,
-          });
+           if (!target) return;
 
-          target.dispatchEvent(commandEvent);
-        }, true);
-        
-        (window as any).__invokerClickListenerVerified = true;
-      }
-    }, 0);
-  }
+           try {
+             const commandEvent = new (window as any).CommandEvent("command", {
+               command: command.trim(),
+               source: source,
+               target: target,
+               cancelable: true,
+               bubbles: true,
+               composed: true,
+             });
+
+             target.dispatchEvent(commandEvent);
+           } catch (error) {
+             if ((window as any).Invoker?.debug) {
+               console.error('Invokers: Fallback CommandEvent dispatch failed:', error);
+             }
+           }
+         };
+
+         document.addEventListener("click", fallbackListener, true);
+         (window as any).__invokerClickListenerVerified = true;
+       }
+     }, 0);
+   }
 
   // Initial scan for `oncommand` attributes
   oncommandObserver.observe(target.document, {

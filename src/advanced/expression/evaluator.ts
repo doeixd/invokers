@@ -1,35 +1,40 @@
 // src/expression-evaluator.ts
 
 import { ASTNode, ASTNodeType } from './parser';
+import { hasExpressionFunction, callExpressionFunction } from '../expressions';
 
 export class ExpressionEvaluator {
   private context: Record<string, any>;
   private static readonly MAX_RECURSION_DEPTH = 100;
   private recursionDepth = 0;
 
-  constructor(context: Record<string, any>) {
-    this.context = this.sanitizeContext(context);
+  constructor(context: Record<string, any>, allowFunctions = false) {
+    this.context = this.sanitizeContext(context, allowFunctions);
   }
 
-  private sanitizeContext(context: Record<string, any>): Record<string, any> {
+  private sanitizeContext(context: Record<string, any>, allowFunctions = false): Record<string, any> {
     // Create a safe context that prevents access to dangerous properties
     const safeContext: Record<string, any> = {};
 
     for (const [key, value] of Object.entries(context)) {
       if (this.isSafeProperty(key)) {
-        safeContext[key] = this.sanitizeValue(value);
+        safeContext[key] = this.sanitizeValue(value, allowFunctions);
       }
     }
 
     return safeContext;
   }
 
-  private sanitizeValue(value: any): any {
+  private sanitizeValue(value: any, allowFunctions = false): any {
     if (value === null || value === undefined) {
       return value;
     }
 
     if (typeof value === 'function') {
+      // Allow functions if explicitly permitted (for expression helpers)
+      if (allowFunctions) {
+        return value;
+      }
       // Block functions for security - they could be dangerous
       return undefined;
     }
@@ -290,6 +295,16 @@ export class ExpressionEvaluator {
   }
 
   private evaluateCallExpression(node: ASTNode): any {
+    // First check if it's a registered expression function
+    if (node.callee!.type === ASTNodeType.IDENTIFIER) {
+      const functionName = node.callee!.value as string;
+      if (hasExpressionFunction(functionName)) {
+        const args = node.args!.map(arg => this.evaluate(arg));
+        return callExpressionFunction(functionName, ...args);
+      }
+    }
+
+    // Fall back to context function
     const callee = this.evaluate(node.callee!);
     if (typeof callee !== 'function') {
       throw new Error(`Invokers Expression Error: '${(node.callee as any).value}' is not a function`);

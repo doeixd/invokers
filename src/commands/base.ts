@@ -70,9 +70,7 @@ export function registerBaseCommands(manager: InvokerManager): void {
         targets.forEach(target => {
           if (!target.isConnected) {
             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-              if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
               console.warn('Invokers: Skipping disconnected target element', target);
-            }
             }
             return;
           }
@@ -240,14 +238,8 @@ export function registerBaseCommands(manager: InvokerManager): void {
 
   // --attr: Attribute manipulation
   manager.register("--attr", ({ invoker, getTargets, params }) => {
-    if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.log('--attr command called with params:', params);
-    }
     const [action, attrName, attrValue] = params;
     const targets = getTargets();
-    if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.log('--attr targets:', targets);
-    }
 
     if (!action) {
       throw createInvokerError(
@@ -320,10 +312,7 @@ export function registerBaseCommands(manager: InvokerManager): void {
      }
 
         try {
-         targets.forEach(target => {
-           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-             console.log('--attr processing target:', target, 'isConnected:', target.isConnected);
-           }
+          targets.forEach(target => {
 
           // Interpolate attrValue if interpolation is enabled and contains {{...}}
           let finalAttrValue = attrValue || "";
@@ -345,11 +334,8 @@ export function registerBaseCommands(manager: InvokerManager): void {
             case "set":
               target.setAttribute(attrName, finalAttrValue);
               break;
-              case "remove":
-                if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-                  console.log('attr command removing', attrName, 'from target', target);
-                }
-                if (attrName === 'hidden') {
+               case "remove":
+                 if (attrName === 'hidden') {
                   (target as HTMLElement).hidden = false;
                   target.removeAttribute('hidden'); // Ensure attribute is removed in all environments
                 } else {

@@ -54,12 +54,33 @@ registerDomCommands(invokerManager);
 ```
 **Commands**: `--dom:*`, `--template:*`, data context management
 
-#### Flow Control (`invokers/commands/flow`) - 45.3 kB
+#### Fetch Commands (`invokers/commands/fetch`) - ~15 kB
 ```javascript
-import { registerFlowCommands } from 'invokers/commands/flow';
-registerFlowCommands(invokerManager);
+import { registerFetchCommands } from 'invokers/commands/fetch';
+registerFetchCommands(invokerManager);
 ```
-**Commands**: `--fetch:*`, `--command:*`, `--emit:*`, `--navigate:*`, `--on:*`, `--bind:*`
+**Commands**: `--fetch:get`, `--fetch:put`, `--fetch:patch`
+
+#### WebSocket Commands (`invokers/commands/websocket`) - ~12 kB
+```javascript
+import { registerWebSocketCommands } from 'invokers/commands/websocket';
+registerWebSocketCommands(invokerManager);
+```
+**Commands**: `--websocket:connect`, `--websocket:disconnect`, `--websocket:send`, `--websocket:status`, `--websocket:on:message`
+
+#### Server-Sent Events (`invokers/commands/sse`) - ~10 kB
+```javascript
+import { registerSSECommands } from 'invokers/commands/sse';
+registerSSECommands(invokerManager);
+```
+**Commands**: `--sse:connect`, `--sse:disconnect`, `--sse:status`, `--sse:on:message`, `--sse:on:event`
+
+#### Navigation & Flow Control (`invokers/commands/navigation`) - ~8 kB
+```javascript
+import { registerNavigationCommands } from 'invokers/commands/navigation';
+registerNavigationCommands(invokerManager);
+```
+**Commands**: `--navigate:to`, `--emit`, `--bind`, `--command:trigger`, `--command:delay`
 
 #### Media & Animation (`invokers/commands/media`) - 27.7 kB
 ```javascript
@@ -118,6 +139,92 @@ import { enableAdvancedEvents } from 'invokers/advanced';
 enableAdvancedEvents();
 ```
 **Features**: Both event triggers and expression engine
+
+### **Tier 4: Advanced Modules** ⭐ **NEW**
+Advanced application features for complex use cases. These modules provide high-level abstractions for common application patterns.
+
+#### State Management (`invokers/state`) - ~83 kB
+```javascript
+import { enableState } from 'invokers/state';
+enableState();
+```
+**Features**:
+- Global reactive state store with JSON script initialization
+- State manipulation commands (`--state:set`, `--state:get`, `--state:array:push`, etc.)
+- Computed properties via `<data-let>` elements
+- Two-way data binding with `data-bind` attribute
+
+**Usage**:
+```html
+<!-- Initialize state -->
+<script type="application/json" data-state="user">
+  {"name": "John", "items": []}
+</script>
+
+<!-- State commands -->
+<button command="--state:set:user.name:Jane">Update Name</button>
+<button command="--state:array:push:user.items:new-item">Add Item</button>
+
+<!-- Computed properties -->
+<data-let data-let="state.user.name + ' has ' + count(state.user.items) + ' items'" data-target="#summary"></data-let>
+
+<!-- Two-way binding -->
+<input data-bind="user.name" placeholder="Enter name">
+```
+
+#### Control Flow (`invokers/control`) - ~56 kB
+```javascript
+import { enableControl } from 'invokers/control';
+enableControl();
+```
+**Features**:
+- Conditional rendering with `data-if`/`data-else` attributes
+- Switch/case rendering with `data-switch`/`data-case` attributes
+- Promise-based chaining infrastructure for async command sequences
+
+**Usage**:
+```html
+<!-- Conditional rendering -->
+<div data-if="state.user.loggedIn">Welcome back!</div>
+<div data-else>Please log in</div>
+
+<!-- Switch/case rendering -->
+<div data-switch="state.view.mode">
+  <div data-case="view">📖 Viewing mode</div>
+  <div data-case="edit">✏️ Editing mode</div>
+  <div data-case="default">❓ Unknown mode</div>
+</div>
+```
+
+#### Components (`invokers/components`) - ~55 kB
+```javascript
+import { enableComponents } from 'invokers/components';
+enableComponents();
+```
+**Features**:
+- Component templates with props (`{{prop.name}}`)
+- Content projection via slots (`<slot>`, `data-slot`)
+- Scoped CSS for encapsulation
+
+**Usage**:
+```html
+<!-- Component definition -->
+<template data-component="my-button" data-props="text,color" data-slots="icon">
+  <button class="btn" style="color: {{prop.color}};">
+    <slot name="icon"></slot>
+    {{prop.text}}
+  </button>
+</template>
+
+<style scoped data-component="my-button">
+  .btn { border: none; padding: 10px 20px; }
+</style>
+
+<!-- Component usage -->
+<my-button text="Click me" color="blue">
+  <span data-slot="icon">⭐</span>
+</my-button>
+```
 
 ## 🧪 Testing Patterns
 
@@ -257,8 +364,16 @@ import { registerDomCommands } from 'invokers/commands/dom';
 registerFormCommands(invokers);
 registerDomCommands(invokers);
 
+// App with HTTP requests (~133 + 15 kB = ~148 kB)
+import { registerFetchCommands } from 'invokers/commands/fetch';
+registerFetchCommands(invokers);
+
+// Real-time app with WebSockets (~148 + 12 kB = ~160 kB)
+import { registerWebSocketCommands } from 'invokers/commands/websocket';
+registerWebSocketCommands(invokers);
+
 // Full-featured app (~200+ kB)
-import { registerFlowCommands } from 'invokers/commands/flow';
+import { registerNavigationCommands } from 'invokers/commands/navigation';
 import { registerMediaCommands } from 'invokers/commands/media';
 import { registerDataCommands } from 'invokers/commands/data';
 import { enableAdvancedEvents } from 'invokers/advanced';
@@ -335,7 +450,11 @@ window.Invoker = { debug: true };
     "./commands/base": "./src/commands/base.ts",    // Essential UI commands (29.2 kB)
     "./commands/form": "./src/commands/form.ts",    // Form commands (30.5 kB)
     "./commands/dom": "./src/commands/dom.ts",      // DOM manipulation (47.1 kB)
-    "./commands/flow": "./src/commands/flow.ts",    // Async & flow control (45.3 kB)
+    "./commands/fetch": "./src/commands/fetch.ts",   // HTTP fetch commands (~15 kB)
+    "./commands/websocket": "./src/commands/websocket.ts", // WebSocket commands (~12 kB)
+    "./commands/sse": "./src/commands/sse.ts",       // Server-Sent Events (~10 kB)
+    "./commands/navigation": "./src/commands/navigation.ts", // Navigation & flow control (~8 kB)
+    "./commands/flow": "./src/commands/flow.ts",     // Compatibility layer (45.3 kB)
     "./commands/media": "./src/commands/media.ts",   // Media & animations (27.7 kB)
     "./commands/browser": "./src/commands/browser.ts", // Browser APIs (25.3 kB)
     "./commands/data": "./src/commands/data.ts",    // Data management (45.2 kB)
@@ -509,6 +628,54 @@ Each command receives a `CommandContext` with:
 1. **Phase 1**: Install v1.5, add required imports for existing functionality
 2. **Phase 2**: Gradually switch to modular imports
 3. **Phase 3**: Remove unused command packs to optimize bundle size
+
+### **Tier 4: Advanced Modules** (New in v2.0)
+Advanced, opt-in modules that provide framework-level features for complex SPAs.
+
+#### State Module (`invokers/state`) - ~83 kB
+```javascript
+import { enableStateModule } from 'invokers/state';
+enableStateModule();
+```
+**Features:**
+- Global state store from JSON script tags
+- State manipulation commands (`--state:set`, `--state:array:push`, etc.)
+- Computed properties with `<data-let>`
+- Two-way data binding with `data-bind`
+
+#### Control Flow Module (`invokers/control`) - ~75 kB
+```javascript
+import { enableControl } from 'invokers/control';
+enableControl();
+```
+**Features:**
+- Conditional rendering with `data-if`/`data-else`
+- Switch/case rendering with `data-switch`/`data-case`
+- Loop constructs with `data-for-each`, `data-while`, `data-repeat`
+- Error boundaries with `data-try`, `data-catch`, `data-finally`
+- Async control with `data-parallel`, `data-race`, `data-sequence`
+- Promise-based command chaining with `{{result}}`
+
+#### Components Module (`invokers/components`) - ~55 kB
+```javascript
+import { enableComponents } from 'invokers/components';
+enableComponents();
+```
+**Features:**
+- Component templates with props (`{{prop.name}}`)
+- Content projection with slots (`<slot>`, `data-slot`)
+- Scoped CSS for style encapsulation
+
+#### Forms Module (`invokers/forms`) - ~35 kB
+```javascript
+import { enableForms } from 'invokers/forms';
+enableForms();
+```
+**Features:**
+- Form validation with built-in rules (required, email, min/max, custom)
+- Reactive form state with dirty/pristine tracking
+- Form submission handling with loading states and error handling
+- Form-specific commands for validation and state management
 
 ## 🎯 Best Practices for AI Agents
 
@@ -963,25 +1130,51 @@ Advanced DOM manipulation:
 - `--data:set:context` - Set data context
 - `--data:update:context` - Update data context
 
-### Flow Pack Commands (`invokers/commands/flow`)
-Async operations and control flow:
+### Fetch Pack Commands (`invokers/commands/fetch`)
+HTTP request commands:
 
-#### Network
-- `--fetch:get` - GET request with loading states
-- `--fetch:send` - POST/PUT/DELETE requests
+#### HTTP Methods
+- `--fetch:get` - GET request with loading states and response handling
+- `--fetch:put` - PUT request with optional body
+- `--fetch:patch` - PATCH request with optional body
 
-#### Control Flow
-- `--command:trigger:command` - Trigger another command
-- `--command:delay:ms` - Delay command execution
+### WebSocket Pack Commands (`invokers/commands/websocket`)
+Real-time WebSocket communication:
+
+#### Connection Management
+- `--websocket:connect` - Establish WebSocket connection
+- `--websocket:disconnect` - Close WebSocket connection
+- `--websocket:status` - Get connection status
+
+#### Messaging
+- `--websocket:send` - Send message through WebSocket
+- `--websocket:on:message` - Set up message handler
+
+### SSE Pack Commands (`invokers/commands/sse`)
+Server-Sent Events for real-time server communication:
+
+#### Connection Management
+- `--sse:connect` - Establish SSE connection
+- `--sse:disconnect` - Close SSE connection
+- `--sse:status` - Get connection status
+
+#### Event Handling
+- `--sse:on:message` - Handle all SSE messages
+- `--sse:on:event` - Handle specific SSE event types
+
+### Navigation Pack Commands (`invokers/commands/navigation`)
+Navigation and flow control commands:
 
 #### Navigation
-- `--navigate:to:url` - Navigate to URL
-- `--url:hash:set` - Set URL hash
-- `--history:push/back` - History navigation
+- `--navigate:to:url` - Navigate to URL using History API
 
-#### Events
-- `--emit:event:detail` - Emit custom event
-- `--bind:property` - Bind property to element
+#### Control Flow
+- `--command:trigger:command` - Trigger another command on an element
+- `--command:delay:ms` - Delay command execution
+
+#### Events & Data Binding
+- `--emit:event:detail` - Emit custom events
+- `--bind:property` - Create one-way data bindings
 
 ### Media Pack Commands (`invokers/commands/media`)
 Media and animation controls:

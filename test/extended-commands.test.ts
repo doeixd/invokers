@@ -345,12 +345,14 @@ describe('Extended Commands', () => {
 
         // Create invoker button with outerHTML strategy
         const button = document.createElement('button');
+        button.setAttribute('data-url', '/api/submit');
         button.setAttribute('data-response-target', '#response-target');
         button.setAttribute('data-replace-strategy', 'outerHTML');
+        button.setAttribute('data-body-from', '#test-form');
         document.body.appendChild(button);
 
         // Execute command
-        await invokerManager.executeCommand('--fetch:send', '#test-form', button);
+        await invokerManager.executeCommand('--fetch:post', '#test-form', button);
 
         // Check that response target was replaced entirely
         const newResponse = document.getElementById('response-content');

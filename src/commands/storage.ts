@@ -15,12 +15,12 @@ function isExpired(item: StorageItem): boolean {
   return item.expires ? Date.now() > item.expires : false;
 }
 
-function getStorage(storageType: string): Storage {
+function getStorage(storageType: string): Storage | null {
   if (storageType !== 'local' && storageType !== 'session') {
-    throw createInvokerError(
-      `Invalid storage type: ${storageType}. Must be 'local' or 'session'`,
-      ErrorSeverity.ERROR
-    );
+    if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+      console.warn('--storage: Invalid storage type:', storageType, '. Must be "local" or "session"');
+    }
+    return null;
   }
   return storageType === 'local' ? localStorage : sessionStorage;
 }
@@ -49,107 +49,184 @@ function stringifyStorageItem(value: any, expires?: number): string {
 }
 
 export function registerStorageCommands(manager: InvokerManager): void {
-  manager.register('--storage', ({ targetElement, params }) => {
+  manager.register('--storage', ({ targetElement, params, invoker }) => {
     try {
+      if (invoker && !invoker.isConnected) {
+        throw createInvokerError('--storage failed: Invoker element not connected to DOM', ErrorSeverity.ERROR, {
+          command: '--storage', element: invoker, recovery: 'Ensure the element is still in the document.'
+        });
+      }
+
       const storageType = params[0];
       const action = params[1];
       const key = params[2];
       const value = params.slice(3).join(':');
 
+      if (!storageType) {
+        throw createInvokerError('--storage failed: Storage type required', ErrorSeverity.ERROR, {
+          command: '--storage', element: invoker, recovery: 'Use --storage:local:action or --storage:session:action'
+        });
+      }
+
+      if (!action) {
+        throw createInvokerError('--storage failed: Action required', ErrorSeverity.ERROR, {
+          command: '--storage', element: invoker, recovery: 'Use --storage:type:set/get/remove/clear/keys/has/size'
+        });
+      }
+
       const storage = getStorage(storageType);
+      if (!storage) {
+        if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+          console.warn('--storage failed: Invalid storage type', { storageType, command: '--storage', element: invoker });
+        }
+        return; // Gracefully handle invalid storage type
+      }
 
-      switch (action) {
-        case 'set': {
-          if (!key) {
-            throw createInvokerError('Storage set requires a key', ErrorSeverity.ERROR);
-          }
-          let actualValue = value;
-          if (!actualValue && targetElement) {
-            // If no value provided in command, get from target element
-            if (targetElement instanceof HTMLInputElement) {
-              if (targetElement.type === 'checkbox') {
-                actualValue = targetElement.checked.toString();
-              } else {
-                actualValue = targetElement.value;
+      try {
+        switch (action) {
+          case 'set': {
+            if (!key) {
+              if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+                console.warn('--storage set failed: Key required', { command: '--storage', element: invoker });
               }
-            } else {
-              actualValue = targetElement.textContent || '';
+              return; // Gracefully handle missing key
             }
-          }
-           let expires: number | undefined;
-           if (actualValue.startsWith('expires:')) {
-             const expiresValue = parseInt(actualValue.split(':')[1]);
-             // If expires value is small (< year 2286), treat as relative milliseconds from now
-             // Otherwise, treat as absolute timestamp
-             expires = expiresValue < 1e10 ? Date.now() + expiresValue : expiresValue;
-             actualValue = actualValue.split(':').slice(2).join(':');
-           }
-           const finalValue = actualValue;
-          storage.setItem(key, stringifyStorageItem(finalValue, expires));
-          break;
-        }
-
-        case 'get': {
-          if (!key) {
-            throw createInvokerError('Storage get requires a key', ErrorSeverity.ERROR);
-          }
-          const item = parseStorageItem(storage.getItem(key));
-          if (targetElement) {
-            targetElement.textContent = item ? item.value : '';
-          }
-          break;
-        }
-
-        case 'remove': {
-          if (!key) {
-            throw createInvokerError('Storage remove requires a key', ErrorSeverity.ERROR);
-          }
-          storage.removeItem(key);
-          break;
-        }
-
-        case 'clear': {
-          storage.clear();
-          break;
-        }
-
-        case 'keys': {
-          const keys = Object.keys(storage);
-          if (targetElement) {
-            targetElement.textContent = keys.join(', ');
-          }
-          break;
-        }
-
-        case 'has': {
-          if (!key) {
-            throw createInvokerError('Storage has requires a key', ErrorSeverity.ERROR);
-          }
-          const item = parseStorageItem(storage.getItem(key));
-          const hasKey = item !== null;
-          if (targetElement) {
-            targetElement.textContent = hasKey ? 'true' : 'false';
-          }
-          break;
-        }
-
-        case 'size': {
-          let size = 0;
-          for (let i = 0; i < storage.length; i++) {
-            const key = storage.key(i);
-            if (key) {
-              const item = parseStorageItem(storage.getItem(key));
-              if (item) size++;
+            let actualValue = value;
+            if (!actualValue && targetElement && targetElement.isConnected) {
+              // If no value provided in command, get from target element
+              if (targetElement instanceof HTMLInputElement) {
+                if (targetElement.type === 'checkbox') {
+                  actualValue = targetElement.checked.toString();
+                } else {
+                  actualValue = targetElement.value;
+                }
+              } else {
+                actualValue = targetElement.textContent || '';
+              }
             }
-          }
-          if (targetElement) {
-            targetElement.textContent = size.toString();
-          }
-          break;
-        }
+             let expires: number | undefined;
+             if (actualValue.startsWith('expires:')) {
+               const expiresValue = parseInt(actualValue.split(':')[1]);
+               // If expires value is small (< year 2286), treat as relative milliseconds from now
+               // Otherwise, treat as absolute timestamp
+               expires = expiresValue < 1e10 ? Date.now() + expiresValue : expiresValue;
+               actualValue = actualValue.split(':').slice(2).join(':');
+             }
+             const finalValue = actualValue;
+            storage.setItem(key, stringifyStorageItem(finalValue, expires));
 
-        default:
-          throw createInvokerError(`Unknown storage action: ${action}`, ErrorSeverity.ERROR);
+            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+              console.log('--storage set:', storageType, key, '=', finalValue);
+            }
+            break;
+          }
+
+          case 'get': {
+            if (!key) {
+              if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+                console.warn('--storage get failed: Key required', { command: '--storage', element: invoker });
+              }
+              return; // Gracefully handle missing key
+            }
+            const rawValue = storage.getItem(key);
+            const item = parseStorageItem(rawValue);
+            if (item === null && rawValue !== null) {
+              // Item exists but is expired, remove it
+              storage.removeItem(key);
+            }
+            if (targetElement && targetElement.isConnected) {
+              targetElement.textContent = item ? item.value : '';
+            }
+
+            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+              console.log('--storage get:', storageType, key, '=', item ? item.value : 'null');
+            }
+            break;
+          }
+
+          case 'remove': {
+            if (!key) {
+              if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+                console.warn('--storage remove failed: Key required', { command: '--storage', element: invoker });
+              }
+              return; // Gracefully handle missing key
+            }
+            storage.removeItem(key);
+
+            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+              console.log('--storage remove:', storageType, key);
+            }
+            break;
+          }
+
+          case 'clear': {
+            storage.clear();
+
+            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+              console.log('--storage clear:', storageType);
+            }
+            break;
+          }
+
+          case 'keys': {
+            const keys = Object.keys(storage);
+            if (targetElement && targetElement.isConnected) {
+              targetElement.textContent = keys.join(', ');
+            }
+
+            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+              console.log('--storage keys:', storageType, keys);
+            }
+            break;
+          }
+
+          case 'has': {
+            if (!key) {
+              throw createInvokerError('--storage has failed: Key required', ErrorSeverity.ERROR, {
+                command: '--storage', element: invoker, recovery: 'Use --storage:type:has:key'
+              });
+            }
+            const item = parseStorageItem(storage.getItem(key));
+            const hasKey = item !== null;
+            if (targetElement && targetElement.isConnected) {
+              targetElement.textContent = hasKey ? 'true' : 'false';
+            }
+
+            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+              console.log('--storage has:', storageType, key, '=', hasKey);
+            }
+            break;
+          }
+
+          case 'size': {
+            let size = 0;
+            for (let i = 0; i < storage.length; i++) {
+              const key = storage.key(i);
+              if (key) {
+                const item = parseStorageItem(storage.getItem(key));
+                if (item) size++;
+              }
+            }
+            if (targetElement && targetElement.isConnected) {
+              targetElement.textContent = size.toString();
+            }
+
+            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+              console.log('--storage size:', storageType, size);
+            }
+            break;
+          }
+
+          default:
+            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+              console.warn('--storage failed: Unknown action', { action, command: '--storage', element: invoker });
+            }
+            return; // Gracefully handle unknown action
+        }
+      } catch (storageError) {
+        throw createInvokerError('--storage failed: Storage operation error', ErrorSeverity.ERROR, {
+          command: '--storage', element: invoker, cause: storageError as Error, recovery: 'Check storage availability and permissions.'
+        });
       }
     } catch (error) {
       if (error instanceof Error && 'severity' in error) {
@@ -157,7 +234,11 @@ export function registerStorageCommands(manager: InvokerManager): void {
       }
       throw createInvokerError(
         `Storage operation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        ErrorSeverity.ERROR
+        ErrorSeverity.ERROR,
+        {
+          command: '--storage',
+          recovery: 'Check storage type, action, and parameters'
+        }
       );
     }
   });

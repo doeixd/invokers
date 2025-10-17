@@ -331,6 +331,15 @@ describe('Expression Evaluation', () => {
         };
         expect(evaluateExpression('this.data[this.index] + this.data[this.index + 1]', arrayContext)).toBe(70); // data[2] + data[3] = 30 + 40 = 70
       });
+
+      it('should handle randomChoice function', () => {
+        const randomContext = {
+          adjectives: ['pretty', 'large', 'small'],
+          colors: ['red', 'blue', 'green']
+        };
+        const result = evaluateExpression('randomChoice(adjectives)', randomContext);
+        expect(['pretty', 'large', 'small']).toContain(result);
+      });
     });
   });
 
