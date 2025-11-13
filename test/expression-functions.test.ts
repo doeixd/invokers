@@ -10,6 +10,7 @@ import {
   validateExpressionFunctionCall,
   getAllExpressionFunctions,
   clearExpressionFunctionCache,
+  clearExpressionFunctions,
   hasExpressionFunction,
   getExpressionFunction
 } from '../src/advanced/expressions';
@@ -368,6 +369,10 @@ describe('Expression Functions', () => {
       });
 
       expect(() => callExpressionFunction('testError', 5)).toThrow();
+
+      // Clean up the test function
+      clearExpressionFunctions();
+      enableExpressionEngine(); // Re-register built-in functions
     });
 
     it.skip('should handle validation errors', () => {

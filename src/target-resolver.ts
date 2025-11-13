@@ -14,13 +14,6 @@ export function resolveTargets(selector: string, invoker: HTMLElement): Element[
     return [];
   }
 
-  if (!invoker || !invoker.isConnected) {
-    if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.warn('Invokers: Invoker element is not connected to DOM');
-    }
-    return [];
-  }
-
   const trimmedSelector = selector.trim();
   if (!trimmedSelector) {
     return [];
@@ -28,6 +21,12 @@ export function resolveTargets(selector: string, invoker: HTMLElement): Element[
 
   // 1. Contextual Selectors (prefixed with @)
   if (trimmedSelector.startsWith('@')) {
+    if (!invoker || !invoker.isConnected) {
+      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+        console.warn('Invokers: Invoker element is not connected to DOM');
+      }
+      return [];
+    }
     const match = trimmedSelector.match(/^@([a-z]+)\((.*)\)$/);
     if (!match) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {

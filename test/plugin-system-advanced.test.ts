@@ -423,10 +423,10 @@ describe('Advanced Plugin System', () => {
         name: 'monitoring-plugin',
         middleware: {
           [HookPoint.BEFORE_COMMAND]: (context, hookPoint) => {
+            metrics.commandsExecuted++;
             (context as any).startTime = Date.now();
           },
           [HookPoint.AFTER_COMMAND]: (context, hookPoint) => {
-            metrics.commandsExecuted++;
             const executionTime = Date.now() - ((context as any).startTime || 0);
             metrics.avgExecutionTime = (metrics.avgExecutionTime + executionTime) / 2;
           },
@@ -451,7 +451,7 @@ describe('Advanced Plugin System', () => {
       expect(metrics.avgExecutionTime).toBeGreaterThan(0);
 
       // Execute failing command
-      await invokerManager.executeCommand('--monitor-error', 'test-target', mockButton);
+      await expect(invokerManager.executeCommand('--monitor-error', 'test-target', mockButton)).rejects.toThrow();
 
       expect(metrics.commandsExecuted).toBe(2); // BEFORE_COMMAND is called even for failed commands
       expect(metrics.errorsCaught).toBe(1);

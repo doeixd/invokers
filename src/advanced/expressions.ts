@@ -339,6 +339,14 @@ class ExpressionFunctionRegistry {
   clearCache(): void {
     this.functionCache.clear();
   }
+
+  /**
+   * Clears all registered functions (for testing)
+   */
+  clear(): void {
+    this.functions.clear();
+    this.functionCache.clear();
+  }
 }
 
 // Global registry instance
@@ -410,6 +418,13 @@ export function getAllExpressionFunctions(): Map<string, ExpressionFunction> {
  */
 export function clearExpressionFunctionCache(): void {
   functionRegistry.clearCache();
+}
+
+/**
+ * Clears all registered expression functions (for testing)
+ */
+export function clearExpressionFunctions(): void {
+  functionRegistry.clear();
 }
 
 // Export category-specific enablers for modular usage
