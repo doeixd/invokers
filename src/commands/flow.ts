@@ -208,6 +208,82 @@ const flowCommands: Record<string, CommandCallback> = {
     }
   },
 
+  /**
+   * `--fetch:delete`: Sends a DELETE request via fetch.
+   *
+   * @example
+   * ```html
+   * <button type="button"
+   *   id="delete-btn"
+   *   command="--fetch:delete"
+   *   commandfor="delete-btn"
+   *   data-url="/api/delete"
+   * >
+   *   Submit via Fetch
+   * </button>
+   * ```
+   */
+  "--fetch:delete": async ({ invoker, targetElement }: CommandContext) => {
+    const validationErrors = validateElement(targetElement, { tagName: ['button'] });
+    if (validationErrors.length > 0) {
+      throw createInvokerError(`Fetch delete failed: ${validationErrors.join(', ')}`, ErrorSeverity.ERROR, {
+        command: '--fetch:delete', element: invoker, recovery: 'Ensure commandfor points to a <button> element.'
+      });
+    }
+    const button = targetElement as HTMLButtonElement;
+
+    const responseSelector = invoker.dataset.responseTarget;
+    const responseTarget = responseSelector ? document.querySelector<HTMLElement>(responseSelector) : button;
+    if (!responseTarget) {
+      throw createInvokerError(`Response target "${responseSelector}" not found`, ErrorSeverity.ERROR, {
+        command: '--fetch:delete', element: invoker
+      });
+    }
+
+    setBusyState(invoker, true);
+    showFeedbackState(invoker, responseTarget, "data-loading-template");
+
+    const url = button.dataset.url;
+    if (!url) {
+      throw createInvokerError(`  "${responseSelector}" not found`, ErrorSeverity.ERROR, {
+        command: '--fetch:delete', element: invoker
+      });
+    }
+    try {
+      const response = await fetch(url, {
+        method: "DELETE",
+        headers: getHeadersFromAttributes(invoker),
+      });
+
+      if (!response.ok) throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+
+      const html = await response.text();
+      const newContent = parseHTML(html);
+      const updateDOM = () => {
+        const strategy = invoker.dataset.replaceStrategy || "innerHTML";
+        if (strategy === "innerHTML")
+          responseTarget.replaceChildren(newContent);
+        else if (strategy === "outerHTML")
+          responseTarget.replaceWith(newContent);
+        else if (/(before|after)(begin|end)/.test(strategy)) {
+          const fragment = new DOMParser().parseFromString(html, "text/html").body.children[0];
+          responseTarget.insertAdjacentElement(strategy as InsertPosition, fragment)
+        }
+        else throw strategy;
+      };
+
+      await (document.startViewTransition ? document.startViewTransition(updateDOM).finished : Promise.resolve(updateDOM()));
+    } catch (error) {
+      showFeedbackState(invoker, responseTarget, "data-error-template");
+      throw createInvokerError('Fetch delete failed', ErrorSeverity.ERROR, {
+        command: '--fetch:delete', element: invoker, cause: error as Error,
+        recovery: 'Check the button definition, network connection, and server response.'
+      });
+    } finally {
+      setBusyState(invoker, false);
+    }
+  },
+
   // --- Command Control ---
 
   /**
