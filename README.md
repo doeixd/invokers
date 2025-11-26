@@ -57,110 +57,7 @@
     - **JS Framework Benchmark**: Complete declarative implementation of the JS Framework Benchmark
     - **Performance Optimizations**: Batch DOM operations and keyed rendering
 
-## 🚀 v2.0.0: Declarative Reactive Engine
-
-**Invokers v2.0.0 introduces a complete declarative reactive engine that rivals modern JavaScript frameworks while maintaining zero-JavaScript philosophy.**
-
-### Expression Functions
-Use 40+ built-in functions in `{{...}}` expressions for reactive computations:
-
-```html
-<!-- String operations -->
-<div>{{concat("Hello", " ", "World")}}</div>
-<div>{{uppercase("hello world")}}</div>
-<div>{{truncate("Long text here", 10)}}</div>
-
-<!-- Math operations -->
-<span>{{min(10, 20, 30)}}</span>
-<span>{{round(3.14159)}}</span>
-
-<!-- Array operations -->
-<div>{{arrayLength(items)}}</div>
-<div>{{join(selectedItems, ", ")}}</div>
-
-<!-- Conditional logic -->
-<div class="{{if(isActive, 'active', 'inactive')}}">
-  {{if(userCount > 1, pluralize(userCount, 'user'), 'user')}}
-</div>
-```
-
-### Loop Commands
-Declarative iteration with performance optimizations:
-
-```html
-<!-- Basic looping -->
-<div command="--dom:repeat-append:5" commandfor="#container">
-  <template>
-    <div>Item {{index1}} of {{count}}</div>
-  </template>
-</div>
-
-<!-- Data-driven rendering -->
-<div command="--data:render:items" commandfor="#data-store">
-  <template data-loop-item="items">
-    <div class="{{selected ? 'selected' : ''}}">
-      <h3>{{title}}</h3>
-      <p>{{description}}</p>
-      <button command="--data:array:toggle-selected"
-              data-item-id="{{id}}">
-        {{selected ? 'Deselect' : 'Select'}}
-      </button>
-    </div>
-  </template>
-</div>
-```
-
-### Random Data Generation
-Generate random data without JavaScript:
-
-```html
-<datalist id="colors">
-  <option value="red,blue,green,yellow,purple,orange">
-</datalist>
-
-<button command="--random:choice:colors" commandfor="#result">
-  Pick Random Color
-</button>
-
-<div id="result"></div>
-```
-
-### JS Framework Benchmark
-**Complete declarative implementation** of the JS Framework Benchmark:
-
-```html
-<!-- Create 1,000 rows -->
-<button command="--benchmark:create:1000" commandfor="#data">Create 1,000 rows</button>
-
-<!-- Update every 10th row -->
-<button command="--benchmark:update" commandfor="#data">Update every 10th row</button>
-
-<!-- Swap rows -->
-<button command="--benchmark:swap" commandfor="#data">Swap rows</button>
-
-<!-- Clear table -->
-<button command="--benchmark:clear" commandfor="#data">Clear</button>
-
-<!-- Declarative table rendering -->
-<table>
-  <tbody command="--data:render:benchmarkRows" commandfor="#data">
-    <template data-loop-item="benchmarkRows">
-      <tr class="{{selected ? 'selected' : ''}}">
-        <td>{{id}}</td>
-        <td>{{label}}</td>
-        <td>{{status}}</td>
-        <td>
-          <button command="--data:array:toggle-selected" data-item-id="{{id}}">
-            {{selected ? 'Deselect' : 'Select'}}
-          </button>
-        </td>
-      </tr>
-    </template>
-  </tbody>
-</table>
-```
-
-**Performance Results:** Invokers v2.0.0 achieves competitive performance with modern JS frameworks while maintaining pure HTML declarations.
+<br />
 
 ## Quick Demo
 
@@ -3370,6 +3267,111 @@ beforeEach(() => {
 - **Legacy browsers**: Graceful degradation
 - **Mobile browsers**: Touch and gesture support
 - **Accessibility**: Screen reader and keyboard navigation
+
+- ## 🚀 v2.0.0: Declarative Reactive Engine
+
+**Invokers v2.0.0 introduces a complete declarative reactive engine that rivals modern JavaScript frameworks while maintaining zero-JavaScript philosophy.**
+
+### Expression Functions
+Use 40+ built-in functions in `{{...}}` expressions for reactive computations:
+
+```html
+<!-- String operations -->
+<div>{{concat("Hello", " ", "World")}}</div>
+<div>{{uppercase("hello world")}}</div>
+<div>{{truncate("Long text here", 10)}}</div>
+
+<!-- Math operations -->
+<span>{{min(10, 20, 30)}}</span>
+<span>{{round(3.14159)}}</span>
+
+<!-- Array operations -->
+<div>{{arrayLength(items)}}</div>
+<div>{{join(selectedItems, ", ")}}</div>
+
+<!-- Conditional logic -->
+<div class="{{if(isActive, 'active', 'inactive')}}">
+  {{if(userCount > 1, pluralize(userCount, 'user'), 'user')}}
+</div>
+```
+
+### Loop Commands
+Declarative iteration with performance optimizations:
+
+```html
+<!-- Basic looping -->
+<div command="--dom:repeat-append:5" commandfor="#container">
+  <template>
+    <div>Item {{index1}} of {{count}}</div>
+  </template>
+</div>
+
+<!-- Data-driven rendering -->
+<div command="--data:render:items" commandfor="#data-store">
+  <template data-loop-item="items">
+    <div class="{{selected ? 'selected' : ''}}">
+      <h3>{{title}}</h3>
+      <p>{{description}}</p>
+      <button command="--data:array:toggle-selected"
+              data-item-id="{{id}}">
+        {{selected ? 'Deselect' : 'Select'}}
+      </button>
+    </div>
+  </template>
+</div>
+```
+
+### Random Data Generation
+Generate random data without JavaScript:
+
+```html
+<datalist id="colors">
+  <option value="red,blue,green,yellow,purple,orange">
+</datalist>
+
+<button command="--random:choice:colors" commandfor="#result">
+  Pick Random Color
+</button>
+
+<div id="result"></div>
+```
+
+### JS Framework Benchmark
+**Complete declarative implementation** of the JS Framework Benchmark:
+
+```html
+<!-- Create 1,000 rows -->
+<button command="--benchmark:create:1000" commandfor="#data">Create 1,000 rows</button>
+
+<!-- Update every 10th row -->
+<button command="--benchmark:update" commandfor="#data">Update every 10th row</button>
+
+<!-- Swap rows -->
+<button command="--benchmark:swap" commandfor="#data">Swap rows</button>
+
+<!-- Clear table -->
+<button command="--benchmark:clear" commandfor="#data">Clear</button>
+
+<!-- Declarative table rendering -->
+<table>
+  <tbody command="--data:render:benchmarkRows" commandfor="#data">
+    <template data-loop-item="benchmarkRows">
+      <tr class="{{selected ? 'selected' : ''}}">
+        <td>{{id}}</td>
+        <td>{{label}}</td>
+        <td>{{status}}</td>
+        <td>
+          <button command="--data:array:toggle-selected" data-item-id="{{id}}">
+            {{selected ? 'Deselect' : 'Select'}}
+          </button>
+        </td>
+      </tr>
+    </template>
+  </tbody>
+</table>
+```
+
+**Performance Results:** Invokers v2.0.0 achieves competitive performance with modern JS frameworks while maintaining pure HTML declarations.
 
 ## 🤝 Contributing
 
