@@ -8,14 +8,7 @@
 
 **Invokers lets you write future-proof HTML interactions without custom JavaScript.** It's a polyfill for the upcoming HTML Invoker Commands API and Interest Invokers (hover cards, tooltips), with a comprehensive set of extended commands automatically included for real-world needs like toggling, fetching, media controls, and complex workflow chaining.
 
-**🚀 v2.0.0 New Features:**
-- **Advanced Modules**: State management, control flow, components, and forms
-- **Expression Functions**: 40+ built-in functions for reactive computations (`{{concat("Hello", " ", "World")}}`)
-- **Loop Commands**: Declarative iteration and batch DOM operations
-- **Random Commands**: Generate random data without JavaScript
-- **Data Commands**: Advanced array operations and reactive data binding
-- **JS Framework Benchmark**: Complete declarative implementation of the JS Framework Benchmark
-- **Performance Optimizations**: Batch DOM operations and keyed rendering
+
 
 ## 📋 Table of Contents
 
@@ -55,6 +48,14 @@
 -   🚀 **Zero Dependencies & Tiny:** A featherlight addition to any project, framework-agnostic, and ready to use in seconds.
 -   🎨 **View Transitions:** Built-in, automatic support for the [View Transition API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API) for beautiful, animated UI changes with zero JS configuration.
 -   🔧 **Singleton Architecture:** Optimized internal architecture ensures consistent behavior and prevents duplicate registrations.
+-   **🚀 v2.0.0 New Features:**
+    - **Advanced Modules**: State management, control flow, components, and forms
+    - **Expression Functions**: 40+ built-in functions for reactive computations (`{{concat("Hello", " ", "World")}}`)
+    - **Loop Commands**: Declarative iteration and batch DOM operations
+    - **Random Commands**: Generate random data without JavaScript
+    - **Data Commands**: Advanced array operations and reactive data binding
+    - **JS Framework Benchmark**: Complete declarative implementation of the JS Framework Benchmark
+    - **Performance Optimizations**: Batch DOM operations and keyed rendering
 
 ## 🚀 v2.0.0: Declarative Reactive Engine
 
