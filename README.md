@@ -2,7 +2,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/doeixd/invokers)
 
-# ✨ Invokers v2.0.0
+# ✨ Invokers 
 
 ### _Write Interactive HTML Without Writing JavaScript_
 
