@@ -48,7 +48,7 @@
 -   🚀 **Zero Dependencies & Tiny:** A featherlight addition to any project, framework-agnostic, and ready to use in seconds.
 -   🎨 **View Transitions:** Built-in, automatic support for the [View Transition API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API) for beautiful, animated UI changes with zero JS configuration.
 -   🔧 **Singleton Architecture:** Optimized internal architecture ensures consistent behavior and prevents duplicate registrations.
--   **🚀 v2.0.0 New Features:**
+-   **🚀 New Features:**
     - **Advanced Modules**: State management, control flow, components, and forms
     - **Expression Functions**: 40+ built-in functions for reactive computations (`{{concat("Hello", " ", "World")}}`)
     - **Loop Commands**: Declarative iteration and batch DOM operations
@@ -3268,9 +3268,9 @@ beforeEach(() => {
 - **Mobile browsers**: Touch and gesture support
 - **Accessibility**: Screen reader and keyboard navigation
 
-- ## 🚀 v2.0.0: Declarative Reactive Engine
+- ## 🚀 = Declarative Reactive Engine
 
-**Invokers v2.0.0 introduces a complete declarative reactive engine that rivals modern JavaScript frameworks while maintaining zero-JavaScript philosophy.**
+**Latest Version of Invokers introduces a complete declarative reactive engine that rivals modern JavaScript frameworks while maintaining zero-JavaScript philosophy.**
 
 ### Expression Functions
 Use 40+ built-in functions in `{{...}}` expressions for reactive computations:
@@ -3336,42 +3336,7 @@ Generate random data without JavaScript:
 <div id="result"></div>
 ```
 
-### JS Framework Benchmark
-**Complete declarative implementation** of the JS Framework Benchmark:
 
-```html
-<!-- Create 1,000 rows -->
-<button command="--benchmark:create:1000" commandfor="#data">Create 1,000 rows</button>
-
-<!-- Update every 10th row -->
-<button command="--benchmark:update" commandfor="#data">Update every 10th row</button>
-
-<!-- Swap rows -->
-<button command="--benchmark:swap" commandfor="#data">Swap rows</button>
-
-<!-- Clear table -->
-<button command="--benchmark:clear" commandfor="#data">Clear</button>
-
-<!-- Declarative table rendering -->
-<table>
-  <tbody command="--data:render:benchmarkRows" commandfor="#data">
-    <template data-loop-item="benchmarkRows">
-      <tr class="{{selected ? 'selected' : ''}}">
-        <td>{{id}}</td>
-        <td>{{label}}</td>
-        <td>{{status}}</td>
-        <td>
-          <button command="--data:array:toggle-selected" data-item-id="{{id}}">
-            {{selected ? 'Deselect' : 'Select'}}
-          </button>
-        </td>
-      </tr>
-    </template>
-  </tbody>
-</table>
-```
-
-**Performance Results:** Invokers v2.0.0 achieves competitive performance with modern JS frameworks while maintaining pure HTML declarations.
 
 ## 🤝 Contributing
 
