@@ -3,6 +3,7 @@
  * Provides built-in validation rules and custom validation support.
  */
 
+import { debugLog, debugWarn, debugError } from '../../utils';
 // import { getStateStore } from '../state/store'; // Not currently used
 
 export interface ValidationRule {
@@ -191,7 +192,7 @@ class FormValidator {
           }
         });
       } catch (error) {
-        console.warn(`[InvokerForms] Invalid data-validate format:`, dataValidate);
+        debugWarn(`[InvokerForms] Invalid data-validate format:`, dataValidate);
       }
     }
 

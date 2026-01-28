@@ -16,6 +16,7 @@
  * ```
  */
 
+import { debugLog, debugWarn, debugError } from '../utils';
 import type { InvokerManager } from '../core';
 import type { CommandCallback, CommandContext } from '../index';
 import { createInvokerError, ErrorSeverity } from '../index';
@@ -54,7 +55,7 @@ const deviceCommands: Record<string, CommandCallback> = {
 
        if (!('vibrate' in navigator) || typeof navigator.vibrate !== 'function') {
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.warn('--device:vibrate: Vibration API not supported');
+           debugWarn('--device:vibrate: Vibration API not supported');
          }
          return;
        }
@@ -65,11 +66,11 @@ const deviceCommands: Record<string, CommandCallback> = {
 
          if (!vibrateResult) {
            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-             console.warn('--device:vibrate: Vibration failed - may be blocked or not supported');
+             debugWarn('--device:vibrate: Vibration failed - may be blocked or not supported');
            }
          } else {
            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-             console.log('--device:vibrate: Vibration triggered with pattern:', vibrationPattern);
+             debugLog('--device:vibrate: Vibration triggered with pattern:', vibrationPattern);
            }
          }
        } catch (error) {
@@ -92,7 +93,7 @@ const deviceCommands: Record<string, CommandCallback> = {
      try {
        if (!('share' in navigator) || typeof (navigator as any).share !== 'function') {
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.warn('--device:share: Web Share API not supported');
+           debugWarn('--device:share: Web Share API not supported');
          }
          return;
        }
@@ -121,7 +122,7 @@ const deviceCommands: Record<string, CommandCallback> = {
          document.dispatchEvent(new CustomEvent('device:share:success'));
 
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.log('--device:share: Content shared successfully');
+           debugLog('--device:share: Content shared successfully');
          }
        } catch (shareError) {
          // User cancelled or error occurred
@@ -130,7 +131,7 @@ const deviceCommands: Record<string, CommandCallback> = {
          }));
 
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.log('--device:share: Share cancelled or failed:', shareError);
+           debugLog('--device:share: Share cancelled or failed:', shareError);
          }
        }
      } catch (error) {
@@ -154,7 +155,7 @@ const deviceCommands: Record<string, CommandCallback> = {
 
         if (!('geolocation' in navigator) || typeof navigator.geolocation?.getCurrentPosition !== 'function') {
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.warn('--device:geolocation:get: Geolocation API not supported');
+            debugWarn('--device:geolocation:get: Geolocation API not supported');
           }
           return;
         }
@@ -175,7 +176,7 @@ const deviceCommands: Record<string, CommandCallback> = {
        const hasGeoPermission = await requestPermission('geolocation');
        if (!hasGeoPermission) {
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.warn('--device:geolocation:get: Geolocation permission not granted');
+           debugWarn('--device:geolocation:get: Geolocation permission not granted');
          }
          document.dispatchEvent(new CustomEvent('device:geolocation:denied'));
          return;
@@ -207,7 +208,7 @@ const deviceCommands: Record<string, CommandCallback> = {
            document.dispatchEvent(new CustomEvent('device:geolocation:success', { detail: data }));
 
            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-             console.log('--device:geolocation:get: Location retrieved successfully');
+             debugLog('--device:geolocation:get: Location retrieved successfully');
            }
          },
          (error) => {
@@ -219,7 +220,7 @@ const deviceCommands: Record<string, CommandCallback> = {
            document.dispatchEvent(new CustomEvent('device:geolocation:error', { detail: errorData }));
 
            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-             console.warn('--device:geolocation:get: Location retrieval failed:', error.message);
+             debugWarn('--device:geolocation:get: Location retrieval failed:', error.message);
            }
          },
          geoOptions
@@ -239,7 +240,7 @@ const deviceCommands: Record<string, CommandCallback> = {
      try {
        if (!window.DeviceOrientationEvent) {
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.warn('--device:orientation:get: Device Orientation API not supported');
+           debugWarn('--device:orientation:get: Device Orientation API not supported');
          }
          return;
        }
@@ -260,7 +261,7 @@ const deviceCommands: Record<string, CommandCallback> = {
        document.dispatchEvent(new CustomEvent('device:orientation:current', { detail: orientationData }));
 
        if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-         console.log('--device:orientation:get: Orientation retrieved:', orientationData);
+         debugLog('--device:orientation:get: Orientation retrieved:', orientationData);
        }
      } catch (error) {
        throw createInvokerError('--device:orientation:get failed', ErrorSeverity.ERROR, {
@@ -277,7 +278,7 @@ const deviceCommands: Record<string, CommandCallback> = {
      try {
        if (!window.DeviceMotionEvent) {
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.warn('--device:motion:get: Device Motion API not supported');
+           debugWarn('--device:motion:get: Device Motion API not supported');
          }
          return;
        }
@@ -290,13 +291,13 @@ const deviceCommands: Record<string, CommandCallback> = {
            const permission = await (DeviceMotionEvent as any).requestPermission();
            if (permission !== 'granted') {
              if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-               console.warn('--device:motion:get: Device motion permission denied');
+               debugWarn('--device:motion:get: Device motion permission denied');
              }
              return;
            }
          } catch (error) {
            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-             console.warn('--device:motion:get: Failed to request device motion permission:', error);
+             debugWarn('--device:motion:get: Failed to request device motion permission:', error);
            }
            return;
          }
@@ -309,7 +310,7 @@ const deviceCommands: Record<string, CommandCallback> = {
        }
 
        if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-         console.log('--device:motion:get: Motion API support confirmed');
+         debugLog('--device:motion:get: Motion API support confirmed');
        }
      } catch (error) {
        throw createInvokerError('--device:motion:get failed', ErrorSeverity.ERROR, {
@@ -325,7 +326,7 @@ const deviceCommands: Record<string, CommandCallback> = {
    "--device:battery:get": async ({ getTargets }: CommandContext) => {
      try {
         if (!('getBattery' in navigator) || typeof (navigator as any).getBattery !== 'function') {
-          console.warn('Invokers: Battery API not supported');
+          debugWarn('Invokers: Battery API not supported');
           return;
         }
 
@@ -346,7 +347,7 @@ const deviceCommands: Record<string, CommandCallback> = {
          document.dispatchEvent(new CustomEvent('device:battery:status', { detail: data }));
 
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.log('--device:battery:get: Battery status retrieved:', data);
+           debugLog('--device:battery:get: Battery status retrieved:', data);
          }
        } catch (batteryError) {
          throw createInvokerError('--device:battery:get failed: Error retrieving battery status', ErrorSeverity.ERROR, {
@@ -367,7 +368,7 @@ const deviceCommands: Record<string, CommandCallback> = {
    "--device:clipboard:read": async ({ getTargets }: CommandContext) => {
      try {
         if (!navigator.clipboard?.readText) {
-          console.warn('Invokers: Clipboard read failed');
+          debugWarn('Invokers: Clipboard read failed');
           return;
         }
 
@@ -385,11 +386,11 @@ const deviceCommands: Record<string, CommandCallback> = {
          document.dispatchEvent(new CustomEvent('device:clipboard:read', { detail: clipboardText }));
 
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.log('--device:clipboard:read: Clipboard text read successfully');
+           debugLog('--device:clipboard:read: Clipboard text read successfully');
          }
         } catch (clipboardError) {
           document.dispatchEvent(new CustomEvent('device:clipboard:denied'));
-          console.warn('Invokers: Clipboard read failed', clipboardError);
+          debugWarn('Invokers: Clipboard read failed', clipboardError);
         }
      } catch (error) {
        throw createInvokerError('--device:clipboard:read failed', ErrorSeverity.ERROR, {
@@ -412,7 +413,7 @@ const deviceCommands: Record<string, CommandCallback> = {
 
        if (!navigator.clipboard?.writeText) {
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.warn('--device:clipboard:write: Clipboard write not supported');
+           debugWarn('--device:clipboard:write: Clipboard write not supported');
          }
          return;
        }
@@ -435,13 +436,13 @@ const deviceCommands: Record<string, CommandCallback> = {
          document.dispatchEvent(new CustomEvent('device:clipboard:written', { detail: textToWrite }));
 
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.log('--device:clipboard:write: Text written to clipboard successfully');
+           debugLog('--device:clipboard:write: Text written to clipboard successfully');
          }
        } catch (clipboardError) {
          document.dispatchEvent(new CustomEvent('device:clipboard:denied'));
 
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.warn('--device:clipboard:write: Clipboard write failed:', clipboardError);
+           debugWarn('--device:clipboard:write: Clipboard write failed:', clipboardError);
          }
        }
      } catch (error) {
@@ -458,7 +459,7 @@ const deviceCommands: Record<string, CommandCallback> = {
    "--device:wake-lock": async (): Promise<void> => {
      try {
         if (!('wakeLock' in navigator) || typeof (navigator as any).wakeLock?.request !== 'function') {
-          console.warn('Invokers: Wake lock request failed');
+          debugWarn('Invokers: Wake lock request failed');
           return;
         }
 
@@ -470,11 +471,11 @@ const deviceCommands: Record<string, CommandCallback> = {
          document.dispatchEvent(new CustomEvent('device:wake-lock:acquired'));
 
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.log('--device:wake-lock: Wake lock acquired successfully');
+           debugLog('--device:wake-lock: Wake lock acquired successfully');
          }
         } catch (wakeError) {
           document.dispatchEvent(new CustomEvent('device:wake-lock:denied'));
-          console.warn('Invokers: Wake lock request failed', wakeError);
+          debugWarn('Invokers: Wake lock request failed', wakeError);
         }
      } catch (error) {
        throw createInvokerError('--device:wake-lock failed', ErrorSeverity.ERROR, {
@@ -495,11 +496,11 @@ const deviceCommands: Record<string, CommandCallback> = {
          document.dispatchEvent(new CustomEvent('device:wake-lock:released'));
 
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.log('--device:wake-lock:release: Wake lock released successfully');
+           debugLog('--device:wake-lock:release: Wake lock released successfully');
          }
        } else {
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.warn('--device:wake-lock:release: No active wake lock to release');
+           debugWarn('--device:wake-lock:release: No active wake lock to release');
          }
        }
      } catch (error) {

@@ -3,6 +3,7 @@
  * Provides data-switch/data-case attributes for switch-case conditional rendering.
  */
 
+import { debugLog, debugWarn, debugError } from '../../utils';
 import { getStateStore } from '../state/store';
 
 interface SwitchElement {
@@ -120,7 +121,7 @@ class SwitchRenderer {
         }
       });
     } catch (error) {
-      console.warn(`[InvokerControl] Failed to evaluate switch "${switchValue}":`, error);
+      debugWarn(`[InvokerControl] Failed to evaluate switch "${switchValue}":`, error);
     }
   }
 
@@ -142,7 +143,7 @@ class SwitchRenderer {
       const result = new Function(`return ${processedValue};`)();
       return result;
     } catch (error) {
-      console.warn(`[InvokerControl] Switch value evaluation error: ${switchValue}`, error);
+      debugWarn(`[InvokerControl] Switch value evaluation error: ${switchValue}`, error);
       return null;
     }
   }

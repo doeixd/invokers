@@ -27,6 +27,7 @@
  * ```
  */
 
+import { debugLog, debugWarn, debugError } from '../utils';
 import { InvokerManager } from '../core';
 import { interpolateString } from './interpolation';
 import { enableAllHelpers, enableStringHelpers, enableArrayHelpers, enableMathHelpers, enableDateHelpers, enableUtilityHelpers } from './expression/categories';
@@ -73,7 +74,7 @@ export function enableExpressionEngine(): void {
   registerBuiltInFunctions();
 
   if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-    console.log("Invokers: Expression Engine ({{...}}) enabled.");
+    debugLog("Invokers: Expression Engine ({{...}}) enabled.");
   }
 }
 
@@ -115,7 +116,7 @@ class ExpressionFunctionRegistry {
    */
   register(func: ExpressionFunction): void {
     if (this.functions.has(func.name)) {
-      console.warn(`Invokers: Expression function "${func.name}" is being overwritten`);
+      debugWarn(`Invokers: Expression function "${func.name}" is being overwritten`);
     }
     this.functions.set(func.name, func);
     // Clear cache when function is registered/updated
@@ -170,7 +171,7 @@ class ExpressionFunctionRegistry {
     // Check cache if we have a valid key
     if (cacheKey && this.functionCache.has(cacheKey)) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.log(`Invokers: Using cached result for ${name}`);
+        debugLog(`Invokers: Using cached result for ${name}`);
       }
       return this.functionCache.get(cacheKey);
     }
@@ -179,13 +180,13 @@ class ExpressionFunctionRegistry {
       const startTime = typeof window !== 'undefined' && (window as any).Invoker?.debug ? performance.now() : 0;
 
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.log(`Invokers: About to call ${name} with args:`, args);
+        debugLog(`Invokers: About to call ${name} with args:`, args);
       }
       const result = func.implementation(...args);
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.log(`Invokers: Function ${name} returned:`, result);
+        debugLog(`Invokers: Function ${name} returned:`, result);
         const endTime = performance.now();
-        console.log(`Invokers: Function ${name} executed in ${(endTime - startTime).toFixed(2)}ms`);
+        debugLog(`Invokers: Function ${name} executed in ${(endTime - startTime).toFixed(2)}ms`);
       }
 
       // Cache pure function results (avoid caching functions that return different results)
@@ -202,7 +203,7 @@ class ExpressionFunctionRegistry {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.log(`Invokers: Function ${name} threw error:`, error);
+        debugLog(`Invokers: Function ${name} threw error:`, error);
       }
       throw new Error(`Invokers: Expression function "${name}" failed: ${errorMessage}. Function signature: ${this.getFunctionSignature(func)}`);
     }
@@ -275,7 +276,7 @@ class ExpressionFunctionRegistry {
     }
 
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.log(`Invokers: Evicted ${toRemove} old cache entries`);
+      debugLog(`Invokers: Evicted ${toRemove} old cache entries`);
     }
   }
 
@@ -394,7 +395,7 @@ export function hasExpressionFunction(name: string): boolean {
  */
 export function callExpressionFunction(name: string, ...args: any[]): any {
   if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-    console.log('Invokers: callExpressionFunction called with:', name, args);
+    debugLog('Invokers: callExpressionFunction called with:', name, args);
   }
   return functionRegistry.call(name, ...args);
 }

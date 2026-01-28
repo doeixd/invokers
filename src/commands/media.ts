@@ -16,6 +16,7 @@
  * ```
  */
 
+import { debugLog, debugWarn, debugError } from '../utils';
 import type { InvokerManager } from '../core';
 import type { CommandCallback, CommandContext } from '../index';
 import { createInvokerError, ErrorSeverity, validateElement } from '../index';
@@ -214,8 +215,8 @@ const mediaCommands: Record<string, CommandCallback> = {
    *   <div>Slide 1</div>
    *   <div hidden>Slide 2</div>
    * </div>
-   * <button type="button" command="--carousel:nav:prev" commandfor="my-carousel">‹</button>
-   * <button type="button" command="--carousel:nav:next" commandfor="my-carousel">›</button>
+   * <button type="button" command="--carousel:nav:prev" commandfor="my-carousel">ΓÇ╣</button>
+   * <button type="button" command="--carousel:nav:next" commandfor="my-carousel">ΓÇ║</button>
    * ```
    */
   "--carousel:nav": ({ invoker, targetElement, params }: CommandContext) => {
@@ -243,7 +244,7 @@ const mediaCommands: Record<string, CommandCallback> = {
       const slides = Array.from(targetElement.children) as HTMLElement[];
       if (slides.length < 2) {
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.warn('Carousel has fewer than 2 slides, navigation skipped');
+          debugWarn('Carousel has fewer than 2 slides, navigation skipped');
         }
         return;
       }
@@ -265,7 +266,7 @@ const mediaCommands: Record<string, CommandCallback> = {
         document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
       } catch (error) {
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.warn('View transition failed, falling back to direct update:', error);
+          debugWarn('View transition failed, falling back to direct update:', error);
         }
         updateDOM();
       }
@@ -641,7 +642,7 @@ const mediaCommands: Record<string, CommandCallback> = {
 
       if (!validAnimations.includes(animation)) {
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.warn(`Invokers: Unknown animation "${animation}". Valid animations: ${validAnimations.join(', ')}`);
+          debugWarn(`Invokers: Unknown animation "${animation}". Valid animations: ${validAnimations.join(', ')}`);
         }
         return; // Skip invalid animations instead of throwing
       }
@@ -690,7 +691,7 @@ const mediaCommands: Record<string, CommandCallback> = {
       targets.forEach(target => {
         if (!target.isConnected) {
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.warn('Invokers: Skipping disconnected target element', target);
+            debugWarn('Invokers: Skipping disconnected target element', target);
           }
           return;
         }
@@ -736,7 +737,7 @@ const mediaCommands: Record<string, CommandCallback> = {
           }, durationMs + delayMs + 100); // Add 100ms buffer
         } catch (error) {
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.error('Error animating target element:', error);
+            debugError('Error animating target element:', error);
           }
         }
       });

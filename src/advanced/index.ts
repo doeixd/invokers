@@ -3,7 +3,7 @@
 import { InvokerManager } from '../core';
 import { EventTriggerManager } from './event-trigger-manager';
 import { interpolateString } from './interpolation';
-import { generateUid } from '../utils';
+import { generateUid, debugLog, debugWarn, debugError } from '../utils';
 
 /**
  * Enables advanced event triggering (e.g., `command-on`, `data-on-event`)
@@ -32,7 +32,7 @@ export function enableAdvancedEvents(): void {
   EventTriggerManager.getInstance().initialize();
 
   if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-  console.log("Invokers: Advanced event features (command-on, data-on-event, interpolation, templating) enabled.");
+  debugLog("Invokers: Advanced event features (command-on, data-on-event, interpolation, templating) enabled.");
 }
 }
 

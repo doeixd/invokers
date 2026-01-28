@@ -16,6 +16,7 @@
  * ```
  */
 
+import { debugLog, debugWarn, debugError } from '../utils';
 import type { InvokerManager } from '../core';
 import type { CommandCallback, CommandContext } from '../index';
 import { createInvokerError, ErrorSeverity } from '../index';
@@ -42,7 +43,7 @@ const browserCommands: Record<string, CommandCallback> = {
 
       const key = params[0];
       if (!key) {
-        console.error('URL params-get command requires a parameter name');
+        debugError('URL params-get command requires a parameter name');
         return;
       }
 
@@ -85,7 +86,7 @@ const browserCommands: Record<string, CommandCallback> = {
       }
 
       if (!key) {
-        console.error('URL params-set command requires a parameter name');
+        debugError('URL params-set command requires a parameter name');
         return;
       }
 
@@ -393,7 +394,7 @@ const browserCommands: Record<string, CommandCallback> = {
     const stateJson = params.join(':');
     
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.log('History state set params:', params, 'joined:', stateJson);
+      debugLog('History state set params:', params, 'joined:', stateJson);
     }
     
     if (!stateJson) {
@@ -446,7 +447,7 @@ const browserCommands: Record<string, CommandCallback> = {
              cookieString += `; expires=${date.toUTCString()}`;
            } else {
              if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-               console.warn('--cookie:set: Invalid expires value, ignoring:', expires);
+               debugWarn('--cookie:set: Invalid expires value, ignoring:', expires);
              }
            }
          }
@@ -454,7 +455,7 @@ const browserCommands: Record<string, CommandCallback> = {
          document.cookie = cookieString;
 
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.log('--cookie:set: Cookie set successfully:', key, '=', value);
+           debugLog('--cookie:set: Cookie set successfully:', key, '=', value);
          }
        } catch (error) {
          throw createInvokerError('--cookie:set failed: Error setting cookie', ErrorSeverity.ERROR, {
@@ -498,7 +499,7 @@ const browserCommands: Record<string, CommandCallback> = {
              }
 
              if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-               console.log('--cookie:get: Cookie retrieved:', key, '=', decodedValue);
+               debugLog('--cookie:get: Cookie retrieved:', key, '=', decodedValue);
              }
              return;
            }
@@ -510,7 +511,7 @@ const browserCommands: Record<string, CommandCallback> = {
          }
 
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.log('--cookie:get: Cookie not found:', key);
+           debugLog('--cookie:get: Cookie not found:', key);
          }
        } catch (error) {
          throw createInvokerError('--cookie:get failed: Error retrieving cookie', ErrorSeverity.ERROR, {
@@ -541,7 +542,7 @@ const browserCommands: Record<string, CommandCallback> = {
          document.cookie = `${encodeURIComponent(key)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
 
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.log('--cookie:remove: Cookie removed:', key);
+           debugLog('--cookie:remove: Cookie removed:', key);
          }
        } catch (error) {
          throw createInvokerError('--cookie:remove failed: Error removing cookie', ErrorSeverity.ERROR, {

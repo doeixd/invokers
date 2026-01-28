@@ -3,6 +3,7 @@
  * This provides the basic expression evaluation engine for minimal bundle size
  */
 
+import { debugLog, debugWarn, debugError } from '../../utils';
 import { InvokerManager } from '../../core';
 import { interpolateString } from '../interpolation';
 import { evaluateExpression } from './index';
@@ -42,7 +43,7 @@ export function enableCoreExpressionEngine(): void {
   }
 
   if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-    console.log("Invokers: Core Expression Engine ({{...}}) enabled (no helpers).");
+    debugLog("Invokers: Core Expression Engine ({{...}}) enabled (no helpers).");
   }
 }
 

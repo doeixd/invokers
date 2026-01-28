@@ -1,4 +1,5 @@
 // src/commands/loop.ts
+import { debugLog, debugWarn, debugError } from '../utils';
 import type { InvokerManager, CommandContext } from '../core';
 import { createInvokerError, ErrorSeverity, isInterpolationEnabled } from '../index';
 import { interpolateString } from '../advanced/interpolation';
@@ -198,7 +199,7 @@ function processLoopFragment(
       Object.assign(fullContext, jsonData);
     } catch (error) {
       if (typeof window !== 'undefined' && (window as any).Invoker && (window as any).Invoker.debug) {
-        console.warn('Invokers: Invalid JSON in data-with-json:', error);
+        debugWarn('Invokers: Invalid JSON in data-with-json:', error);
       }
     }
   }
@@ -213,7 +214,7 @@ function processLoopFragment(
             node.textContent = interpolateString(textContent, fullContext);
           } catch (error) {
             if (typeof window !== 'undefined' && (window as any).Invoker && (window as any).Invoker.debug) {
-              console.warn('Invokers: Loop interpolation error:', error);
+              debugWarn('Invokers: Loop interpolation error:', error);
             }
           }
         }
@@ -235,7 +236,7 @@ function processLoopFragment(
           element.setAttribute(attr.name, interpolated);
         } catch (error) {
           if (typeof window !== 'undefined' && (window as any).Invoker && (window as any).Invoker.debug) {
-            console.warn('Invokers: Loop attribute interpolation error:', error);
+            debugWarn('Invokers: Loop attribute interpolation error:', error);
           }
         }
       }
@@ -256,6 +257,24 @@ async function batchedOperation(
   return new Promise((resolve) => {
     let currentIndex = 0;
 
+    const isJsdom = typeof navigator !== 'undefined' && navigator.userAgent?.includes('jsdom');
+    const scheduleBatch = (!isJsdom && typeof requestAnimationFrame === 'function' &&
+      (typeof document === 'undefined' || document.visibilityState !== 'hidden'))
+      ? requestAnimationFrame
+      : (callback: () => void) => setTimeout(callback, 0);
+
+    if (isJsdom) {
+      while (currentIndex < count) {
+        const end = Math.min(currentIndex + BATCH_SIZE, count);
+        const batchFragment = document.createDocumentFragment();
+        operation(batchFragment, currentIndex, end);
+        targetElement.appendChild(batchFragment);
+        currentIndex = end;
+      }
+      resolve();
+      return;
+    }
+
     const processBatch = () => {
       const end = Math.min(currentIndex + BATCH_SIZE, count);
       const batchFragment = document.createDocumentFragment();
@@ -268,13 +287,13 @@ async function batchedOperation(
       currentIndex = end;
 
       if (currentIndex < count) {
-        requestAnimationFrame(processBatch);
+        scheduleBatch(processBatch);
       } else {
         resolve();
       }
     };
 
-    requestAnimationFrame(processBatch);
+    scheduleBatch(processBatch);
   });
 }
 
@@ -406,7 +425,7 @@ export function registerLoopCommands(manager: InvokerManager): void {
         }
 
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.log('--dom:repeat-append: Appended', count, 'template instances to target element');
+          debugLog('--dom:repeat-append: Appended', count, 'template instances to target element');
         }
        } catch (error) {
         throw createInvokerError(
@@ -786,7 +805,7 @@ export function registerLoopCommands(manager: InvokerManager): void {
       }
 
         if (typeof window !== 'undefined' && (window as any).Invoker && (window as any).Invoker.debug) {
-          console.log(`Invokers: Updated ${Math.ceil(elements.length / step)} elements (every ${step}th)`);
+          debugLog(`Invokers: Updated ${Math.ceil(elements.length / step)} elements (every ${step}th)`);
         }
 
       } catch (error) {

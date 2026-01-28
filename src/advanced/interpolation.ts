@@ -1,7 +1,7 @@
 // src/interpolation.ts
 
 import { evaluateExpressionWithHelpers } from './expression';
-import { generateUid } from '../utils';
+import { generateUid, debugLog, debugWarn, debugError } from '../utils';
 
 // Global data context storage
 const dataContexts: Record<string, Record<string, any>> = {};
@@ -35,7 +35,7 @@ export function interpolateString(template: string, context: Record<string, any>
 
   // Limit template size to prevent DoS
   if (template.length > 10000) {
-    console.warn('Invokers: Template too large, truncating');
+    debugWarn('Invokers: Template too large, truncating');
     template = template.substring(0, 10000);
   }
 
@@ -45,7 +45,7 @@ export function interpolateString(template: string, context: Record<string, any>
    result = result.replace(/\{\{(.*?)\}\}/g, (_, expression) => {
      replacements++;
      if (replacements > 50) {
-       console.warn('Invokers: Too many interpolations in template, stopping');
+       debugWarn('Invokers: Too many interpolations in template, stopping');
        return '';
      }
 
@@ -80,7 +80,7 @@ export function interpolateString(template: string, context: Record<string, any>
        const value = evaluateExpressionWithHelpers(trimmedExpression, context);
        return value !== undefined && value !== null ? String(value) : '';
      } catch (error) {
-       console.warn(`Invokers: Expression evaluation failed in interpolation: ${expression}`, error);
+       debugWarn(`Invokers: Expression evaluation failed in interpolation: ${expression}`, error);
        return '';
      }
    });
@@ -173,7 +173,7 @@ function notifyContextListeners(contextKey: string): void {
       try {
         listener();
       } catch (error) {
-        console.error('Invokers: Error in context listener:', error);
+        debugError('Invokers: Error in context listener:', error);
       }
     });
   }

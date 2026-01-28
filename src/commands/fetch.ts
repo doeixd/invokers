@@ -15,6 +15,7 @@
  * ```
  */
 
+import { debugLog, debugWarn, debugError } from '../utils';
 import type { InvokerManager } from '../core';
 import type { CommandCallback, CommandContext } from '../index';
 import { createInvokerError, ErrorSeverity } from '../index';
@@ -325,7 +326,7 @@ async function executeFetch({
 
       // Log error in debug mode
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.error(`${command} failed:`, error);
+        debugError(`${command} failed:`, error);
       }
 
       return; // Exit gracefully without throwing
@@ -360,7 +361,7 @@ async function executeFetch({
 
     // Log error in debug mode
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.error(`${command} failed:`, error);
+      debugError(`${command} failed:`, error);
     }
 
     // Handle gracefully - do not re-throw to allow command chain to continue
@@ -396,7 +397,7 @@ function buildHeaders(invoker: HTMLElement, _method: string): HeadersInit {
     return headers;
   } catch (error) {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.error('Failed to build headers:', error);
+      debugError('Failed to build headers:', error);
     }
     return {};
   }
@@ -559,7 +560,7 @@ async function handleResponse(
             targetElement.textContent = html;
           } else {
             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-              console.error(`Invalid replace strategy: ${strategy}. Use "innerHTML", "outerHTML", "text", or "beforebegin"/"afterbegin"/"beforeend"/"afterend"`);
+              debugError(`Invalid replace strategy: ${strategy}. Use "innerHTML", "outerHTML", "text", or "beforebegin"/"afterbegin"/"beforeend"/"afterend"`);
             }
             return; // Don't update DOM for invalid strategy
           }
@@ -598,7 +599,7 @@ function setBusyState(element: HTMLElement, busy: boolean): void {
     }
   } catch (error) {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.error('Failed to set busy state:', error);
+      debugError('Failed to set busy state:', error);
     }
   }
 }
@@ -627,7 +628,7 @@ function showFeedbackState(invoker: HTMLElement, target: HTMLElement, templateAt
     }
   } catch (error) {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.error('Failed to show feedback state:', error);
+      debugError('Failed to show feedback state:', error);
     }
   }
 }
@@ -648,7 +649,7 @@ function getHeadersFromAttributes(element: HTMLElement): HeadersInit {
           headers[headerName] = value;
         } catch (error) {
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.warn(`Failed to process header attribute ${key}:`, error);
+            debugWarn(`Failed to process header attribute ${key}:`, error);
           }
         }
       }
@@ -657,7 +658,7 @@ function getHeadersFromAttributes(element: HTMLElement): HeadersInit {
     return headers;
   } catch (error) {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.error('Failed to get headers from attributes:', error);
+      debugError('Failed to get headers from attributes:', error);
     }
     return {};
   }
@@ -676,7 +677,7 @@ function parseHTML(html: string): DocumentFragment {
     return template.content;
   } catch (error) {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.error('Failed to parse HTML:', error);
+      debugError('Failed to parse HTML:', error);
     }
     // Return empty fragment on error
     const emptyTemplate = document.createElement('template');

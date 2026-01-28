@@ -17,6 +17,7 @@
  * registerDemoCommands();
  */
 
+import { debugLog, debugWarn, debugError } from './utils';
 import type { CommandContext } from "./index";
 import { createInvokerError, ErrorSeverity } from "./index";
 
@@ -230,7 +231,7 @@ export const demoCommands: CommandRegistry = {
         <div class="todo-item ${completedClass}" style="padding: 10px; border-bottom: 1px solid #eee;">
           <strong>${item.title}</strong>
           <span style="float: right; color: ${item.priority === 'high' ? '#e53e3e' : item.priority === 'medium' ? '#d69e2e' : '#38a169'};">${item.priority}</span>
-          ${item.completed ? '<span style="color: #38a169;">✓</span>' : ''}
+          ${item.completed ? '<span style="color: #38a169;">Γ£ô</span>' : ''}
         </div>
       `;
     });
@@ -340,7 +341,7 @@ export const demoCommands: CommandRegistry = {
 
     targetElement.textContent = `Debug mode: ${newMode ? 'ENABLED' : 'DISABLED'}\n`;
     targetElement.textContent += newMode ?
-      'Detailed command execution logs will be shown in console.\n' :
+      'Enable window.Invoker.debug for detailed command execution logs.\n' :
       'Debug logging disabled.\n';
   },
 
@@ -381,7 +382,7 @@ export const demoCommands: CommandRegistry = {
  */
 export function registerDemoCommands(specificCommands?: string[]): void {
   if (!window.Invoker?.register) {
-    console.error("Invokers: Core library not found. Ensure it is loaded before the demo commands module.");
+    debugError("Invokers: Core library not found. Ensure it is loaded before the demo commands module.");
     return;
   }
 
@@ -394,7 +395,7 @@ export function registerDemoCommands(specificCommands?: string[]): void {
     if (demoCommands[normalizedName]) {
       window.Invoker?.register?.(normalizedName, demoCommands[normalizedName]);
     } else {
-      console.warn(`Invokers: Demo command "${name}" was requested but not found. Skipping registration.`);
+      debugWarn(`Invokers: Demo command "${name}" was requested but not found. Skipping registration.`);
     }
   }
 }

@@ -3,6 +3,7 @@
  * Provides commands for validation, submission, and form state management.
  */
 
+import { debugLog, debugWarn, debugError } from '../../utils';
 import { InvokerManager } from '../../core';
 import { validateForm } from './validation';
 import { getFormState, setFormSubmitting, setFormErrors } from './state';
@@ -95,7 +96,7 @@ const formCommands: Record<string, any> = {
         const formName = params[0] || form.getAttribute('data-form-state');
         if (formName) {
           // This would integrate with form state management
-          console.log(`Resetting form: ${formName}`);
+          debugLog(`Resetting form: ${formName}`);
         }
       }
 

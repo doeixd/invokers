@@ -16,13 +16,36 @@
  * ```
  */
 
+import { debugLog, debugWarn, debugError } from '../utils';
 import type { InvokerManager } from '../core';
 import type { CommandCallback, CommandContext } from '../index';
 import { createInvokerError, ErrorSeverity, isInterpolationEnabled } from '../index';
 import { interpolateString } from '../advanced/interpolation';
 import { resolveTargets } from '../target-resolver';
 
+const numberValuePattern = /^-?\d+(?:\.\d+)?$/;
 
+function coerceDatasetValues(dataset?: DOMStringMap): Record<string, string | number> {
+  if (!dataset) {
+    return {};
+  }
+
+  const result: Record<string, string | number> = {};
+  for (const [key, value] of Object.entries(dataset)) {
+    if (value == null) {
+      continue;
+    }
+    const trimmed = value.trim();
+    if (trimmed && numberValuePattern.test(trimmed)) {
+      const numericValue = Number(trimmed);
+      result[key] = Number.isFinite(numericValue) ? numericValue : value;
+    } else {
+      result[key] = value;
+    }
+  }
+
+  return result;
+}
 
 /**
  * Data manipulation commands for complex data operations and state management.
@@ -406,7 +429,7 @@ const dataCommands: Record<string, CommandCallback> = {
    * @example `<button command="--data:generate:array:numbers" data-count="10" data-pattern="index" commandfor="#app">Generate Numbers</button>`
    */
   "--data:generate:array": ({ invoker, targetElement, params }: CommandContext) => {
-    console.log('Invokers: --data:generate:array EXECUTING', {
+    debugLog('Invokers: --data:generate:array EXECUTING', {
       params,
       arrayKey: params[0],
       hasTemplate: !!invoker.dataset.template,
@@ -444,18 +467,26 @@ const dataCommands: Record<string, CommandCallback> = {
     if (template && isInterpolationEnabled()) {
       // Handle template-based generation with expressions
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.log('Invokers: Processing template-based data generation', { template, count, isInterpolationEnabled: isInterpolationEnabled() });
+        debugLog('Invokers: Processing template-based data generation', { template, count, isInterpolationEnabled: isInterpolationEnabled() });
       }
       try {
-        console.log('Invokers: Processing template:', template);
+        debugLog('Invokers: Processing template:', template);
         for (let i = 0; i < count; i++) {
           // Create context for interpolation
+          const datasetContext = {
+            ...coerceDatasetValues(document.body?.dataset),
+            ...coerceDatasetValues(targetElement?.dataset),
+            ...coerceDatasetValues(invoker.parentElement?.dataset),
+            ...coerceDatasetValues(invoker.dataset)
+          };
+
           const context: any = {
+            ...datasetContext,
             index: i,
             index1: i + 1,
             count: count,
             start: start,
-            data: { ...document.body.dataset, ...(invoker.parentElement?.dataset || {}) },
+            data: { ...datasetContext },
             this: {
               dataset: { ...invoker.dataset },
               value: (invoker as any).value || '',
@@ -465,15 +496,15 @@ const dataCommands: Record<string, CommandCallback> = {
 
           // Add datalist contents to context
           const datalists = document.querySelectorAll('datalist');
-          console.log('Found datalists:', datalists.length);
+          debugLog('Found datalists:', datalists.length);
           datalists.forEach(datalist => {
             const id = datalist.id;
             if (id) {
               const textContent = datalist.textContent?.trim();
-              console.log('Datalist', id, 'textContent:', textContent);
+              debugLog('Datalist', id, 'textContent:', textContent);
               if (textContent) {
                 const array = textContent.split(',').map(s => s.trim());
-                console.log('Processing datalist', id, textContent, array);
+                debugLog('Processing datalist', id, textContent, array);
                 context[id] = array;
               }
             }
@@ -487,9 +518,9 @@ const dataCommands: Record<string, CommandCallback> = {
           }
 
           // Interpolate the template string
-          if (i === 0) console.log('Invokers: Context for first item:', context);
+          if (i === 0) debugLog('Invokers: Context for first item:', context);
           const interpolatedString = interpolateString(template, context);
-          if (i === 0) console.log('Invokers: Interpolated string for first item:', interpolatedString);
+          if (i === 0) debugLog('Invokers: Interpolated string for first item:', interpolatedString);
 
           // Parse the interpolated string as JSON
           const item = JSON.parse(interpolatedString);
@@ -523,7 +554,7 @@ const dataCommands: Record<string, CommandCallback> = {
     }
 
     targetElement.dataset[arrayKey] = JSON.stringify(arrayData);
-    console.log('Invokers: --data:generate:array COMPLETED', {
+    debugLog('Invokers: --data:generate:array COMPLETED', {
       arrayKey,
       arrayDataLength: arrayData.length,
       targetElementId: targetElement.id,
@@ -749,7 +780,7 @@ const dataCommands: Record<string, CommandCallback> = {
          // Parse the result as JSON
          return JSON.parse(interpolated);
        } catch (e) {
-         console.warn('Invokers: Error mapping item:', e);
+         debugWarn('Invokers: Error mapping item:', e);
          return item; // Return original item on error
        }
      });
@@ -888,6 +919,7 @@ const dataCommands: Record<string, CommandCallback> = {
   "--data:concat": ({ invoker, targetElement, params }: CommandContext) => {
     const resultKey = params[0] || invoker.dataset.resultKey || invoker.dataset.result_key;
     const sourceArrays = invoker.dataset.sourceArrays || invoker.dataset.source_arrays;
+    const paramSources = params.slice(1);
 
     if (!resultKey) {
       throw createInvokerError('Array concat command requires a result key parameter or data-result-key attribute', ErrorSeverity.ERROR, {
@@ -895,13 +927,15 @@ const dataCommands: Record<string, CommandCallback> = {
       });
     }
 
-    if (!sourceArrays) {
-      throw createInvokerError('Array concat command requires a data-source-arrays attribute', ErrorSeverity.ERROR, {
+    const arrayKeys = sourceArrays
+      ? sourceArrays.split(',').map(key => key.trim())
+      : [resultKey, ...paramSources].filter(Boolean);
+
+    if (!arrayKeys || arrayKeys.length === 0) {
+      throw createInvokerError('Array concat command requires data-source-arrays or additional array key parameters', ErrorSeverity.ERROR, {
         command: '--data:concat', element: invoker
       });
     }
-
-    const arrayKeys = sourceArrays.split(',').map(key => key.trim());
     const allArrays: any[][] = [];
 
     for (const key of arrayKeys) {
@@ -938,6 +972,40 @@ const dataCommands: Record<string, CommandCallback> = {
        detail: { key: arrayKey, value: [] }
      }));
    },
+
+  /**
+   * `--data:length`: Gets the length of an array stored in a data attribute.
+   * @example `<button command="--data:length:items" data-result-key="items-length" commandfor="#app">Get Length</button>`
+   */
+  "--data:length": ({ invoker, targetElement, params }: CommandContext) => {
+    const arrayKey = params[0];
+    if (!arrayKey) {
+      throw createInvokerError('Array length command requires an array key parameter', ErrorSeverity.ERROR, {
+        command: '--data:length', element: invoker
+      });
+    }
+
+    const resultKey = invoker.dataset.resultKey || invoker.dataset.result_key || `${arrayKey}-length`;
+    let arrayData: any[] = [];
+    try {
+      const existingData = targetElement.dataset[arrayKey];
+      arrayData = existingData ? JSON.parse(existingData) : [];
+    } catch (error) {
+      throw createInvokerError('Failed to parse array data for length calculation', ErrorSeverity.ERROR, {
+        command: '--data:length', element: invoker, cause: error as Error
+      });
+    }
+
+    if (!Array.isArray(arrayData)) {
+      throw createInvokerError(`Data key "${arrayKey}" is not an array`, ErrorSeverity.ERROR, {
+        command: '--data:length', element: invoker
+      });
+    }
+
+    const length = arrayData.length;
+    targetElement.dataset[resultKey] = String(length);
+    invoker.dataset[resultKey] = String(length);
+  },
 
   // --- Application-Specific Todo Commands ---
   // These are specialized commands that could be extracted to a separate module in the future

@@ -1,4 +1,5 @@
 // src/commands/base.ts
+import { debugLog, debugWarn, debugError } from '../utils';
 import type { InvokerManager, CommandContext } from '../core';
 import { createInvokerError, ErrorSeverity, isInterpolationEnabled } from '../index';
 import { interpolateString } from '../advanced/interpolation';
@@ -60,7 +61,7 @@ export function registerBaseCommands(manager: InvokerManager): void {
         }
       );
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(error.message);
+        debugWarn(error.message);
       }
       return;
     }
@@ -70,7 +71,7 @@ export function registerBaseCommands(manager: InvokerManager): void {
         targets.forEach(target => {
           if (!target.isConnected) {
             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-              console.warn('Invokers: Skipping disconnected target element', target);
+              debugWarn('Invokers: Skipping disconnected target element', target);
             }
             return;
           }
@@ -108,7 +109,7 @@ export function registerBaseCommands(manager: InvokerManager): void {
         }
       );
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(error.message);
+        debugWarn(error.message);
       }
       return;
     }
@@ -124,7 +125,7 @@ export function registerBaseCommands(manager: InvokerManager): void {
         }
       );
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(error.message);
+        debugWarn(error.message);
       }
       return;
     }
@@ -170,7 +171,7 @@ export function registerBaseCommands(manager: InvokerManager): void {
     const targets = getTargets();
     if (!action || targets.length === 0) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn('Invokers: `--class` command requires an action (e.g., "--class:toggle:my-class").', invoker);
+        debugWarn('Invokers: `--class` command requires an action (e.g., "--class:toggle:my-class").', invoker);
       }
       return;
     }
@@ -179,7 +180,7 @@ export function registerBaseCommands(manager: InvokerManager): void {
         const [classIfTrue, classIfFalse, condition] = rest;
         if (!classIfTrue || !classIfFalse || !condition) {
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.warn('Invokers: `--class:ternary` requires class-if-true, class-if-false, and condition.', invoker);
+            debugWarn('Invokers: `--class:ternary` requires class-if-true, class-if-false, and condition.', invoker);
           }
           return;
         }
@@ -219,7 +220,7 @@ export function registerBaseCommands(manager: InvokerManager): void {
          const className = rest[0];
          if (!className && action !== "clear") {
            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-             console.warn('Invokers: `--class` command requires a class name.', invoker);
+             debugWarn('Invokers: `--class` command requires a class name.', invoker);
            }
            return;
          }
@@ -229,7 +230,7 @@ export function registerBaseCommands(manager: InvokerManager): void {
            case "toggle": target.classList.toggle(className); break;
            case "clear": target.className = ""; break;
             default: if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-              console.warn(`Invokers: Unknown action "${action}" for '--class' command.`, invoker);
+              debugWarn(`Invokers: Unknown action "${action}" for '--class' command.`, invoker);
             }
          }
        }
@@ -278,7 +279,7 @@ export function registerBaseCommands(manager: InvokerManager): void {
         }
       );
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(error.message);
+        debugWarn(error.message);
       }
       return;
     }
@@ -376,7 +377,7 @@ export function registerBaseCommands(manager: InvokerManager): void {
     const [classIfTrue, classIfFalse, condition] = params;
     if (!classIfTrue || !classIfFalse || !condition) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn('Invokers: `--class:ternary` requires class-if-true, class-if-false, and condition.', invoker);
+        debugWarn('Invokers: `--class:ternary` requires class-if-true, class-if-false, and condition.', invoker);
       }
       return;
     }

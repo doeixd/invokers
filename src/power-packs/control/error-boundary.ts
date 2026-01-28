@@ -3,6 +3,7 @@
  * Provides data-try, data-catch, and data-finally attributes for error handling.
  */
 
+import { debugLog, debugWarn, debugError } from '../../utils';
 import { getStateStore } from '../state/store';
 
 interface ErrorBoundaryElement {
@@ -37,7 +38,7 @@ class ErrorBoundaryRenderer {
 
       const tryBlock = document.querySelector(trySelector) as HTMLElement;
       if (!tryBlock) {
-        console.warn(`[InvokerControl] Try block selector "${trySelector}" not found`);
+        debugWarn(`[InvokerControl] Try block selector "${trySelector}" not found`);
         return;
       }
 
@@ -197,7 +198,7 @@ class ErrorBoundaryRenderer {
       if (commandOn) {
         // For command-on, you'd need to parse and trigger the appropriate event
         // This is simplified for the example
-        console.log(`Executing command-on: ${commandOn}`);
+        debugLog(`Executing command-on: ${commandOn}`);
       }
     }
   }

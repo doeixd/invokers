@@ -20,7 +20,8 @@ import type { CommandContext, CommandCallback } from "./index";
 import { createInvokerError, ErrorSeverity, validateElement, sanitizeHTML, isInterpolationEnabled } from "./index";
 import { interpolateString, setDataContext, getDataContext, updateDataContext } from "./advanced/interpolation";
 import { resolveTargets } from "./target-resolver";
-import { generateUid } from "./utils";
+import { generateUid, debugLog, debugWarn, debugError } from './utils';
+import { InvokerManager } from './core';
 
 type CommandRegistry = Record<string, CommandCallback>;
 
@@ -144,8 +145,8 @@ export const commands: CommandRegistry = {
    *   <div>Slide 1</div>
    *   <div hidden>Slide 2</div>
    * </div>
-   * <button type="button" command="--carousel:nav:prev" commandfor="my-carousel">‹</button>
-   * <button type="button" command="--carousel:nav:next" commandfor="my-carousel">›</button>
+   * <button type="button" command="--carousel:nav:prev" commandfor="my-carousel">ΓÇ╣</button>
+   * <button type="button" command="--carousel:nav:next" commandfor="my-carousel">ΓÇ║</button>
    * ```
    */
   "--carousel:nav": ({ invoker, targetElement, params }: CommandContext) => {
@@ -402,6 +403,16 @@ export const commands: CommandRegistry = {
      const updateDOM = () => targetElement.remove();
      document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
    },
+
+  /**
+   * `--dom:clear`: Removes all child nodes from the target element.
+   * @example `<button command="--dom:clear" commandfor="list">Clear List</button>`
+   */
+  "--dom:clear": ({ targetElement }: CommandContext) => {
+    if (!targetElement.isConnected) return;
+    const updateDOM = () => targetElement.replaceChildren();
+    document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
+  },
 
     /**
      * `--dom:replace`: Replaces the target element with content from a `<template>`.
@@ -1423,12 +1434,9 @@ export const commands: CommandRegistry = {
 
       // Set up new interval
       const intervalId = setInterval(() => {
-        // Execute the interval command programmatically
-        if (window.Invoker?.executeCommand) {
-          const targetId = targetElement.id || `__invoker-target-${Date.now()}`;
-          if (!targetElement.id) targetElement.id = targetId;
-          window.Invoker.executeCommand(intervalCommand, targetId, invoker);
-        }
+        const targetId = targetElement.id || `__invoker-target-${Date.now()}`;
+        if (!targetElement.id) targetElement.id = targetId;
+        InvokerManager.getInstance().executeCommand(intervalCommand, targetId, invoker);
       }, intervalMs);
 
       // Store the interval ID
@@ -2088,7 +2096,7 @@ export const commands: CommandRegistry = {
 export function registerAll(specificCommands?: string[]): void {
   if (!window.Invoker?.register) {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.error("Invokers: Core library not found. Ensure it is loaded before the commands module.");
+      debugError("Invokers: Core library not found. Ensure it is loaded before the commands module.");
     }
     return;
   }
@@ -2104,7 +2112,7 @@ export function registerAll(specificCommands?: string[]): void {
       window.Invoker.register!(normalizedName, commands[normalizedName]);
     } else {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(`Invokers: Command "${name}" was requested but not found in the commands module. Skipping registration.`);
+        debugWarn(`Invokers: Command "${name}" was requested but not found in the commands module. Skipping registration.`);
       }
     }
   }
@@ -2144,7 +2152,7 @@ function showFeedbackState(invoker: HTMLButtonElement, target: HTMLElement, temp
     // This is a non-critical warning, so we log instead of throwing.
     const error = createInvokerError(`Feedback template "#${templateId}" not found or is not a <template>`, ErrorSeverity.WARNING, { element: invoker });
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.error(error);
+      debugError(error);
     }
     return;
   }
@@ -2194,7 +2202,7 @@ function processTemplateFragment(fragment: DocumentFragment, invoker: HTMLButton
     interpolatedJson = interpolateString(jsonData, context);
   } catch (error) {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.error("Invokers: Failed to interpolate data-with-json:", error);
+      debugError("Invokers: Failed to interpolate data-with-json:", error);
     }
     return fragment; // Return raw fragment on interpolation error
   }
@@ -2204,7 +2212,7 @@ function processTemplateFragment(fragment: DocumentFragment, invoker: HTMLButton
     dataContext = JSON.parse(interpolatedJson);
   } catch (error) {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.error("Invokers: Invalid JSON in data-with-json attribute:", error);
+      debugError("Invokers: Invalid JSON in data-with-json attribute:", error);
     }
     return fragment; // Return raw fragment on JSON parse error
   }
@@ -2316,7 +2324,7 @@ function processInterpolation(fragment: DocumentFragment, context: Record<string
             node.textContent = interpolated;
           } catch (error) {
             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-              console.warn('Invokers: Interpolation error in template:', error);
+              debugWarn('Invokers: Interpolation error in template:', error);
             }
           }
         }
@@ -2338,7 +2346,7 @@ function processInterpolation(fragment: DocumentFragment, context: Record<string
           element.setAttribute(attr.name, interpolated);
         } catch (error) {
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.warn('Invokers: Attribute interpolation error:', error);
+            debugWarn('Invokers: Attribute interpolation error:', error);
           }
         }
       }
@@ -2375,7 +2383,7 @@ function processDataBindings(root: Element | DocumentFragment): void {
       }
     } catch (error) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn('Invokers: Data binding error:', error);
+        debugWarn('Invokers: Data binding error:', error);
       }
     }
   }

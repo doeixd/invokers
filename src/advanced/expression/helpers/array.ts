@@ -3,22 +3,23 @@
  * These can be imported separately to reduce bundle size
  */
 
+import { debugLog, debugWarn, debugError } from '../../../utils';
 export const arrayHelpers = {
   // Array creation and generation
   randomChoice: (arr: any[]): any => {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.log('Invokers: randomChoice called with:', arr);
+      debugLog('Invokers: randomChoice called with:', arr);
     }
     if (!Array.isArray(arr) || arr.length === 0) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.log('Invokers: randomChoice returning undefined - not array or empty');
+        debugLog('Invokers: randomChoice returning undefined - not array or empty');
       }
       return undefined;
     }
     const index = Math.floor(Math.random() * arr.length);
     const result = arr[index];
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.log('Invokers: randomChoice result:', result, 'from index', index);
+      debugLog('Invokers: randomChoice result:', result, 'from index', index);
     }
     return result;
   },

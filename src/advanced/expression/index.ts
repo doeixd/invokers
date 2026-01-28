@@ -1,5 +1,6 @@
 // src/expression.ts
 
+import { debugLog, debugWarn, debugError } from '../../utils';
 import { Lexer } from './lexer';
 import { ExpressionParser, ASTNode } from './parser';
 import { ExpressionEvaluator } from './evaluator';
@@ -81,7 +82,7 @@ export interface ExpressionResult<T = any> {
 export function evaluateExpression(expression: string, context: Record<string, any>): any {
   // Rate limiting check
   if (!rateLimiter.canEvaluate()) {
-    console.warn('Invokers: Expression evaluation rate limit exceeded');
+    debugWarn('Invokers: Expression evaluation rate limit exceeded');
     return undefined;
   }
 
@@ -118,7 +119,7 @@ export function evaluateExpression(expression: string, context: Record<string, a
     if (errorMessage.includes('Maximum call stack')) {
       throw new Error('Invokers Expression Error: Maximum recursion depth exceeded');
     }
-    console.error(`Invokers Expression Error in "${expression}": ${errorMessage}`);
+    debugError(`Invokers Expression Error in "${expression}": ${errorMessage}`);
     return undefined;
   }
 }
@@ -250,18 +251,18 @@ export const expressionHelpers = {
   // Additional Array Functions (Phase 4)
   randomChoice: (arr: any[]): any => {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.log('Invokers: randomChoice called with:', arr);
+      debugLog('Invokers: randomChoice called with:', arr);
     }
     if (!Array.isArray(arr) || arr.length === 0) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.log('Invokers: randomChoice returning undefined - not array or empty');
+        debugLog('Invokers: randomChoice returning undefined - not array or empty');
       }
       return undefined;
     }
     const index = Math.floor(Math.random() * arr.length);
     const result = arr[index];
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.log('Invokers: randomChoice result:', result, 'from index', index);
+      debugLog('Invokers: randomChoice result:', result, 'from index', index);
     }
     return result;
   },

@@ -1,4 +1,5 @@
 // src/commands/random.ts
+import { debugLog, debugWarn, debugError } from '../utils';
 import type { InvokerManager, CommandContext } from '../core';
 import { createInvokerError, ErrorSeverity } from '../index';
 
@@ -241,7 +242,7 @@ export function registerRandomCommands(manager: InvokerManager): void {
           : Promise.resolve(updateDOM()));
 
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.log('--random:choice: Selected', choice, 'from list', listId);
+          debugLog('--random:choice: Selected', choice, 'from list', listId);
         }
       } catch (error) {
         throw createInvokerError(
@@ -323,7 +324,7 @@ export function registerRandomCommands(manager: InvokerManager): void {
           : Promise.resolve(updateDOM()));
 
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.log('--random:concat: Concatenated', choices.length, 'choices into', result);
+          debugLog('--random:concat: Concatenated', choices.length, 'choices into', result);
         }
       } catch (error) {
         throw createInvokerError(
@@ -419,7 +420,7 @@ export function registerRandomCommands(manager: InvokerManager): void {
         : Promise.resolve(updateDOM()));
 
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.log('--random:number: Generated random number:', randomNum, 'between', min, 'and', max);
+        debugLog('--random:number: Generated random number:', randomNum, 'between', min, 'and', max);
       }
     } catch (error) {
       // Re-throw InvokerErrors as-is (they already have proper context)
@@ -476,7 +477,7 @@ export function registerRandomCommands(manager: InvokerManager): void {
         globalSeededRandom = new SeededRandom(seed);
 
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.log('--random:seed: Random seed set to', seed);
+          debugLog('--random:seed: Random seed set to', seed);
         }
       } catch (error) {
         throw createInvokerError('--random:seed failed: Error setting random seed', ErrorSeverity.ERROR, {
@@ -519,7 +520,7 @@ export function registerRandomCommands(manager: InvokerManager): void {
         : Promise.resolve(updateDOM()));
 
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.log('--random:uuid: Generated UUID:', uuid);
+        debugLog('--random:uuid: Generated UUID:', uuid);
       }
     } catch (error) {
       throw createInvokerError('--random:uuid failed', ErrorSeverity.ERROR, {
@@ -569,7 +570,7 @@ export function registerRandomCommands(manager: InvokerManager): void {
         }
 
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.log('--random:store: Stored random value', choice, 'in dataset.' + dataKey);
+          debugLog('--random:store: Stored random value', choice, 'in dataset.' + dataKey);
         }
       } catch (error) {
         throw createInvokerError(

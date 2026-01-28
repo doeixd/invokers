@@ -3,6 +3,7 @@
  * Provides reactive binding between form elements and state using data-bind attribute.
  */
 
+import { debugLog, debugWarn, debugError } from '../../utils';
 import { getStateStore } from './store';
 
 interface DataBinding {
@@ -129,7 +130,7 @@ class DataBindingManager {
         element.textContent = String(value ?? '');
       }
     } catch (error) {
-      console.warn(`[InvokerState] Failed to update element with binding:`, error);
+      debugWarn(`[InvokerState] Failed to update element with binding:`, error);
     }
   }
 
@@ -147,7 +148,7 @@ class DataBindingManager {
       }
       return null;
     } catch (error) {
-      console.warn(`[InvokerState] Failed to get value from element:`, error);
+      debugWarn(`[InvokerState] Failed to get value from element:`, error);
       return null;
     }
   }

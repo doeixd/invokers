@@ -12,6 +12,7 @@
  * @license MIT / BSD (compatible with original polyfill license)
  */
 
+import { debugLog, debugWarn, debugError } from './utils';
 // --- TypeScript Interfaces and Types ---
 
 /**
@@ -122,25 +123,25 @@ class InterestInvokersPolyfill {
    */
   public apply(): void {
      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-       console.log('Interest Invokers: apply() called, readyState:', document.readyState);
+       debugLog('Interest Invokers: apply() called, readyState:', document.readyState);
      }
 
     // Feature detection and early return
     if (window.interestForPolyfillInstalled) {
        if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-         console.log('Interest Invokers: already installed, skipping');
+         debugLog('Interest Invokers: already installed, skipping');
        }
       return;
     }
     const nativeSupported = isInterestInvokersSupported();
 
      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-       console.log(`Interest Invokers: native support detected: ${nativeSupported}`);
+       debugLog(`Interest Invokers: native support detected: ${nativeSupported}`);
      }
 
     if (nativeSupported && !window.interestForUsePolyfillAlways) {
        if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-         console.log('Interest Invokers: native support available, not applying polyfill');
+         debugLog('Interest Invokers: native support available, not applying polyfill');
        }
       return;
     }
@@ -154,7 +155,7 @@ class InterestInvokersPolyfill {
     window.interestForPolyfillInstalled = true;
 
      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-       console.log(`Interest Invokers polyfill installed successfully.`);
+       debugLog(`Interest Invokers polyfill installed successfully.`);
      }
   }
 

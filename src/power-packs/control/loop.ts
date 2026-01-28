@@ -3,6 +3,7 @@
  * Provides data-for-each, data-while, and data-repeat attributes for iterative rendering.
  */
 
+import { debugLog, debugWarn, debugError } from '../../utils';
 import { getStateStore } from '../state/store';
 import { enableExpressionEngine } from '../../advanced/expressions';
 import { evaluateExpressionWithHelpers } from '../../advanced/expression';
@@ -136,7 +137,7 @@ class LoopRenderer {
           break;
       }
     } catch (error) {
-      console.warn(`[InvokerControl] Failed to evaluate loop "${loop.expression}":`, error);
+      debugWarn(`[InvokerControl] Failed to evaluate loop "${loop.expression}":`, error);
     }
   }
 
@@ -147,7 +148,7 @@ class LoopRenderer {
     // Parse variable names: "item in items" or "(item, index) in items"
     const varMatch = loop.expression.match(/^(\(\s*([^,]+?)\s*,\s*([^)]+?)\s*\)|\s*([^,\s]+?))\s+in\s+(.+)$/);
     if (!varMatch) {
-      console.warn(`[InvokerControl] Invalid for-each expression: ${loop.expression}`);
+      debugWarn(`[InvokerControl] Invalid for-each expression: ${loop.expression}`);
       return;
     }
 
@@ -157,10 +158,10 @@ class LoopRenderer {
 
     const items = this.evaluateExpression(arrayExpression);
 
-      console.log(`[InvokerControl] Evaluating "${arrayExpression}" ->`, items, 'isArray:', Array.isArray(items));
+      debugLog(`[InvokerControl] Evaluating "${arrayExpression}" ->`, items, 'isArray:', Array.isArray(items));
 
     if (!Array.isArray(items)) {
-      console.warn(`[InvokerControl] for-each expression "${arrayExpression}" did not return an array, got:`, items);
+      debugWarn(`[InvokerControl] for-each expression "${arrayExpression}" did not return an array, got:`, items);
       throw new Error(`for-each expression "${arrayExpression}" did not return an array, got: ${items}`);
     }
 
@@ -188,7 +189,7 @@ class LoopRenderer {
     const maxIterations = 1000; // Prevent infinite loops
 
     while (iterations < maxIterations) {
-      const condition = this.evaluateExpression(loop.expression);
+      const condition = this.evaluateExpression(loop.expression, { iteration: iterations });
       if (!condition) break;
 
       const element = this.createLoopElement(loop, { iteration: iterations });
@@ -198,7 +199,7 @@ class LoopRenderer {
     }
 
     if (iterations >= maxIterations) {
-      console.warn(`[InvokerControl] while loop "${loop.expression}" exceeded maximum iterations (${maxIterations})`);
+      debugWarn(`[InvokerControl] while loop "${loop.expression}" exceeded maximum iterations (${maxIterations})`);
     }
   }
 
@@ -209,7 +210,7 @@ class LoopRenderer {
     const count = this.evaluateExpression(loop.expression);
 
     if (typeof count !== 'number' || count < 0) {
-      console.warn(`[InvokerControl] repeat expression "${loop.expression}" did not return a valid number`);
+      debugWarn(`[InvokerControl] repeat expression "${loop.expression}" did not return a valid number`);
       return;
     }
 
@@ -226,7 +227,7 @@ class LoopRenderer {
     }
 
     if (count > maxRepeats) {
-      console.warn(`[InvokerControl] repeat count "${count}" exceeded maximum (${maxRepeats}), limited to ${maxRepeats}`);
+      debugWarn(`[InvokerControl] repeat count "${count}" exceeded maximum (${maxRepeats}), limited to ${maxRepeats}`);
     }
   }
 
@@ -238,7 +239,9 @@ class LoopRenderer {
     element.innerHTML = loop.template;
 
     // Process interpolation in the template
-    this.processTemplateInterpolation(element, context);
+    const store = getStateStore();
+    const state = store.getState();
+    this.processTemplateInterpolation(element, { state, ...context });
 
     // Return the first child if template was wrapped
     return element.children[0] as HTMLElement || element;
@@ -261,7 +264,7 @@ class LoopRenderer {
             const result = evaluateExpressionWithHelpers(expression.trim(), context);
             return result !== undefined && result !== null ? String(result) : '';
           } catch (error) {
-            console.warn(`[InvokerControl] Template interpolation error: ${expression}`, error);
+            debugWarn(`[InvokerControl] Template interpolation error: ${expression}`, error);
             return '';
           }
         });
@@ -274,25 +277,26 @@ class LoopRenderer {
   /**
    * Evaluate an expression using the state store and expression engine.
    */
-  private evaluateExpression(expression: string): any {
-    console.error(`[InvokerControl] evaluateExpression called with: "${expression}"`);
+  private evaluateExpression(expression: string, contextOverrides: Record<string, any> = {}): any {
+    debugError(`[InvokerControl] evaluateExpression called with: "${expression}"`);
     const store = getStateStore();
     const state = store.getState();
-    console.error(`[InvokerControl] Current state:`, state);
+    debugError(`[InvokerControl] Current state:`, state);
 
     try {
       // Create context with state access - state is the root object containing all stores
       const context = {
         state: state, // Get the entire state object
+        ...contextOverrides,
         // Add other global context as needed
       };
 
-      console.error(`[InvokerControl] Evaluating expression "${expression}" with context:`, context);
+      debugError(`[InvokerControl] Evaluating expression "${expression}" with context:`, context);
       const result = evaluateExpressionWithHelpers(expression, context);
-      console.error(`[InvokerControl] Expression "${expression}" result:`, result);
+      debugError(`[InvokerControl] Expression "${expression}" result:`, result);
       return result;
     } catch (error) {
-      console.warn(`[InvokerControl] Expression evaluation error: ${expression}`, error);
+      debugWarn(`[InvokerControl] Expression evaluation error: ${expression}`, error);
       throw error;
     }
   }

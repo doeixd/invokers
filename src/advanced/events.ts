@@ -23,6 +23,7 @@
  * ```
  */
 
+import { debugLog, debugWarn, debugError } from '../utils';
 import { EventTriggerManager } from './event-trigger-manager';
 
 /**
@@ -51,11 +52,11 @@ export function enableEventTriggers(): void {
     eventTriggerManager.initialize();
     
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.log("Invokers: Event Triggers (command-on) enabled.");
+      debugLog("Invokers: Event Triggers (command-on) enabled.");
     }
   } else {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.log("Invokers: Event Triggers already enabled.");
+      debugLog("Invokers: Event Triggers already enabled.");
     }
   }
 }

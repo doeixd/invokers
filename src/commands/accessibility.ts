@@ -16,6 +16,7 @@
  * ```
  */
 
+import { debugLog, debugWarn, debugError } from '../utils';
 import type { InvokerManager } from '../core';
 import type { CommandCallback, CommandContext } from '../index';
 import { createInvokerError, ErrorSeverity } from '../index';
@@ -80,7 +81,7 @@ const accessibilityCommands: Record<string, CommandCallback> = {
          }, 100);
 
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.log('--a11y:announce: Announcement made:', value, 'priority:', priority);
+           debugLog('--a11y:announce: Announcement made:', value, 'priority:', priority);
          }
        } catch (error) {
          throw createInvokerError('--a11y:announce failed: Error creating announcement', ErrorSeverity.ERROR, {
@@ -143,7 +144,7 @@ const accessibilityCommands: Record<string, CommandCallback> = {
                }));
 
                if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-                 console.log('--a11y:focus: Focus moved to element:', focusTarget);
+                 debugLog('--a11y:focus: Focus moved to element:', focusTarget);
                }
              }
            }, 300);
@@ -209,7 +210,7 @@ const accessibilityCommands: Record<string, CommandCallback> = {
                (skipTarget as HTMLElement).focus();
 
                if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-                 console.log('--a11y:skip-to: Focus moved to element:', value);
+                 debugLog('--a11y:skip-to: Focus moved to element:', value);
                }
              }
            }, 300);
@@ -339,7 +340,7 @@ const accessibilityCommands: Record<string, CommandCallback> = {
            }));
 
            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-             console.log('--a11y:focus-trap: Focus trap enabled for container:', container);
+             debugLog('--a11y:focus-trap: Focus trap enabled for container:', container);
            }
          } catch (error) {
            throw createInvokerError('--a11y:focus-trap failed: Error setting up focus trap', ErrorSeverity.ERROR, {
@@ -369,7 +370,7 @@ const accessibilityCommands: Record<string, CommandCallback> = {
            }));
 
            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-             console.log('--a11y:focus-trap: Focus trap disabled for container:', container);
+             debugLog('--a11y:focus-trap: Focus trap disabled for container:', container);
            }
          } catch (error) {
            throw createInvokerError('--a11y:focus-trap failed: Error disabling focus trap', ErrorSeverity.ERROR, {
@@ -431,7 +432,7 @@ const accessibilityCommands: Record<string, CommandCallback> = {
          });
 
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.log('--a11y:aria:set: ARIA attribute set:', `aria-${ariaAttr}=${ariaValue}`, 'on', targets.length, 'elements');
+           debugLog('--a11y:aria:set: ARIA attribute set:', `aria-${ariaAttr}=${ariaValue}`, 'on', targets.length, 'elements');
          }
        } catch (error) {
          throw createInvokerError('--a11y:aria:set failed: Error setting ARIA attribute', ErrorSeverity.ERROR, {
@@ -485,7 +486,7 @@ const accessibilityCommands: Record<string, CommandCallback> = {
          });
 
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.log('--a11y:aria:remove: ARIA attribute removed:', `aria-${value}`, 'from', targets.length, 'elements');
+           debugLog('--a11y:aria:remove: ARIA attribute removed:', `aria-${value}`, 'from', targets.length, 'elements');
          }
        } catch (error) {
          throw createInvokerError('--a11y:aria:remove failed: Error removing ARIA attribute', ErrorSeverity.ERROR, {
@@ -552,7 +553,7 @@ const accessibilityCommands: Record<string, CommandCallback> = {
          });
 
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.log('--a11y:heading-level: Heading level changed to', value, 'for', targets.length, 'elements');
+           debugLog('--a11y:heading-level: Heading level changed to', value, 'for', targets.length, 'elements');
          }
        } catch (error) {
          throw createInvokerError('--a11y:heading-level failed: Error changing heading level', ErrorSeverity.ERROR, {

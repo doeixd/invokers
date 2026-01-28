@@ -19,6 +19,7 @@
  * ```
  */
 
+import { debugLog, debugWarn, debugError } from './utils';
 // Import the core system
 import { InvokerManager, HookPoint } from './core';
 
@@ -46,14 +47,37 @@ import { enableAdvancedEvents } from './advanced/index';
 export * from './index';
 export { HookPoint } from './core';
 
-// Ensure polyfill is applied to browsers
+const compatGlobal = (typeof globalThis !== 'undefined'
+  ? globalThis
+  : (typeof window !== 'undefined' ? window : global)) as {
+  __invokersCompatibleState?: {
+    registered: boolean;
+    advancedEnabled: boolean;
+    polyfillApplied: boolean;
+    windowSetup: boolean;
+    resetPatched: boolean;
+  };
+};
+
+const compatState = compatGlobal.__invokersCompatibleState ?? {
+  registered: false,
+  advancedEnabled: false,
+  polyfillApplied: false,
+  windowSetup: false,
+  resetPatched: false
+};
+
+compatGlobal.__invokersCompatibleState = compatState;
+
+// Ensure polyfill is applied to browsers (only once)
 import { apply as applyPolyfill } from './polyfill';
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && !compatState.polyfillApplied) {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => applyPolyfill());
   } else {
     applyPolyfill();
   }
+  compatState.polyfillApplied = true;
 }
 
 // Get the singleton instance
@@ -77,21 +101,32 @@ const commandPacks = [
 ];
 
 let registeredCount = 0;
-for (const pack of commandPacks) {
-  try {
-    pack.register(invokerInstance);
-    registeredCount++;
-  } catch (error) {
-    if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.error(`Invokers: Failed to register ${pack.name} commands:`, error);
+
+const registerCompatibleCommands = (force = false): boolean => {
+  const hasCommands = Boolean((invokerInstance as any).commands?.size);
+  if (!force && compatState.registered && hasCommands) {
+    return false;
+  }
+
+  registeredCount = 0;
+  for (const pack of commandPacks) {
+    try {
+      pack.register(invokerInstance);
+      registeredCount++;
+    } catch (error) {
+      debugError(`Invokers: Failed to register ${pack.name} commands:`, error);
     }
   }
-}
+  compatState.registered = true;
+  return true;
+};
+
+const didRegister = registerCompatibleCommands();
 
 
 
 // Setup the global for CDN users and backward compatibility FIRST (same as index.ts but with all commands)
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && !compatState.windowSetup) {
   (window as any).Invoker = {
     instance: invokerInstance,
     register: invokerInstance.register.bind(invokerInstance),
@@ -112,16 +147,30 @@ if (typeof window !== 'undefined') {
     debug: false
   };
 
+  compatState.windowSetup = true;
+
   // Command event listener is already attached by InvokerManager constructor
 }
 
 // Enable all advanced features by default - AFTER window setup
-try {
-  enableAdvancedEvents();
-} catch (error) {
-  if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-    console.warn('Invokers: Failed to enable advanced events:', error);
+if (!compatState.advancedEnabled) {
+  try {
+    enableAdvancedEvents();
+    compatState.advancedEnabled = true;
+  } catch (error) {
+    debugWarn('Invokers: Failed to enable advanced events:', error);
   }
+}
+
+// Ensure reset() re-registers compatible command packs.
+if (!compatState.resetPatched) {
+  const originalReset = invokerInstance.reset.bind(invokerInstance);
+  invokerInstance.reset = () => {
+    originalReset();
+    compatState.registered = false;
+    registerCompatibleCommands(true);
+  };
+  compatState.resetPatched = true;
 }
 
 // Interest invokers are loaded separately when needed
@@ -134,8 +183,12 @@ export { InvokerManager };
 
 if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
   const totalCommands = (invokerInstance as any).commands?.size || 0;
-  console.log('Invokers: Compatibility layer loaded');
-  console.log(`Command packs registered: ${registeredCount}/${commandPacks.length}`);
-  console.log(`Total commands available: ${totalCommands}`);
-  console.log('Advanced features: enabled');
+  debugLog('Invokers: Compatibility layer loaded');
+  if (didRegister) {
+    debugLog(`Command packs registered: ${registeredCount}/${commandPacks.length}`);
+  } else {
+    debugLog('Command packs registered: skipped (already initialized)');
+  }
+  debugLog(`Total commands available: ${totalCommands}`);
+  debugLog(`Advanced features: ${compatState.advancedEnabled ? 'enabled' : 'skipped'}`);
 }

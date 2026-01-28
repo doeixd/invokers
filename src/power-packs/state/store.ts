@@ -3,6 +3,7 @@
  * Provides reactive state management with JSON script initialization.
  */
 
+import { debugLog, debugWarn, debugError } from '../../utils';
 export interface StateStore {
   [key: string]: any;
 }
@@ -19,17 +20,17 @@ class InvokerStateStore {
     if (typeof document === 'undefined') return;
 
     const stateScripts = document.querySelectorAll('script[type="application/json"][data-state]');
-    console.error(`[InvokerState] Found ${stateScripts.length} state scripts`);
+    debugError(`[InvokerState] Found ${stateScripts.length} state scripts`);
     stateScripts.forEach(script => {
       const storeName = script.getAttribute('data-state');
       if (!storeName) return;
 
       try {
         const data = JSON.parse(script.textContent || '{}');
-        console.error(`[InvokerState] Setting store "${storeName}" with data:`, data);
+        debugError(`[InvokerState] Setting store "${storeName}" with data:`, data);
         this.setStore(storeName, data);
       } catch (error) {
-        console.warn(`[InvokerState] Failed to parse state script for "${storeName}":`, error);
+        debugWarn(`[InvokerState] Failed to parse state script for "${storeName}":`, error);
       }
     });
   }

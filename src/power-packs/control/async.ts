@@ -3,6 +3,8 @@
  * Provides data-parallel, data-race, and data-sequence attributes for async flow control.
  */
 
+import { debugLog, debugWarn, debugError } from '../../utils';
+import { InvokerManager } from '../../core';
 interface AsyncControlElement {
   element: HTMLElement;
   type: 'parallel' | 'race' | 'sequence';
@@ -114,7 +116,7 @@ class AsyncControlRenderer {
       // Store result if completion variable is specified
       if (control.completionVariable) {
         // In a real implementation, this would integrate with the state store
-        console.log(`Async control result stored in ${control.completionVariable}:`, result);
+        debugLog(`Async control result stored in ${control.completionVariable}:`, result);
       }
 
       // Dispatch completion event
@@ -123,7 +125,7 @@ class AsyncControlRenderer {
       }));
 
     } catch (error) {
-      console.error(`[InvokerControl] Async control execution failed:`, error);
+      debugError(`[InvokerControl] Async control execution failed:`, error);
 
       // Dispatch error event
       control.element.dispatchEvent(new CustomEvent('async:error', {
@@ -202,42 +204,23 @@ class AsyncControlRenderer {
    */
   private async executeChild(child: HTMLElement): Promise<any> {
     return new Promise((resolve, reject) => {
-      // Set up completion tracking
-      const handleComplete = (event: Event) => {
-        cleanup();
-        resolve({ element: child, event, result: (event as CustomEvent).detail });
-      };
-
-      const handleError = (event: Event) => {
-        cleanup();
-        reject({ element: child, event, error: (event as CustomEvent).detail });
-      };
-
       const cleanup = () => {
-        child.removeEventListener('async:complete', handleComplete);
-        child.removeEventListener('async:error', handleError);
-        child.removeEventListener('command', handleCommand);
       };
-
-      const handleCommand = (event: Event) => {
-        // For command execution, wait a bit then resolve
-        // In practice, this would integrate with command completion tracking
-        setTimeout(() => {
-          cleanup();
-          resolve({ element: child, event, command: (event as CustomEvent).detail });
-        }, 100);
-      };
-
-      // Listen for completion events
-      child.addEventListener('async:complete', handleComplete);
-      child.addEventListener('async:error', handleError);
-      child.addEventListener('command', handleCommand);
 
       // Trigger execution
       const command = child.getAttribute('command');
       if (command) {
-        const commandEvent = new CustomEvent('command', { detail: { command } });
-        child.dispatchEvent(commandEvent);
+        const target = child.getAttribute('commandfor') || '';
+        const manager = InvokerManager.getInstance();
+        manager.executeCommand(command, target, child)
+          .then(() => {
+            cleanup();
+            resolve({ element: child, command });
+          })
+          .catch((error) => {
+            cleanup();
+            reject({ element: child, error });
+          });
       } else {
         // If no command, execute immediately
         setTimeout(() => {

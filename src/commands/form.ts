@@ -1,4 +1,5 @@
 // src/commands/form.ts
+import { debugLog, debugWarn, debugError } from '../utils';
 import type { InvokerManager, CommandContext } from '../core';
 import { createInvokerError, ErrorSeverity } from '../index';
 
@@ -73,7 +74,7 @@ export function registerFormCommands(manager: InvokerManager): void {
         }
       );
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(error.message);
+        debugWarn(error.message);
       }
       return;
     }
@@ -96,7 +97,7 @@ export function registerFormCommands(manager: InvokerManager): void {
       targets.forEach(target => {
         if (!target.isConnected) {
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.warn('Invokers: Skipping disconnected target element', target);
+            debugWarn('Invokers: Skipping disconnected target element', target);
           }
           return;
         }
@@ -147,7 +148,7 @@ export function registerFormCommands(manager: InvokerManager): void {
         }
       );
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(error.message);
+        debugWarn(error.message);
       }
       return;
     }
@@ -168,7 +169,7 @@ export function registerFormCommands(manager: InvokerManager): void {
           }
           (target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value = valueToSet;
         } else {
-          console.warn('Invokers: --value command target does not support value property', target);
+          debugWarn('Invokers: --value command target does not support value property', target);
         }
       });
     } catch (error) {
@@ -200,7 +201,7 @@ export function registerFormCommands(manager: InvokerManager): void {
         }
       );
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(error.message);
+        debugWarn(error.message);
       }
       return;
     }
@@ -211,7 +212,7 @@ export function registerFormCommands(manager: InvokerManager): void {
         targets[0].focus();
       } else {
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.warn('Invokers: Target element does not support focus', targets[0]);
+          debugWarn('Invokers: Target element does not support focus', targets[0]);
         }
       }
     } catch (error) {
@@ -244,7 +245,7 @@ export function registerFormCommands(manager: InvokerManager): void {
         }
       );
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(error.message);
+        debugWarn(error.message);
       }
       return;
     }
@@ -267,12 +268,12 @@ export function registerFormCommands(manager: InvokerManager): void {
               break;
             default:
               if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-                console.warn(`Invokers: Unknown action "${action}" for --disabled command. Use "toggle", "true", "false", "enable", or "disable".`);
+                debugWarn(`Invokers: Unknown action "${action}" for --disabled command. Use "toggle", "true", "false", "enable", or "disable".`);
               }
           }
         } else {
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.warn('Invokers: --disabled command target does not support disabled property', target);
+            debugWarn('Invokers: --disabled command target does not support disabled property', target);
           }
         }
       });
@@ -319,7 +320,7 @@ export function registerFormCommands(manager: InvokerManager): void {
         }
       );
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(error.message);
+        debugWarn(error.message);
       }
       return;
     }
@@ -351,7 +352,7 @@ export function registerFormCommands(manager: InvokerManager): void {
           }
         } else {
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.warn('Invokers: --form command target is not a form element', target);
+            debugWarn('Invokers: --form command target is not a form element', target);
           }
         }
       });
@@ -385,7 +386,7 @@ export function registerFormCommands(manager: InvokerManager): void {
         }
       );
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(error.message);
+        debugWarn(error.message);
       }
       return;
     }
@@ -408,7 +409,7 @@ export function registerFormCommands(manager: InvokerManager): void {
       targets.forEach(target => {
         if (!(target instanceof HTMLInputElement) || target.type !== "number") {
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.warn('Invokers: --input:step target must be an input[type="number"] element', target);
+            debugWarn('Invokers: --input:step target must be an input[type="number"] element', target);
           }
           return;
         }
@@ -453,7 +454,7 @@ export function registerFormCommands(manager: InvokerManager): void {
         }
       );
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(error.message);
+        debugWarn(error.message);
       }
       return;
     }
@@ -508,7 +509,7 @@ export function registerFormCommands(manager: InvokerManager): void {
         (target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value = '';
       } else {
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.warn('Invokers: --value:clear command target does not support value property', target);
+          debugWarn('Invokers: --value:clear command target does not support value property', target);
         }
       }
     });

@@ -3,6 +3,7 @@
  * These allow enabling only specific categories of helper functions
  */
 
+import { debugLog, debugWarn, debugError } from '../../utils';
 import { registerExpressionFunction } from '../expressions';
 import { stringHelpers } from './helpers/string';
 import { arrayHelpers } from './helpers/array';
@@ -90,6 +91,6 @@ function registerHelperFunctions(helpers: Record<string, any>): void {
  */
 function logEnablement(category: string): void {
   if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-    console.log(`Invokers: ${category} enabled for expressions.`);
+    debugLog(`Invokers: ${category} enabled for expressions.`);
   }
 }

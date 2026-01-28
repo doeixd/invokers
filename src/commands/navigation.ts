@@ -15,6 +15,7 @@
  * ```
  */
 
+import { debugLog, debugWarn, debugError } from '../utils';
 import type { InvokerManager } from '../core';
 import { parseCommaSeparatedCommands } from '../core';
 import type { CommandCallback, CommandContext } from '../index';
@@ -185,7 +186,7 @@ const navigationCommands: Record<string, CommandCallback> = {
         } catch (e) {
           // Keep as string if JSON parsing fails
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.warn('Failed to parse event detail as JSON, using as string:', detail);
+            debugWarn('Failed to parse event detail as JSON, using as string:', detail);
           }
         }
       }
@@ -319,12 +320,12 @@ const navigationCommands: Record<string, CommandCallback> = {
             }
           } else {
             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-              console.warn(`Invalid destination property for --bind: "${destinationProperty}"`);
+              debugWarn(`Invalid destination property for --bind: "${destinationProperty}"`);
             }
           }
         } catch (error) {
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.error('Error applying binding to destination:', error);
+            debugError('Error applying binding to destination:', error);
           }
         }
       });
@@ -417,7 +418,7 @@ const navigationCommands: Record<string, CommandCallback> = {
 
         if (isNaN(delay) || delay < 0) {
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.warn(`Invalid delay in pipeline step ${i}: ${step.getAttribute('delay')}`);
+            debugWarn(`Invalid delay in pipeline step ${i}: ${step.getAttribute('delay')}`);
           }
           continue;
         }
@@ -449,7 +450,7 @@ const navigationCommands: Record<string, CommandCallback> = {
         } catch (error) {
           hasError = true;
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.error(`Pipeline step ${i} failed:`, error);
+            debugError(`Pipeline step ${i} failed:`, error);
           }
           // Continue execution for conditional steps
         }

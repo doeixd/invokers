@@ -3,6 +3,7 @@
  * @description Storage command implementations for localStorage and sessionStorage
  */
 
+import { debugLog, debugWarn, debugError } from '../utils';
 import type { InvokerManager } from '../core';
 import { createInvokerError, ErrorSeverity } from '../index';
 
@@ -18,7 +19,7 @@ function isExpired(item: StorageItem): boolean {
 function getStorage(storageType: string): Storage | null {
   if (storageType !== 'local' && storageType !== 'session') {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.warn('--storage: Invalid storage type:', storageType, '. Must be "local" or "session"');
+      debugWarn('--storage: Invalid storage type:', storageType, '. Must be "local" or "session"');
     }
     return null;
   }
@@ -77,7 +78,7 @@ export function registerStorageCommands(manager: InvokerManager): void {
       const storage = getStorage(storageType);
       if (!storage) {
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.warn('--storage failed: Invalid storage type', { storageType, command: '--storage', element: invoker });
+          debugWarn('--storage failed: Invalid storage type', { storageType, command: '--storage', element: invoker });
         }
         return; // Gracefully handle invalid storage type
       }
@@ -87,7 +88,7 @@ export function registerStorageCommands(manager: InvokerManager): void {
           case 'set': {
             if (!key) {
               if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-                console.warn('--storage set failed: Key required', { command: '--storage', element: invoker });
+                debugWarn('--storage set failed: Key required', { command: '--storage', element: invoker });
               }
               return; // Gracefully handle missing key
             }
@@ -116,7 +117,7 @@ export function registerStorageCommands(manager: InvokerManager): void {
             storage.setItem(key, stringifyStorageItem(finalValue, expires));
 
             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-              console.log('--storage set:', storageType, key, '=', finalValue);
+              debugLog('--storage set:', storageType, key, '=', finalValue);
             }
             break;
           }
@@ -124,7 +125,7 @@ export function registerStorageCommands(manager: InvokerManager): void {
           case 'get': {
             if (!key) {
               if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-                console.warn('--storage get failed: Key required', { command: '--storage', element: invoker });
+                debugWarn('--storage get failed: Key required', { command: '--storage', element: invoker });
               }
               return; // Gracefully handle missing key
             }
@@ -139,7 +140,7 @@ export function registerStorageCommands(manager: InvokerManager): void {
             }
 
             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-              console.log('--storage get:', storageType, key, '=', item ? item.value : 'null');
+              debugLog('--storage get:', storageType, key, '=', item ? item.value : 'null');
             }
             break;
           }
@@ -147,14 +148,14 @@ export function registerStorageCommands(manager: InvokerManager): void {
           case 'remove': {
             if (!key) {
               if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-                console.warn('--storage remove failed: Key required', { command: '--storage', element: invoker });
+                debugWarn('--storage remove failed: Key required', { command: '--storage', element: invoker });
               }
               return; // Gracefully handle missing key
             }
             storage.removeItem(key);
 
             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-              console.log('--storage remove:', storageType, key);
+              debugLog('--storage remove:', storageType, key);
             }
             break;
           }
@@ -163,7 +164,7 @@ export function registerStorageCommands(manager: InvokerManager): void {
             storage.clear();
 
             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-              console.log('--storage clear:', storageType);
+              debugLog('--storage clear:', storageType);
             }
             break;
           }
@@ -175,7 +176,7 @@ export function registerStorageCommands(manager: InvokerManager): void {
             }
 
             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-              console.log('--storage keys:', storageType, keys);
+              debugLog('--storage keys:', storageType, keys);
             }
             break;
           }
@@ -193,7 +194,7 @@ export function registerStorageCommands(manager: InvokerManager): void {
             }
 
             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-              console.log('--storage has:', storageType, key, '=', hasKey);
+              debugLog('--storage has:', storageType, key, '=', hasKey);
             }
             break;
           }
@@ -212,14 +213,14 @@ export function registerStorageCommands(manager: InvokerManager): void {
             }
 
             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-              console.log('--storage size:', storageType, size);
+              debugLog('--storage size:', storageType, size);
             }
             break;
           }
 
           default:
             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-              console.warn('--storage failed: Unknown action', { action, command: '--storage', element: invoker });
+              debugWarn('--storage failed: Unknown action', { action, command: '--storage', element: invoker });
             }
             return; // Gracefully handle unknown action
         }

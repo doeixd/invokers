@@ -3,6 +3,7 @@
  * Provides reactive computed values using <data-let> elements.
  */
 
+import { debugLog, debugWarn, debugError } from '../../utils';
 import { getStateStore } from './store';
 
 interface ComputedProperty {
@@ -98,7 +99,7 @@ class ComputedPropertiesManager {
         }
       });
     } catch (error) {
-      console.warn(`[InvokerState] Failed to evaluate computed property "${computed.expression}":`, error);
+      debugWarn(`[InvokerState] Failed to evaluate computed property "${computed.expression}":`, error);
     }
   }
 

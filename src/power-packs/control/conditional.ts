@@ -1,9 +1,9 @@
-
 /**
  * Conditional rendering for Invokers Control module.
  * Provides data-if/data-else attributes for conditional element visibility.
  */
 
+import { debugLog, debugWarn, debugError } from '../../utils';
 import { getStateStore } from '../state/store';
 
 interface ConditionalElement {
@@ -120,7 +120,7 @@ class ConditionalRenderer {
         }
       }
     } catch (error) {
-      console.warn(`[InvokerControl] Failed to evaluate conditional "${conditional.condition}":`, error);
+      debugWarn(`[InvokerControl] Failed to evaluate conditional "${conditional.condition}":`, error);
     }
   }
 
@@ -142,7 +142,7 @@ class ConditionalRenderer {
       const result = new Function(`return ${processedCondition};`)();
       return Boolean(result);
     } catch (error) {
-      console.warn(`[InvokerControl] Condition evaluation error: ${condition}`, error);
+      debugWarn(`[InvokerControl] Condition evaluation error: ${condition}`, error);
       return false;
     }
   }

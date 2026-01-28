@@ -3,6 +3,7 @@
  * Provides loading states, error handling, and submission orchestration.
  */
 
+import { debugLog, debugWarn, debugError } from '../../utils';
 import { getStateStore } from '../state/store';
 import { validateForm, ValidationResult } from './validation';
 import { setFormSubmitting, setFormErrors } from './state';
@@ -207,7 +208,7 @@ class FormSubmissionHandler {
   private async executeCommandSubmission(_form: HTMLFormElement, _formName: string, command: string): Promise<SubmissionResult> {
     // This would integrate with the InvokerManager to execute submit commands
     // For now, return a mock success
-    console.log(`Executing submit command: ${command} for form: ${_formName}`);
+    debugLog(`Executing submit command: ${command} for form: ${_formName}`);
 
     // Simulate async operation
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -279,7 +280,7 @@ class FormSubmissionHandler {
       this.store.set(`forms.${formName}.lastSubmission`, result);
     }
 
-    console.log(`Form "${formName}" submitted successfully:`, result);
+    debugLog(`Form "${formName}" submitted successfully:`, result);
   }
 
   /**
@@ -300,7 +301,7 @@ class FormSubmissionHandler {
     const message = options.errorMessage || error.message;
     this.showMessage(form, message, 'error');
 
-    console.error(`Form "${formName}" submission failed:`, error);
+    debugError(`Form "${formName}" submission failed:`, error);
   }
 
   /**

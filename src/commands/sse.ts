@@ -15,6 +15,7 @@
  * ```
  */
 
+import { debugLog, debugWarn, debugError } from '../utils';
 import type { InvokerManager } from '../core';
 import type { CommandCallback, CommandContext } from '../index';
 import { createInvokerError, ErrorSeverity } from '../index';
@@ -92,7 +93,7 @@ const sseCommands: Record<string, CommandCallback> = {
         (targetElement as any)._sseConnection.close();
       } catch (error) {
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.warn('Failed to close existing SSE connection:', error);
+          debugWarn('Failed to close existing SSE connection:', error);
         }
       }
     }
@@ -178,7 +179,7 @@ const sseCommands: Record<string, CommandCallback> = {
         targetElement.dataset.sseStatus = 'disconnected';
       } catch (error) {
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.warn('Error closing SSE connection:', error);
+          debugWarn('Error closing SSE connection:', error);
         }
       }
     }
@@ -294,7 +295,7 @@ const sseCommands: Record<string, CommandCallback> = {
         }
       } catch (error) {
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.error('Error handling SSE message:', error);
+          debugError('Error handling SSE message:', error);
         }
       }
     };
@@ -381,7 +382,7 @@ const sseCommands: Record<string, CommandCallback> = {
         }
       } catch (error) {
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.error('Error handling SSE event:', error);
+          debugError('Error handling SSE event:', error);
         }
       }
     });

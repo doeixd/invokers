@@ -15,6 +15,7 @@
  * ```
  */
 
+import { debugLog, debugWarn, debugError } from '../utils';
 import type { InvokerManager } from '../core';
 import type { CommandCallback, CommandContext } from '../index';
 import { createInvokerError, ErrorSeverity } from '../index';
@@ -98,7 +99,7 @@ const websocketCommands: Record<string, CommandCallback> = {
         (targetElement as any)._websocketConnection.close();
       } catch (error) {
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.warn('Failed to close existing WebSocket connection:', error);
+          debugWarn('Failed to close existing WebSocket connection:', error);
         }
       }
     }
@@ -192,7 +193,7 @@ const websocketCommands: Record<string, CommandCallback> = {
         ws.close();
       } catch (error) {
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.warn('Error closing WebSocket connection:', error);
+          debugWarn('Error closing WebSocket connection:', error);
         }
       }
       delete (targetElement as any)._websocketConnection;
@@ -381,7 +382,7 @@ const websocketCommands: Record<string, CommandCallback> = {
          }
        } catch (error) {
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.error('Error handling WebSocket message:', error);
+           debugError('Error handling WebSocket message:', error);
          }
        }
       };
