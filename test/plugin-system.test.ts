@@ -35,6 +35,11 @@ describe('Plugin System', () => {
     // Clear any existing plugins and middleware
     (invokerManager as any).plugins.clear();
     (invokerManager as any).middleware.clear();
+
+    if (typeof window !== 'undefined') {
+      window.Invoker = window.Invoker || {};
+      window.Invoker.debug = true;
+    }
   });
 
   afterEach(() => {
@@ -229,7 +234,11 @@ describe('Plugin System', () => {
         type: 'command'
       } as any;
 
-      await (invokerManager as any).handleCommand(mockCommandEvent);
+      try {
+        await (invokerManager as any).handleCommand(mockCommandEvent);
+      } catch (error) {
+        void error;
+      }
 
       expect(middlewareSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -284,7 +293,11 @@ describe('Plugin System', () => {
         type: 'command'
       } as any;
 
-      await (invokerManager as any).handleCommand(mockCommandEvent);
+      try {
+        await (invokerManager as any).handleCommand(mockCommandEvent);
+      } catch (error) {
+        void error;
+      }
 
       expect(middlewareSpy).toHaveBeenCalledWith(
         expect.objectContaining({

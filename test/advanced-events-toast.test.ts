@@ -77,7 +77,10 @@ describe('Advanced Events Toast Notification', () => {
      `;
 
     // Enable debug mode
-    (window as any).Invoker = { debug: true };
+    if (typeof window !== 'undefined') {
+      window.Invoker = window.Invoker || {};
+      window.Invoker.debug = true;
+    }
 
     // Reset InvokerManager to avoid command overwriting
     const { InvokerManager } = await import('../src/compatible');

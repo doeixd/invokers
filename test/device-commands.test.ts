@@ -12,7 +12,10 @@ describe('Device Commands', () => {
 
     // Enable debug mode for testing warnings
     if (typeof window !== 'undefined') {
-      (window as any).Invoker = { debug: true };
+      if (typeof window !== 'undefined') {
+        window.Invoker = window.Invoker || {};
+        window.Invoker.debug = true;
+      }
     }
 
     // Register device commands

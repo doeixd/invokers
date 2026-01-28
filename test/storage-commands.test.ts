@@ -419,8 +419,8 @@ describe('Storage Commands', () => {
       target.id = 'target';
       document.body.appendChild(target);
 
-      // Set data with short expiration (50ms)
-      await invokerManager.executeCommand('--storage:local:set:tempData:expires:50:temp value', 'target');
+      // Set data with short expiration (200ms)
+      await invokerManager.executeCommand('--storage:local:set:tempData:expires:200:temp value', 'target');
       await new Promise(resolve => setTimeout(resolve, 0));
 
       // Should work immediately
@@ -428,7 +428,7 @@ describe('Storage Commands', () => {
       expect(target.textContent).toBe('temp value');
 
       // Wait for expiration
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       // Should be expired now
       await invokerManager.executeCommand('--storage:local:get:tempData', 'target');

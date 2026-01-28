@@ -4,9 +4,11 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { InvokerManager } from 'invokers';
-import { enableControl } from 'invokers/control';
-import { enableState, getStateStore, resetStateStore } from 'invokers/state';
+import { InvokerManager } from '../../src/index';
+import { enableControl } from '../../src/power-packs/control';
+import { enableState, getStateStore, resetStateStore } from '../../src/power-packs/state';
+import { registerBaseCommands } from '../../src/commands/base';
+import { registerFormCommands } from '../../src/commands/form';
 
 describe('Enhanced Control Module', () => {
   let manager: InvokerManager;
@@ -16,8 +18,13 @@ describe('Enhanced Control Module', () => {
     manager = InvokerManager.getInstance();
     manager.reset();
     resetStateStore(); // Reset state store between tests
-    // Enable debug mode for troubleshooting
-    (window as any).Invoker = { debug: true };
+    registerBaseCommands(manager);
+    registerFormCommands(manager);
+    // Keep debug logging off for test stability
+    if (typeof window !== 'undefined') {
+      window.Invoker = window.Invoker || {};
+      window.Invoker.debug = false;
+    }
   });
 
   afterEach(() => {
@@ -125,7 +132,7 @@ describe('Enhanced Control Module', () => {
           <script type="application/json" data-state="test">
             {"count": 3}
           </script>
-          <div data-while="state.test.count > 0">
+          <div data-while="iteration < state.test.count">
             <span>Count: {{state.test.count}}</span>
           </div>
         `;
@@ -141,9 +148,9 @@ describe('Enhanced Control Module', () => {
 
         await new Promise(resolve => setTimeout(resolve, 0));
 
-        // Should render once (while count > 0)
+        // Should render while iteration is less than count
         const items = document.querySelectorAll('span');
-        expect(items).toHaveLength(1);
+        expect(items).toHaveLength(3);
         expect(items[0].textContent).toBe('Count: 3');
       });
     });
@@ -218,8 +225,8 @@ describe('Enhanced Control Module', () => {
     it('should execute parallel operations', async () => {
       document.body.innerHTML = `
         <div data-parallel>
-          <div><button command="--text:set:Task 1" commandfor="#result1">Task 1</button></div>
-          <div><button command="--text:set:Task 2" commandfor="#result2">Task 2</button></div>
+          <button command="--text:set:Task 1" commandfor="#result1">Task 1</button>
+          <button command="--text:set:Task 2" commandfor="#result2">Task 2</button>
         </div>
         <div id="result1"></div>
         <div id="result2"></div>
@@ -230,6 +237,10 @@ describe('Enhanced Control Module', () => {
       enableControl();
 
       await new Promise(resolve => setTimeout(resolve, 0));
+
+      const container = document.querySelector('[data-parallel]') as HTMLDivElement;
+      container.click();
+      await new Promise(resolve => setTimeout(resolve, 50));
 
       // Both tasks should execute
       const result1 = document.querySelector('#result1');
@@ -242,8 +253,8 @@ describe('Enhanced Control Module', () => {
     it('should execute race condition', async () => {
       document.body.innerHTML = `
         <div data-race>
-          <div><button command="--text:set:Fast" commandfor="#result">Fast Task</button></div>
-          <div><button command="--text:set:Slow" commandfor="#result">Slow Task</button></div>
+          <button command="--text:set:Fast" commandfor="#result">Fast Task</button>
+          <button command="--text:set:Slow" commandfor="#result">Slow Task</button>
         </div>
         <div id="result"></div>
       `;
@@ -253,6 +264,10 @@ describe('Enhanced Control Module', () => {
       enableControl();
 
       await new Promise(resolve => setTimeout(resolve, 0));
+
+      const container = document.querySelector('[data-race]') as HTMLDivElement;
+      container.click();
+      await new Promise(resolve => setTimeout(resolve, 50));
 
       const result = document.querySelector('#result');
       // One of the tasks should have completed

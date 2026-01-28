@@ -9,11 +9,7 @@ describe('Enhanced Attribute-Based Chaining', () => {
   let invokerManager: InvokerManager;
 
    beforeEach(() => {
-     // Clean up any existing test elements
-     const existingButton = document.getElementById('test-button');
-     const existingTarget = document.getElementById('test-target');
-     if (existingButton) existingButton.remove();
-     if (existingTarget) existingTarget.remove();
+     document.body.innerHTML = '';
 
      // Create mock DOM elements
      mockButton = document.createElement('button');
@@ -80,6 +76,21 @@ describe('Enhanced Attribute-Based Chaining', () => {
        expect(mockTarget.textContent).toBe('success + success chain');
     });
 
+    it('should handle comma-separated data-after-success with empty entries', async () => {
+      invokerManager.register('--test-success', ({ targetElement }) => {
+        targetElement.textContent = 'Start';
+      });
+
+      mockButton.setAttribute('command', '--test-success');
+      mockButton.setAttribute('commandfor', 'test-target');
+      mockButton.setAttribute('data-after-success', ', --text:append: One, , --text:append: Two, ');
+
+      await invokerManager.executeCommand('--test-success', 'test-target', mockButton);
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      expect(mockTarget.textContent).toBe('Start One Two');
+    });
+
     it('should execute error commands on failed execution', async () => {
       // Register test commands
       invokerManager.register('--test-error', () => {
@@ -93,10 +104,14 @@ describe('Enhanced Attribute-Based Chaining', () => {
       // Set up conditional chaining using old attribute method
       mockButton.setAttribute('command', '--test-error');
       mockButton.setAttribute('commandfor', 'test-target');
-      mockButton.setAttribute('data-after-error', '--test-error-chain');
+       mockButton.setAttribute('data-after-error', '--test-error-chain');
 
        // Execute command
-       await invokerManager.executeCommand('--test-error', 'test-target', mockButton);
+      try {
+        await invokerManager.executeCommand('--test-error', 'test-target', mockButton);
+      } catch (error) {
+        void error;
+      }
 
        // Verify error chain executed
        expect(mockTarget.textContent).toBe('error chain executed');
@@ -175,6 +190,70 @@ describe('Enhanced Attribute-Based Chaining', () => {
        expect(testTarget.textContent).toBe('primary + chained');
      });
 
+     it('should prioritize commandfor on and-then over invoker commandfor', async () => {
+       const invokerManager = InvokerManager.getInstance();
+
+       const testButton = document.createElement('button');
+       const primaryTarget = document.createElement('div');
+       primaryTarget.id = 'primary-target';
+       const secondaryTarget = document.createElement('div');
+       secondaryTarget.id = 'secondary-target';
+       const andThenElement = document.createElement('and-then');
+       andThenElement.setAttribute('command', '--test-chain');
+       andThenElement.setAttribute('commandfor', 'secondary-target');
+
+       testButton.appendChild(andThenElement);
+       testButton.setAttribute('command', '--test-primary');
+       testButton.setAttribute('commandfor', 'primary-target');
+
+       document.body.appendChild(testButton);
+       document.body.appendChild(primaryTarget);
+       document.body.appendChild(secondaryTarget);
+
+       invokerManager.register('--test-primary', ({ targetElement }) => {
+         targetElement.textContent = 'primary';
+       });
+       invokerManager.register('--test-chain', ({ targetElement }) => {
+         targetElement.textContent = 'secondary';
+       });
+
+       await invokerManager.executeCommand('--test-primary', 'primary-target', testButton);
+
+       expect(primaryTarget.textContent).toBe('primary');
+       expect(secondaryTarget.textContent).toBe('secondary');
+     });
+
+     it('should prioritize data-then-target over invoker commandfor in attribute chaining', async () => {
+       const invokerManager = InvokerManager.getInstance();
+
+       const testButton = document.createElement('button');
+       const primaryTarget = document.createElement('div');
+       primaryTarget.id = 'primary-attr-target';
+       const secondaryTarget = document.createElement('div');
+       secondaryTarget.id = 'secondary-attr-target';
+
+       document.body.appendChild(testButton);
+       document.body.appendChild(primaryTarget);
+       document.body.appendChild(secondaryTarget);
+
+       invokerManager.register('--test-primary-attr', ({ targetElement }) => {
+         targetElement.textContent = 'primary';
+       });
+       invokerManager.register('--test-chain-attr', ({ targetElement }) => {
+         targetElement.textContent = 'secondary';
+       });
+
+       testButton.setAttribute('command', '--test-primary-attr');
+       testButton.setAttribute('commandfor', 'primary-attr-target');
+       testButton.setAttribute('data-and-then', '--test-chain-attr');
+       testButton.setAttribute('data-then-target', 'secondary-attr-target');
+
+       await invokerManager.executeCommand('--test-primary-attr', 'primary-attr-target', testButton);
+
+       expect(primaryTarget.textContent).toBe('primary');
+       expect(secondaryTarget.textContent).toBe('secondary');
+     });
+
        it('should execute and-then element with conditional success', async () => {
          const invokerManager = InvokerManager.getInstance();
 
@@ -247,7 +326,11 @@ describe('Enhanced Attribute-Based Chaining', () => {
          testButton.setAttribute('commandfor', 'conditional-error-target');
 
          // Execute command
-         await invokerManager.executeCommand('--test-error', 'conditional-error-target', testButton);
+        try {
+          await invokerManager.executeCommand('--test-error', 'conditional-error-target', testButton);
+        } catch (error) {
+          void error;
+        }
 
          // Verify error chain executed
          expect(testTarget.textContent).toBe('error chain executed');

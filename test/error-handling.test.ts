@@ -9,7 +9,8 @@ describe('Enhanced Error Handling & Debugging', () => {
     invokerManager = InvokerManager.getInstance();
 
     // Enable debug mode for testing
-    if (typeof window !== 'undefined' && window.Invoker) {
+    if (typeof window !== 'undefined') {
+      window.Invoker = window.Invoker || {};
       window.Invoker.debug = true;
     }
   });
@@ -197,6 +198,7 @@ describe('Enhanced Error Handling & Debugging', () => {
     it('should validate elements correctly', () => {
       const div = document.createElement('div');
       div.id = 'test';
+      document.body.appendChild(div);
       
       // Should pass validation
       expect(validateElement(div, { id: true })).toEqual([]);

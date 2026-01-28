@@ -182,6 +182,62 @@ describe('Advanced Integration Commands (--text, --attr, --dom)', () => {
   });
 
   describe('Template-based Content Management', () => {
+    it('should append a single todo item per button click', async () => {
+      document.body.innerHTML = `
+        <template id="todoItemTpl">
+          <div class="todo-item">
+            <input type="checkbox" command="--class:toggle:completed" commandfor="@closest(.todo-item)" aria-label="Complete">
+            <span data-tpl-text="text"></span>
+            <button type="button" command="--dom:remove" commandfor="@closest(.todo-item)">Delete</button>
+          </div>
+        </template>
+
+        <div class="row">
+          <button id="add-item"
+                  type="button"
+                  command="--dom:append:inner"
+                  commandfor="todoList"
+                  data-template-id="todoItemTpl"
+                  data-with-json="{&quot;text&quot;:&quot;Buy milk&quot;}">
+            Add item
+          </button>
+
+          <button id="add-another"
+                  type="button"
+                  command="--dom:append:inner"
+                  commandfor="todoList"
+                  data-template-id="todoItemTpl"
+                  data-with-json="{&quot;text&quot;:&quot;Write smaller core first&quot;}">
+            Add another
+          </button>
+        </div>
+
+        <div id="todoList">
+          <div class="todo-item">
+            <input type="checkbox" command="--class:toggle:completed" commandfor="@closest(.todo-item)" aria-label="Complete">
+            <span>Buy milk</span>
+            <button type="button" command="--dom:remove" commandfor="@closest(.todo-item)">Delete</button>
+          </div>
+        </div>
+      `;
+
+      invokerManager.ensureListenersAttached();
+
+      const addItemButton = document.getElementById('add-item') as HTMLButtonElement;
+      const addAnotherButton = document.getElementById('add-another') as HTMLButtonElement;
+      const list = document.getElementById('todoList') as HTMLElement;
+
+      expect(list.querySelectorAll('.todo-item')).toHaveLength(1);
+
+      addItemButton.click();
+      await new Promise(resolve => setTimeout(resolve, 0));
+      expect(list.querySelectorAll('.todo-item')).toHaveLength(2);
+
+      addAnotherButton.click();
+      await new Promise(resolve => setTimeout(resolve, 0));
+      expect(list.querySelectorAll('.todo-item')).toHaveLength(3);
+    });
+
     it('should work with simple templates for content creation', async () => {
       document.body.innerHTML = `
         <div id="template-demo">
