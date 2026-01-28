@@ -1,6 +1,8 @@
 // src/event-trigger-manager.ts
 
+import { debugLog, debugWarn, debugError } from '../utils';
 import { _dispatchCommandEvent } from '../index';
+import { parseCommaSeparatedCommands } from '../core';
 import { interpolateString } from './interpolation';
 import { resolveTargets } from '../target-resolver';
 
@@ -24,26 +26,61 @@ const KEY_ALIASES: Record<string, string> = {
   'arrow-right': 'ArrowRight',
 };
 
+type TriggerSource = 'command-on' | 'data-on-event';
+
 // Handles any DOM event that triggers a command (from command-on or data-on-event)
-function handleTrigger(this: HTMLElement, event: Event) {
+function handleTrigger(this: HTMLElement, event: Event, triggerSource: TriggerSource = 'command-on') {
    if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-     console.log('Invokers: handleTrigger called for event:', event.type, 'on element:', this);
+     debugLog('Invokers: handleTrigger called for event:', event.type, 'on element:', this);
    }
    const source = this;
-   const commandAttribute = source.getAttribute('command') || source.dataset.onEventCommand;
-   const commandforAttribute = source.getAttribute('commandfor') || source.dataset.onEventCommandfor;
+   const hasCommandOn = source.hasAttribute('command-on');
+   const hasDataOnEvent = source.hasAttribute('data-on-event');
+   const dataOnEvent = source.getAttribute('data-on-event') || source.dataset.onEvent;
+   const isDataOnEventTrigger = triggerSource === 'data-on-event'
+     || Boolean(hasDataOnEvent && dataOnEvent && dataOnEvent === event.type);
+
+   if (!hasCommandOn && !hasDataOnEvent) {
+     return;
+   }
+
+   const dataOnEventCommand = source.getAttribute('data-on-event-command') || source.dataset.onEventCommand;
+   const dataOnEventCommandfor = source.getAttribute('data-on-event-commandfor') || source.dataset.onEventCommandfor;
+
+   let commandAttribute: string | null = null;
+   let commandforAttribute: string | null = null;
+
+   if (triggerSource === 'data-on-event') {
+     const preferDataOverrides = hasCommandOn;
+     commandAttribute = preferDataOverrides
+       ? (dataOnEventCommand || source.getAttribute('command'))
+       : (source.getAttribute('command') || dataOnEventCommand);
+     commandforAttribute = preferDataOverrides
+       ? (dataOnEventCommandfor || source.getAttribute('commandfor'))
+       : (source.getAttribute('commandfor') || dataOnEventCommandfor);
+   } else {
+     commandAttribute = source.getAttribute('command');
+     commandforAttribute = source.getAttribute('commandfor');
+   }
+
+   if (!isDataOnEventTrigger && event.type === 'click' && source.hasAttribute('command')) {
+     event.preventDefault();
+   }
 
   if (!commandAttribute || !commandforAttribute) {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.warn("Invokers: Missing 'command' or 'commandfor' attribute on event triggered element:", source);
+      debugWarn("Invokers: Missing 'command' or 'commandfor' attribute on event triggered element:", source);
     }
     return;
   }
 
    // Handle modifiers like .prevent and .stop
-   const triggerAttr = source.getAttribute('command-on') || source.dataset.onEvent || (source as any).originalTriggerAttr;
+   const triggerAttr = isDataOnEventTrigger
+     ? (dataOnEvent || '')
+     : (source.getAttribute('command-on') || '');
    const allModifiers = triggerAttr.split('.').slice(1);
     const modifiers = allModifiers.filter((m: string) => m !== 'window'); // Remove 'window' since it's handled in attach
+    const hasWindowModifier = allModifiers.includes('window');
 
      // Check key-specific modifiers for keyboard events
      if (event.type === 'keydown' || event.type === 'keyup') {
@@ -72,11 +109,11 @@ function handleTrigger(this: HTMLElement, event: Event) {
       // Resolve the target using the target resolver
       const targets = resolveTargets(commandforAttribute, source);
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.log(`Invokers: Resolved targets for "${commandforAttribute}":`, targets);
+        debugLog(`Invokers: Resolved targets for "${commandforAttribute}":`, targets);
       }
       if (targets.length === 0) {
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-         console.warn(`Invokers: No target found for selector "${commandforAttribute}"`, source);
+         debugWarn(`Invokers: No target found for selector "${commandforAttribute}"`, source);
        }
         return;
       }
@@ -86,24 +123,26 @@ function handleTrigger(this: HTMLElement, event: Event) {
 
       // Create interpolation context for this specific event trigger
       let sourceDataContext: Record<string, any> = {};
-      if (source.dataset.context) {
+      const sourceContextRaw = source.dataset.context || source.getAttribute('data-context') || '';
+      if (sourceContextRaw) {
         try {
-          sourceDataContext = JSON.parse(source.dataset.context);
+          sourceDataContext = JSON.parse(sourceContextRaw);
         } catch (error) {
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.warn('Invokers: Failed to parse data-context:', error);
+            debugWarn('Invokers: Failed to parse data-context:', error);
           }
         }
       }
 
       let targetDataContext: Record<string, any> = {};
       const targetDataset = (targetElement as HTMLElement).dataset;
-      if (targetDataset?.context) {
+      const targetContextRaw = targetDataset?.context || (targetElement as HTMLElement).getAttribute('data-context') || '';
+      if (targetContextRaw) {
         try {
-          targetDataContext = JSON.parse(targetDataset.context);
+          targetDataContext = JSON.parse(targetContextRaw);
         } catch (error) {
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.warn('Invokers: Failed to parse data-context:', error);
+            debugWarn('Invokers: Failed to parse data-context:', error);
           }
         }
       }
@@ -117,15 +156,27 @@ function handleTrigger(this: HTMLElement, event: Event) {
         detail: (event as CustomEvent)?.detail,
       };
 
-      // Interpolate the command string using the activated utility
-      const interpolatedCommand = interpolateString(commandAttribute, interpolationContext);
+      const rawCommands = parseCommaSeparatedCommands(commandAttribute);
+      const commandsToDispatch = rawCommands.length > 0 ? rawCommands : [commandAttribute];
 
-   // Dispatch the CommandEvent to the core InvokerManager
-   _dispatchCommandEvent(source, interpolatedCommand, targetElement as HTMLElement, event);
+      for (const rawCommand of commandsToDispatch) {
+        if (!rawCommand) continue;
+        const interpolatedCommand = interpolateString(rawCommand, interpolationContext);
+        if (!interpolatedCommand) continue;
+        (source as any).__invokersResolvedTargets = targets as HTMLElement[];
+        _dispatchCommandEvent(source, interpolatedCommand, targetElement as HTMLElement, event, targets as HTMLElement[]);
+        delete (source as any).__invokersResolvedTargets;
+      }
 
   // Handle 'once' modifier by removing the listener
   if (modifiers.includes('once')) {
-    source.removeEventListener(event.type, handleTrigger);
+    const listener = (source as any).commandOnListener;
+    const target = hasWindowModifier ? window : source;
+    if (listener) {
+      target.removeEventListener(event.type, listener);
+    } else {
+      source.removeEventListener(event.type, handleTrigger);
+    }
   }
 }
 
@@ -139,7 +190,7 @@ function attachListeners(element: HTMLElement) {
      const eventName = parts[0];
      const modifiers = parts.slice(1);
      const target = modifiers.includes('window') ? window : element;
-     const listener = (event: Event) => handleTrigger.call(element, event);
+     const listener = (event: Event) => handleTrigger.call(element, event, 'command-on');
      target.addEventListener(eventName, listener);
      element.dataset.commandOnAttached = 'true';
      (element as any).originalTriggerAttr = triggerAttr;
@@ -148,25 +199,33 @@ function attachListeners(element: HTMLElement) {
 
   // data-on-event (custom events)
   if (element.hasAttribute('data-on-event') && !element.dataset.onEventAttached) {
-    const eventName = element.dataset.onEvent!;
+    const eventName = element.getAttribute('data-on-event') || element.dataset.onEvent || '';
+    const commandOnAttr = element.getAttribute('command-on');
+    const commandOnEvent = commandOnAttr ? commandOnAttr.split('.')[0] : '';
+    if (eventName && commandOnEvent && eventName === commandOnEvent) {
+      return;
+    }
     // For data-on-event, the `command` and `commandfor` attributes are implied
     // to be present on the same element, or can be specified as `data-on-event-command`
     // and `data-on-event-commandfor` to avoid conflicts.
     if (!element.hasAttribute('command') && !element.hasAttribute('data-on-event-command')) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(`Invokers: Element with 'data-on-event="${eventName}"' must also have a 'command' or 'data-on-event-command' attribute.`, element);
+        debugWarn(`Invokers: Element with 'data-on-event="${eventName}"' must also have a 'command' or 'data-on-event-command' attribute.`, element);
       }
       return;
     }
     if (!element.hasAttribute('commandfor') && !element.hasAttribute('data-on-event-commandfor')) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(`Invokers: Element with 'data-on-event="${eventName}"' must also have a 'commandfor' or 'data-on-event-commandfor' attribute.`, element);
+        debugWarn(`Invokers: Element with 'data-on-event="${eventName}"' must also have a 'commandfor' or 'data-on-event-commandfor' attribute.`, element);
       }
       return;
     }
 
-    element.addEventListener(eventName, handleTrigger);
+    const listener = (event: Event) => handleTrigger.call(element, event, 'data-on-event');
+    element.addEventListener(eventName, listener);
+    (element as any).onEventListener = listener;
     element.dataset.onEventAttached = 'true';
+    (element as any).originalOnEventAttr = eventName;
   }
 }
 
@@ -188,9 +247,19 @@ function disconnectListeners(element: HTMLElement) {
      delete (element as any).commandOnListener;
    }
   if (element.dataset.onEventAttached) {
-    const eventName = element.dataset.onEvent!;
-    element.removeEventListener(eventName, handleTrigger);
+    const eventName = (element as any).originalOnEventAttr
+      || element.getAttribute('data-on-event')
+      || element.dataset.onEvent
+      || '';
+    const listener = (element as any).onEventListener;
+    if (eventName && listener) {
+      element.removeEventListener(eventName, listener);
+    } else if (eventName) {
+      element.removeEventListener(eventName, handleTrigger as any);
+    }
     delete element.dataset.onEventAttached;
+    delete (element as any).onEventListener;
+    delete (element as any).originalOnEventAttr;
   }
 }
 
@@ -227,6 +296,20 @@ const observer = new MutationObserver((mutations) => {
         (mutation.attributeName === 'data-on-event' && !element.hasAttribute('data-on-event') && element.dataset.onEventAttached)
       ) {
         disconnectListeners(element);
+      } else if (mutation.attributeName === 'command-on' && element.dataset.commandOnAttached) {
+        const current = element.getAttribute('command-on') || '';
+        const original = (element as any).originalTriggerAttr || '';
+        if (current && current !== original) {
+          disconnectListeners(element);
+          attachListeners(element);
+        }
+      } else if (mutation.attributeName === 'data-on-event' && element.dataset.onEventAttached) {
+        const current = element.getAttribute('data-on-event') || '';
+        const original = (element as any).originalOnEventAttr || '';
+        if (current && current !== original) {
+          disconnectListeners(element);
+          attachListeners(element);
+        }
       }
     }
   }
@@ -265,7 +348,7 @@ export class EventTriggerManager {
     });
     this.isInitialized = true;
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.log('Invokers EventTriggerManager initialized.');
+      debugLog('Invokers EventTriggerManager initialized.');
     }
   }
 
@@ -273,7 +356,7 @@ export class EventTriggerManager {
     observer.disconnect();
     document.querySelectorAll<HTMLElement>('[command-on][data-command-on-attached], [data-on-event][data-on-event-attached]').forEach(disconnectListeners);
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.log('Invokers EventTriggerManager shut down.');
+      debugLog('Invokers EventTriggerManager shut down.');
     }
   }
 

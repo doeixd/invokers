@@ -1,6 +1,43 @@
 // src/utils.ts
 // Utility functions for the Invokers library
 
+export function isDebugEnabled(): boolean {
+  if (typeof globalThis === 'undefined') {
+    return false;
+  }
+  return Boolean((globalThis as any).Invoker?.debug);
+}
+
+export function debugLog(...args: unknown[]): void {
+  if (isDebugEnabled()) {
+    console.log(...args);
+  }
+}
+
+export function debugWarn(...args: unknown[]): void {
+  if (isDebugEnabled()) {
+    console.warn(...args);
+  }
+}
+
+export function debugError(...args: unknown[]): void {
+  if (isDebugEnabled()) {
+    console.error(...args);
+  }
+}
+
+export function debugGroup(...args: unknown[]): void {
+  if (isDebugEnabled()) {
+    console.group(...args);
+  }
+}
+
+export function debugGroupEnd(): void {
+  if (isDebugEnabled()) {
+    console.groupEnd();
+  }
+}
+
 /**
  * Generates a unique identifier string.
  * Uses crypto.getRandomValues() for better randomness when available,
@@ -37,9 +74,7 @@ export function generateUid(prefix = 'invoker', length = 8): string {
     }
   } catch (error) {
     // If crypto fails for any reason, fallback to Math.random
-    if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.warn('Invokers: crypto.getRandomValues failed, using Math.random fallback:', error);
-    }
+    debugWarn('Invokers: crypto.getRandomValues failed, using Math.random fallback:', error);
     randomPart = Math.random().toString(36).substring(2, 2 + length);
   }
 
@@ -124,9 +159,7 @@ export function deepClone<T>(obj: T): T {
     return JSON.parse(JSON.stringify(obj));
   } catch (error) {
     // If JSON serialization fails (circular references, etc.), return shallow clone
-    if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.warn('Invokers: deepClone failed, returning shallow clone:', error);
-    }
+    debugWarn('Invokers: deepClone failed, returning shallow clone:', error);
     return { ...obj };
   }
 }

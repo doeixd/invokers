@@ -13,6 +13,10 @@ describe('Loop Commands', () => {
     registerLoopCommands(invokerInstance);
     enableAdvancedEvents(); // Enable interpolation for loop commands
     invokerInstance.ensureListenersAttached();
+    if (typeof window !== 'undefined') {
+      window.Invoker = window.Invoker || {};
+      window.Invoker.debug = false;
+    }
   });
 
   describe('--dom:repeat-append', () => {

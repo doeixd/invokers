@@ -6,7 +6,7 @@
 
 ### _Write Interactive HTML Without Writing JavaScript_
 
-**Invokers lets you write future-proof HTML interactions without custom JavaScript.** It's a polyfill for the upcoming HTML Invoker Commands API and Interest Invokers (hover cards, tooltips), with a comprehensive set of extended commands automatically included for real-world needs like toggling, fetching, media controls, and complex workflow chaining.
+**Invokers lets you write future-proof HTML interactions without custom JavaScript.** It's a polyfill for the upcoming HTML Invoker Commands API and Interest Invokers (hover cards, tooltips), with extended commands available via modular command packs or the `invokers/compatible` build for real-world needs like toggling, fetching, media controls, and complex workflow chaining.
 
 
 
@@ -607,7 +607,7 @@ registerFlowCommands(invokers);
         data-replace-strategy="outerHTML">Send Message</button>
 
 <button command="--navigate:to:/dashboard">Go to Dashboard</button>
-<input command-on="input" command="--bind:value" data-bind-to="#output" data-bind-as="text">
+<input id="bind-input" command-on="input" command="--bind:value" commandfor="bind-input" data-bind-to="#output" data-bind-as="text">
 ```
 
 **Replace Strategies:**
@@ -834,6 +834,7 @@ These commands are built into modern browsers and work without any JavaScript fr
 | `--form:submit`        | Submit form                       | `command="--form:submit"`                    |
 | `--input:step:amount`  | Step number input                 | `command="--input:step:1"`                   |
 | `--dom:remove`         | Remove element from DOM           | `command="--dom:remove"`                     |
+| `--dom:clear`          | Remove all child nodes            | `command="--dom:clear"`                      |
 | `--dom:replace[:inner\:outer]` | Replace with template content (inner/outer) | `command="--dom:replace:outer" data-template-id="tpl"` |
 | `--dom:swap[:inner\:outer]` | Swap content with template (inner/outer) | `command="--dom:swap:outer" data-template-id="tpl"`|
 | `--dom:append[:inner\:outer]` | Append template content (inner/outer) | `command="--dom:append:outer" data-template-id="tpl"` |
@@ -849,7 +850,7 @@ These commands are built into modern browsers and work without any JavaScript fr
 | `--command:trigger:event` | Trigger event on element       | `command="--command:trigger:click" commandfor="#btn"` |
 | `--command:delay:ms`   | Wait for milliseconds             | `command="--command:delay:2000"`             |
 | `--on:interval:ms`     | Execute command at intervals      | `command-on="load" command="--on:interval:5000" data-interval-command="--fetch:get"` |
-| `--bind:prop`          | Bind data between elements        | `command="--bind:value" data-bind-to="#output"` |
+| `--bind:prop`          | Bind data between elements        | `command="--bind:value" commandfor="source" data-bind-to="#output"` |
 | `--text:copy`          | Copy text between elements        | `command="--text:copy" data-copy-from="#source"` |
 | `--fetch:get`          | GET request (HTML/JSON/text)      | `command="--fetch:get" data-url="/api/data" data-response-type="json"` |
 | `--fetch:post`         | POST request with body            | `command="--fetch:post" data-url="/api/users" data-body='{"name":"John"}'` |
@@ -1075,7 +1076,7 @@ enableEventTriggers();
 
 ```html
 <!-- Respond to any DOM event -->
-<form command-on="submit.prevent" command="--fetch:send">...</form>
+<form command-on="submit.prevent" command="--fetch:send" commandfor="result">...</form>
 <input command-on="input:debounce:300" command="--text:set:{{this.value}}" commandfor="preview">
 ```
 
@@ -1290,7 +1291,7 @@ enableAdvancedEvents();
 ```
 
 ```html
-<form command-on="submit.prevent" command="--fetch:send" data-url="/api/contact">
+<form command-on="submit.prevent" command="--fetch:send" commandfor="contact-result" data-url="/api/contact">
   <input name="email" command-on="blur" 
          command="--text:set:Email: {{this.value}}" 
          commandfor="email-preview" required>
@@ -1806,7 +1807,7 @@ Invokers includes a comprehensive set of extended commands that are automaticall
 ### Automatically Included Commands:
 - **Server Communication**: `--fetch:get`, `--fetch:post`, `--fetch:put`, `--fetch:patch`, `--fetch:delete`, `--fetch:head`, `--fetch:options`, `--fetch:send` - Full HTTP verb support with headers and request bodies
 - **Media Controls**: `--media:toggle`, `--media:seek`, `--media:mute` - Full media player controls
-- **DOM Manipulation**: `--dom:remove`, `--dom:replace`, `--dom:swap`, `--dom:append`, `--dom:prepend` - Dynamic content updates
+- **DOM Manipulation**: `--dom:remove`, `--dom:clear`, `--dom:replace`, `--dom:swap`, `--dom:append`, `--dom:prepend` - Dynamic content updates
 - **Form Handling**: `--form:reset`, `--form:submit` - Form interactions
 - **Input Controls**: `--input:step`, `--value:set` - Control form input values and stepping
 - **Focus Management**: `--focus` - Programmatically focus elements
@@ -2388,7 +2389,7 @@ Once enabled, you gain access to two new declarative attributes for triggering c
 
 #### `command-on`: Trigger Commands from Any Event
 
-Allows any element to execute a command in response to *any* DOM event, not just button clicks.
+Allows any element to execute a command in response to *any* DOM event, not just button clicks. `command-on` requires both `command` and `commandfor` so the target can be resolved.
 
 ```html
 <!-- Self-submitting form (no submit button needed) -->
@@ -3107,7 +3108,7 @@ You can also use any standard CSS selector directly:
 **Before (v1.4.x):**
 ```javascript
 import 'invokers';
-// 160 kB - everything included
+// 160 kB - everything included (legacy v1.4.x)
 ```
 
 **After (v1.5.x) - Recommended:**
@@ -3126,7 +3127,7 @@ registerFormCommands(invokers);
 
 **After (v1.5.x) - Compatibility Layer:**
 ```javascript
-// For existing apps that need all commands (82 kB)
+// For existing apps that need all commands (~200+ kB)
 import 'invokers/compatible';
 // All commands are now available - no changes needed to your HTML
 ```
@@ -3147,7 +3148,7 @@ The compatibility layer:
 - ✅ Pre-registers all command packs automatically
 - ✅ Enables all advanced features by default
 - ✅ Maintains full backward compatibility
-- ✅ Bundle size: 82 kB (still smaller than v1.4.x's 160 kB)
+- ✅ Bundle size: ~200+ kB (full compatibility layer)
 
 ### Progressive Enhancement Strategy
 
@@ -3189,9 +3190,9 @@ window.Invoker.executeCommand(command, targetId, source);
 ### Bundle Size Comparison
 - **Core only**: 25.8 kB (polyfill + engine)
 - **Essential UI**: ~60 kB (core + base + form)
-- **Advanced features**: ~178 kB (core + state + control + forms + components)
-- **Full power**: ~200 kB (all packs + advanced)
-- **Original v1.4**: 160 kB (everything forced)
+- **Advanced features**: Varies by pack selection (state/control/components/forms are sizable)
+- **Full power**: ~200+ kB (compatible build with all packs + advanced)
+- **Original v1.4**: 160 kB (legacy, everything forced)
 
 ### Best Practices
 - Start with core, add incrementally
@@ -3209,7 +3210,7 @@ window.Invoker.executeCommand(command, targetId, source);
 ### Commands
 ```bash
 npm run build     # Build all modules
-npm run build:production  # Build production bundles (removes debug logging)
+npm run build:production  # Build production bundles (optimized)
 npm run test      # Run tests
 npm run dev       # Development mode
 npm run clean     # Clean build artifacts
@@ -3217,12 +3218,10 @@ npm run clean     # Clean build artifacts
 
 ### Production Builds
 
-Invokers includes a production build process that automatically removes debug logging code to optimize bundle size for deployment. The production build script processes all TypeScript source files and removes debug logging statements that use the pattern:
+Invokers gates all internal logging behind `window.Invoker.debug`, so production builds stay quiet without needing to strip logs. The production build script can still be used for bundle optimizations.
 
 ```typescript
-if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-  console.log(...);
-}
+window.Invoker.debug = true;
 ```
 
 #### Usage
@@ -3230,24 +3229,24 @@ if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
 # Build production bundles (recommended for deployment)
 npm run build:production
 
-# Regular development build (includes debug logging)
+# Regular development build (logging is opt-in via window.Invoker.debug)
 npm run build
 ```
 
 #### Benefits
-- **Reduced bundle size**: Removes debug overhead from production builds
-- **Cleaner production output**: No debug console messages in production
-- **Development flexibility**: Full debugging available during development
-- **Automatic processing**: Script processes entire `src/` directory automatically
+- **Quiet by default**: No internal console output unless `window.Invoker.debug = true`
+- **Development flexibility**: Full debugging available when you opt in
+- **Production safe**: No runtime logging noise in production by default
+- **Optional optimization**: Build script still optimizes bundles for deployment
 
 #### Build Output Differences
 
 | Build Type | Debug Logging | Bundle Size | Use Case |
 |------------|---------------|-------------|----------|
-| `npm run build` | ✅ Included | Larger | Development, debugging |
-| `npm run build:production` | ❌ Removed | Smaller | Production deployment |
+| `npm run build` | Off by default, opt in with `window.Invoker.debug` | Larger | Development, debugging |
+| `npm run build:production` | Off by default, opt in with `window.Invoker.debug` | Smaller | Production deployment |
 
-The production build maintains all functionality while removing only the debug logging code, ensuring optimal performance for end users.
+The production build maintains all functionality; logging is still controlled by `window.Invoker.debug`.
 
 ### Testing with Modules
 ```javascript

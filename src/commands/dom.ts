@@ -20,7 +20,7 @@ import type { InvokerManager } from '../core';
 import type { CommandCallback, CommandContext } from '../index';
 import { createInvokerError, ErrorSeverity, isInterpolationEnabled, logInvokerError } from '../index';
 import { interpolateString, setDataContext, getDataContext, updateDataContext } from '../advanced/interpolation';
-import { generateUid } from '../utils';
+import { generateUid, debugLog, debugWarn, debugError } from '../utils';
 
 /**
  * DOM manipulation commands for dynamic UI updates.
@@ -39,6 +39,16 @@ const domCommands: Record<string, CommandCallback> = {
      const updateDOM = () => targetElement.remove();
      document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
    },
+
+  /**
+   * `--dom:clear`: Removes all child nodes from the target element.
+   * @example `<button command="--dom:clear" commandfor="list">Clear List</button>`
+   */
+  "--dom:clear": ({ targetElement }: CommandContext) => {
+    if (!targetElement.isConnected) return;
+    const updateDOM = () => targetElement.replaceChildren();
+    document.startViewTransition ? document.startViewTransition(updateDOM) : updateDOM();
+  },
 
   /**
    * `--dom:replace`: Replaces the target element with content from a `<template>`.
@@ -906,7 +916,7 @@ function processTemplateFragment(fragment: DocumentFragment, invoker: HTMLElemen
       context = { ...context, ...jsonData };
     } catch (error) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.error('Invokers: Invalid JSON in data-with-json:', error);
+        debugError('Invokers: Invalid JSON in data-with-json:', error);
       }
     }
   }
@@ -1063,7 +1073,7 @@ function processInterpolation(fragment: DocumentFragment, context: Record<string
             node.textContent = interpolated;
           } catch (error) {
             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-              console.warn('Invokers: Interpolation error in template:', error);
+              debugWarn('Invokers: Interpolation error in template:', error);
             }
           }
         }
@@ -1085,7 +1095,7 @@ function processInterpolation(fragment: DocumentFragment, context: Record<string
           element.setAttribute(attr.name, interpolated);
         } catch (error) {
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.warn('Invokers: Attribute interpolation error:', error);
+            debugWarn('Invokers: Attribute interpolation error:', error);
           }
         }
       }
@@ -1122,7 +1132,7 @@ function processDataBindings(root: Element | DocumentFragment): void {
       }
     } catch (error) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn('Invokers: Data binding error:', error);
+        debugWarn('Invokers: Data binding error:', error);
       }
     }
   }

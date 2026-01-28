@@ -1,4 +1,5 @@
 // Import required dependencies and types
+import { debugLog, debugWarn, debugError, debugGroup, debugGroupEnd } from './utils';
 import { resolveTargets } from './target-resolver';
 import { interpolateString } from './advanced/interpolation';
 
@@ -51,28 +52,30 @@ export function logInvokerError(error: InvokerError | Error, prefix = 'Invokers'
     : severity === ErrorSeverity.ERROR ? 'error'
       : 'warn';
 
-  if (isDebugMode || severity === ErrorSeverity.CRITICAL) {
-    console.group(`${prefix}: ${error.message}`);
-    console[logMethod]('Error:', error);
+  if (isDebugMode) {
+    debugGroup(`${prefix}: ${error.message}`);
+    if (logMethod === 'error') {
+      debugError('Error:', error);
+    } else {
+      debugWarn('Error:', error);
+    }
 
     if (isInvokerError) {
       const invokerError = error as InvokerError;
       if (invokerError.element) {
-        console.log('Element:', invokerError.element);
+        debugLog('Element:', invokerError.element);
       }
       if (invokerError.command) {
-        console.log('Command:', invokerError.command);
+        debugLog('Command:', invokerError.command);
       }
       if (invokerError.context) {
-        console.log('Context:', invokerError.context);
+        debugLog('Context:', invokerError.context);
       }
       if (invokerError.recovery) {
-        console.log('Suggested fix:', invokerError.recovery);
+        debugLog('Suggested fix:', invokerError.recovery);
       }
     }
-    console.groupEnd();
-  } else {
-    console[logMethod](`${prefix}: ${error.message}`, isInvokerError ? (error as InvokerError).element : undefined);
+    debugGroupEnd();
   }
 }
 
@@ -191,14 +194,14 @@ function sanitizeParams(params: string[]): string[] {
         const allowedProtocols = ['http:', 'https:', 'ftp:', 'mailto:', 'tel:', 'sms:'];
         if (!allowedProtocols.includes(url.protocol)) {
           if ((window as any).Invoker?.debug) {
-            console.warn(`Invokers: Potentially unsafe URL protocol "${url.protocol}" detected and removed`);
+            debugWarn(`Invokers: Potentially unsafe URL protocol "${url.protocol}" detected and removed`);
           }
           return '';
         }
       } catch (e) {
         // If URL parsing fails, it might be malformed or not actually a URL - safer to remove
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.warn('Invokers: Malformed URL detected and removed:', sanitized);
+          debugWarn('Invokers: Malformed URL detected and removed:', sanitized);
         }
         return '';
       }
@@ -273,7 +276,7 @@ class PerformanceMonitor {
     
     if (this.executions.length >= this.maxExecutions) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn('Invokers: Rate limit exceeded. Too many command executions.');
+        debugWarn('Invokers: Rate limit exceeded. Too many command executions.');
       }
       return false;
     }
@@ -383,7 +386,7 @@ class AndThenManager {
       const MAX_DEPTH = 25;
       if (depth > MAX_DEPTH) {
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.error(`Maximum <and-then> depth (${MAX_DEPTH}) reached, stopping execution to prevent infinite loop.`);
+           debugError(`Maximum <and-then> depth (${MAX_DEPTH}) reached, stopping execution to prevent infinite loop.`);
          }
         return;
       }
@@ -391,7 +394,7 @@ class AndThenManager {
       // 2. Element Validation: Ensure the element is still in the DOM
       if (!andThenElement || !andThenElement.isConnected) {
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.warn('<and-then> element is no longer in DOM, skipping execution.');
+          debugWarn('<and-then> element is no longer in DOM, skipping execution.');
         }
         return;
       }
@@ -399,20 +402,20 @@ class AndThenManager {
        // 3. State Check: Skip elements that have already run, are disabled, or are currently executing.
        const state = andThenElement.dataset.state;
        if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-         console.log(`<and-then> state check: element=${andThenElement.tagName}, state="${state}", command="${andThenElement.getAttribute('command')}"`);
+         debugLog(`<and-then> state check: element=${andThenElement.tagName}, state="${state}", command="${andThenElement.getAttribute('command')}"`);
        }
 
        // Validate state values
        const validStates = ['active', 'completed', 'disabled', 'once'];
        if (state && !validStates.includes(state)) {
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.warn(`<and-then> invalid state "${state}", treating as active`);
+           debugWarn(`<and-then> invalid state "${state}", treating as active`);
          }
        }
 
        if (state === 'disabled' || state === 'completed' || state === 'active') {
          if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-           console.log(`<and-then> skipping: already ${state}`);
+           debugLog(`<and-then> skipping: already ${state}`);
          }
          return;
        }
@@ -422,7 +425,7 @@ class AndThenManager {
         const validConditions = ['success', 'error', 'always'];
         if (!validConditions.includes(condition)) {
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.warn(`<and-then> invalid condition "${condition}", defaulting to "always"`);
+            debugWarn(`<and-then> invalid condition "${condition}", defaulting to "always"`);
           }
         }
 
@@ -433,14 +436,14 @@ class AndThenManager {
        // 4. Mark as active immediately to prevent concurrent executions
        andThenElement.dataset.state = 'active';
        if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-         console.log(`<and-then> marked as active: command="${andThenElement.getAttribute('command')}"`);
+         debugLog(`<and-then> marked as active: command="${andThenElement.getAttribute('command')}"`);
        }
 
        // 5. Command and Target Validation
      const command = andThenElement.getAttribute('command');
      if (!command || typeof command !== 'string' || command.trim() === '') {
        if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-         console.error('<and-then> element is missing required "command" attribute or command is empty.');
+         debugError('<and-then> element is missing required "command" attribute or command is empty.');
        }
        return;
      }
@@ -448,7 +451,7 @@ class AndThenManager {
      const targetId = andThenElement.getAttribute('commandfor') || originalInvoker.getAttribute('commandfor') || primaryTarget.id;
      if (!targetId || typeof targetId !== 'string' || targetId.trim() === '') {
        if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-         console.error('<and-then> element is missing required target (commandfor attribute or fallback).');
+         debugError('<and-then> element is missing required target (commandfor attribute or fallback).');
        }
        return;
      }
@@ -456,7 +459,7 @@ class AndThenManager {
      const delay = parseInt(andThenElement.dataset.delay || '0', 10);
      if (isNaN(delay) || delay < 0) {
        if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-         console.warn('<and-then> invalid delay value, defaulting to 0');
+         debugWarn('<and-then> invalid delay value, defaulting to 0');
        }
      }
 
@@ -499,13 +502,13 @@ class AndThenManager {
         if (andThenElement.parentNode) {
           andThenElement.remove();
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.log(`<and-then> removed (data-once): command="${command}"`);
+            debugLog(`<and-then> removed (data-once): command="${command}"`);
           }
         }
       } else {
         andThenElement.dataset.state = 'completed';
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.log(`<and-then> marked as completed: command="${command}"`);
+          debugLog(`<and-then> marked as completed: command="${command}"`);
         }
       }
    }
@@ -540,7 +543,7 @@ class AndThenManager {
         return true;
       default:
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.error(`Unknown condition for <and-then> element: "${condition}"`);
+          debugError(`Unknown condition for <and-then> element: "${condition}"`);
         }
         return false; // Fail safe
     }
@@ -629,7 +632,7 @@ export class InvokerManager {
 
     // Note: Interpolation is not reset as it's a global feature enabled by enableAdvancedEvents()
     if (isDebugMode) {
-      console.log("Invokers: Reset complete.");
+      debugLog("Invokers: Reset complete.");
     }
   }
 
@@ -647,7 +650,7 @@ export class InvokerManager {
         return interpolateString(template, context);
       } catch (error) {
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.warn('Invokers: Template interpolation failed:', error);
+          debugWarn('Invokers: Template interpolation failed:', error);
         }
         return template;
       }
@@ -667,7 +670,7 @@ export class InvokerManager {
     // Performance check
     if (!this.performanceMonitor.recordExecution()) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn('Invokers: Rate limit exceeded, command execution aborted');
+        debugWarn('Invokers: Rate limit exceeded, command execution aborted');
       }
       return; // Abort if too many executions
     }
@@ -792,7 +795,7 @@ export class InvokerManager {
    */
   public registerPlugin(plugin: InvokerPlugin): void {
     if (this.plugins.has(plugin.name)) {
-      console.warn(`Invokers: Plugin "${plugin.name}" is already registered`);
+      debugWarn(`Invokers: Plugin "${plugin.name}" is already registered`);
       return;
     }
 
@@ -815,7 +818,7 @@ export class InvokerManager {
           set: (target, property, value) => {
             // Allow setting internal properties (starting with _) but prevent others
             if (typeof property === 'string' && !property.startsWith('_') && !['plugins', 'middleware', 'commands'].includes(property)) {
-              console.warn(`Invokers: Plugin "${plugin.name}" attempted to modify manager property "${property}". This is not allowed for security.`);
+              debugWarn(`Invokers: Plugin "${plugin.name}" attempted to modify manager property "${property}". This is not allowed for security.`);
               return false;
             }
             return Reflect.set(target, property, value);
@@ -823,12 +826,12 @@ export class InvokerManager {
         });
         plugin.onRegister(managerProxy);
       } catch (error) {
-        console.error(`Invokers: Error in plugin "${plugin.name}" onRegister:`, error);
+        debugError(`Invokers: Error in plugin "${plugin.name}" onRegister:`, error);
       }
     }
 
     if (isDebugMode) {
-      console.log(`Invokers: Plugin "${plugin.name}" registered successfully`);
+      debugLog(`Invokers: Plugin "${plugin.name}" registered successfully`);
     }
   }
 
@@ -838,7 +841,7 @@ export class InvokerManager {
   public unregisterPlugin(pluginName: string): void {
     const plugin = this.plugins.get(pluginName);
     if (!plugin) {
-      console.warn(`Invokers: Plugin "${pluginName}" is not registered`);
+      debugWarn(`Invokers: Plugin "${pluginName}" is not registered`);
       return;
     }
 
@@ -847,7 +850,7 @@ export class InvokerManager {
       try {
         plugin.onUnregister(this);
       } catch (error) {
-        console.error(`Invokers: Error in plugin "${pluginName}" onUnregister:`, error);
+        debugError(`Invokers: Error in plugin "${pluginName}" onUnregister:`, error);
       }
     }
 
@@ -861,7 +864,7 @@ export class InvokerManager {
     this.plugins.delete(pluginName);
 
     if (isDebugMode) {
-      console.log(`Invokers: Plugin "${pluginName}" unregistered successfully`);
+      debugLog(`Invokers: Plugin "${pluginName}" unregistered successfully`);
     }
   }
 
@@ -920,7 +923,7 @@ export class InvokerManager {
           throw error;
         } else {
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.error(`Invokers: Middleware error at ${hookPoint}:`, error);
+            debugError(`Invokers: Middleware error at ${hookPoint}:`, error);
           }
           // Continue with other middleware even if one fails
         }
@@ -998,7 +1001,7 @@ export class InvokerManager {
     if (!normalizedName.startsWith('--')) {
       normalizedName = `--${normalizedName}`;
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(`Invokers: Command "${trimmedName}" registered without '--' prefix. Automatically registered as "${normalizedName}".`);
+        debugWarn(`Invokers: Command "${trimmedName}" registered without '--' prefix. Automatically registered as "${normalizedName}".`);
       }
     }
 
@@ -1019,7 +1022,7 @@ export class InvokerManager {
     // Check for overwrites
     if (this.commands.has(normalizedName)) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(`Invokers: Command "${normalizedName}" is already registered and will be overwritten`);
+        debugWarn(`Invokers: Command "${normalizedName}" is already registered and will be overwritten`);
       }
     }
 
@@ -1028,7 +1031,7 @@ export class InvokerManager {
       this.sortedCommandKeys = Array.from(this.commands.keys()).sort((a, b) => b.length - a.length);
 
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.log(`Invokers: Successfully registered command "${normalizedName}"`);
+        debugLog(`Invokers: Successfully registered command "${normalizedName}"`);
       }
     } catch (error) {
       const invokerError = createInvokerError(
@@ -1114,7 +1117,7 @@ export class InvokerManager {
         const { invoker, targetElement } = context;
 
        if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-         console.log(`Invokers: Executing composite command "${name}" with ${commands.length} sub-commands`);
+         debugLog(`Invokers: Executing composite command "${name}" with ${commands.length} sub-commands`);
        }
 
        for (let i = 0; i < commands.length; i++) {
@@ -1125,12 +1128,12 @@ export class InvokerManager {
            await this.executeCommand(commandString, targetElement?.id || '', invoker);
 
            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-             console.log(`Invokers: Sub-command "${commandString}" completed successfully`);
+             debugLog(`Invokers: Sub-command "${commandString}" completed successfully`);
            }
 
          } catch (error) {
            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-             console.warn(`Invokers: Sub-command "${commandString}" failed:`, error);
+             debugWarn(`Invokers: Sub-command "${commandString}" failed:`, error);
            }
 
            if (stopOnError) {
@@ -1140,13 +1143,13 @@ export class InvokerManager {
 
            // Continue with the next command if not stopping on error
            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-             console.log(`Invokers: Continuing with next command after "${commandString}" failure`);
+             debugLog(`Invokers: Continuing with next command after "${commandString}" failure`);
            }
          }
        }
 
        if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-         console.log(`Invokers: Composite command "${name}" completed`);
+         debugLog(`Invokers: Composite command "${name}" completed`);
        }
      };
 
@@ -1154,7 +1157,7 @@ export class InvokerManager {
      this.register(name, compositeCallback);
 
      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-       console.log(`Invokers: Registered composite command "${name}" composing: ${commands.join(', ')}`);
+       debugLog(`Invokers: Registered composite command "${name}" composing: ${commands.join(', ')}`);
      }
 
       return name;
@@ -1172,12 +1175,12 @@ export class InvokerManager {
     } else if (NATIVE_COMMAND_KEYWORDS.has(commandStr)) {
       // Native commands are handled by the polyfill - do not preventDefault
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.log(`Invokers: Native command "${commandStr}" handled by polyfill`);
+        debugLog(`Invokers: Native command "${commandStr}" handled by polyfill`);
       }
     } else if (commandStr !== "") {
       // Backwards Compatibility: Handle old, non-prefixed library commands.
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(`Invokers (Compatibility): Non-spec-compliant command "${commandStr}" detected. Please update your HTML to use '--${commandStr}' for future compatibility. Attempting to handle...`);
+        debugWarn(`Invokers (Compatibility): Non-spec-compliant command "${commandStr}" detected. Please update your HTML to use '--${commandStr}' for future compatibility. Attempting to handle...`);
       }
       await this.executeCustomCommand(`--${commandStr}`, event);
     }
@@ -1189,7 +1192,7 @@ export class InvokerManager {
    */
   private async executeCustomCommand(commandStr: string, event: any): Promise<void> {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.log('Invokers: executeCustomCommand called with:', commandStr);
+      debugLog('Invokers: executeCustomCommand called with:', commandStr);
     }
 
     // Validate command string
@@ -1210,7 +1213,7 @@ export class InvokerManager {
     // Performance monitoring
     if (!this.performanceMonitor.recordExecution()) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn('Invokers: Rate limit exceeded during command execution');
+        debugWarn('Invokers: Rate limit exceeded during command execution');
       }
       return; // Abort if too many executions
     }
@@ -1253,7 +1256,7 @@ export class InvokerManager {
             interpolationContext = { ...interpolationContext, ...contextData };
           } catch (error) {
             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-              console.warn('Invokers: Failed to parse data-context:', error);
+              debugWarn('Invokers: Failed to parse data-context:', error);
             }
           }
         }
@@ -1310,7 +1313,7 @@ export class InvokerManager {
               }
 
               if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-                console.log(`Invokers: Command "${registeredCommand}" executed successfully (no targets required)`);
+                debugLog(`Invokers: Command "${registeredCommand}" executed successfully (no targets required)`);
               }
             } catch (error) {
               // If it's already an InvokerError, re-throw it as-is
@@ -1417,7 +1420,7 @@ export class InvokerManager {
                await this.executeMiddleware(HookPoint.ON_SUCCESS, { ...targetContext, result: executionResult });
 
                if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-                  console.log(`Invokers: Command "${registeredCommand}" executed successfully on target ${target.id || target}`);
+                  debugLog(`Invokers: Command "${registeredCommand}" executed successfully on target ${target.id || target}`);
                }
 
                } catch (error) {
@@ -1467,6 +1470,7 @@ export class InvokerManager {
           } catch (commandError) {
             // Process error chaining before handling the error
             if (context.invoker && targets.length > 0) {
+              await this._processAndThenElements(context.invoker, { success: false }, targets[0]);
               await this.processAttributeChaining(context.invoker, { success: false }, targets[0], interpolatedCommandStr);
             }
 
@@ -1606,7 +1610,7 @@ export class InvokerManager {
     // Validate that source element exists and is in DOM
     if (sourceElement && !sourceElement.isConnected) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn('Invokers: Source element is not connected to DOM');
+        debugWarn('Invokers: Source element is not connected to DOM');
       }
     }
 
@@ -1621,6 +1625,14 @@ export class InvokerManager {
 
 
     const getTargets = (): HTMLElement[] => {
+      const invokerResolvedTargets = (invoker as any)?.__invokersResolvedTargets as HTMLElement[] | undefined;
+      if (invokerResolvedTargets && invokerResolvedTargets.length > 0) {
+        return invokerResolvedTargets;
+      }
+      const resolvedTargets = (event as any).resolvedTargets as HTMLElement[] | undefined;
+      if (resolvedTargets && resolvedTargets.length > 0) {
+        return resolvedTargets;
+      }
       // For chained commands, use the target from the event directly
       if ((event as any).isChained) {
         return targetElement ? [targetElement] : [];
@@ -1635,9 +1647,16 @@ export class InvokerManager {
       // Validate invoker exists and is connected
       if (!invoker || !invoker.isConnected) {
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.warn('Invokers: Invoker element is not available or not connected to DOM');
+          debugWarn('Invokers: Invoker element is not available or not connected to DOM');
         }
         return targetElement ? [targetElement] : [];
+      }
+
+      if (invoker.hasAttribute('data-on-event-commandfor') && (event as any)?.triggeringEvent?.type) {
+        const dataOnEvent = invoker.getAttribute('data-on-event') || invoker.dataset.onEvent;
+        if (dataOnEvent && (event as any).triggeringEvent.type === dataOnEvent) {
+          return targetElement ? [targetElement] : [];
+        }
       }
 
       // Use advanced target resolver for all selector types
@@ -1766,20 +1785,29 @@ export class InvokerManager {
       return;
     }
 
-    const afterSuccessCommands = invokerElement.dataset.afterSuccess?.split(',');
-    const afterErrorCommands = invokerElement.dataset.afterError?.split(',');
-    const afterCompleteCommands = invokerElement.dataset.afterComplete?.split(',');
+    const afterSuccessCommands = (invokerElement.dataset.afterSuccess || invokerElement.getAttribute('data-after-success') || '')
+      .split(',')
+      .filter(Boolean);
+    const afterErrorCommands = (invokerElement.dataset.afterError || invokerElement.getAttribute('data-after-error') || '')
+      .split(',')
+      .filter(Boolean);
+    const afterCompleteCommands = (invokerElement.dataset.afterComplete || invokerElement.getAttribute('data-after-complete') || '')
+      .split(',')
+      .filter(Boolean);
 
     // Process universal data-and-then
-    const andThenCommand = invokerElement.dataset.andThen;
+    const andThenCommand = invokerElement.dataset.andThen || invokerElement.getAttribute('data-and-then') || '';
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.log('Invokers: Checking data-and-then, dataset.andThen:', andThenCommand, 'hasAttribute:', invokerElement.hasAttribute('data-and-then'), 'getAttribute:', invokerElement.getAttribute('data-and-then'));
+      debugLog('Invokers: Checking data-and-then, dataset.andThen:', andThenCommand, 'hasAttribute:', invokerElement.hasAttribute('data-and-then'), 'getAttribute:', invokerElement.getAttribute('data-and-then'));
     }
     if (andThenCommand) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.log('Invokers: Processing data-and-then:', andThenCommand, 'on invoker:', invokerElement);
+        debugLog('Invokers: Processing data-and-then:', andThenCommand, 'on invoker:', invokerElement);
       }
-      const targetId = invokerElement.dataset.thenTarget || invokerElement.getAttribute('commandfor') || primaryTarget.id;
+      const targetId = invokerElement.dataset.thenTarget
+        || invokerElement.getAttribute('data-then-target')
+        || invokerElement.getAttribute('commandfor')
+        || primaryTarget.id;
       await this.scheduleCommand(andThenCommand, targetId, 'active', primaryTarget, invokerElement);
       // Remove data-and-then after processing to prevent infinite loops
       invokerElement.removeAttribute('data-and-then');
@@ -1788,21 +1816,30 @@ export class InvokerManager {
     // Process conditional chaining
     if (executionResult.success && afterSuccessCommands) {
       for (const command of afterSuccessCommands) {
-        const targetId = invokerElement.dataset.thenTarget || invokerElement.getAttribute('commandfor') || primaryTarget.id;
+        const targetId = invokerElement.dataset.thenTarget
+          || invokerElement.getAttribute('data-then-target')
+          || invokerElement.getAttribute('commandfor')
+          || primaryTarget.id;
         await this.scheduleCommand(command.trim(), targetId, 'active', primaryTarget, invokerElement);
       }
     }
 
     if (!executionResult.success && afterErrorCommands) {
       for (const command of afterErrorCommands) {
-        const targetId = invokerElement.dataset.thenTarget || invokerElement.getAttribute('commandfor') || primaryTarget.id;
+        const targetId = invokerElement.dataset.thenTarget
+          || invokerElement.getAttribute('data-then-target')
+          || invokerElement.getAttribute('commandfor')
+          || primaryTarget.id;
         await this.scheduleCommand(command.trim(), targetId, 'active', primaryTarget, invokerElement);
       }
     }
 
     if (afterCompleteCommands) {
       for (const command of afterCompleteCommands) {
-        const targetId = invokerElement.dataset.thenTarget || invokerElement.getAttribute('commandfor') || primaryTarget.id;
+        const targetId = invokerElement.dataset.thenTarget
+          || invokerElement.getAttribute('data-then-target')
+          || invokerElement.getAttribute('commandfor')
+          || primaryTarget.id;
         await this.scheduleCommand(command.trim(), targetId, 'active', primaryTarget, invokerElement);
       }
     }
@@ -1817,7 +1854,7 @@ export class InvokerManager {
     primaryTarget: HTMLElement
   ): Promise<void> {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.log('_processAndThenElements called with success:', executionResult.success, 'invoker:', invokerElement);
+      debugLog('_processAndThenElements called with success:', executionResult.success, 'invoker:', invokerElement);
     }
 
     // Process <and-then> elements (only direct children to avoid double-processing nested ones)
@@ -1840,7 +1877,7 @@ export class InvokerManager {
       const isOnce = andThen.getAttribute('data-once') === 'true';
 
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.log('Invokers: Processing <and-then> command:', command, 'target:', targetId, 'delay:', delay, 'once:', isOnce);
+        debugLog('Invokers: Processing <and-then> command:', command, 'target:', targetId, 'delay:', delay, 'once:', isOnce);
       }
 
       const executeAndThen = async () => {
@@ -1876,13 +1913,13 @@ export class InvokerManager {
    */
   private async scheduleCommand(command: string, targetId: string, state: CommandState, primaryTarget?: HTMLElement, invoker?: HTMLElement): Promise<void> {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.log('Invokers: scheduleCommand called with command:', command, 'targetId:', targetId);
+      debugLog('Invokers: scheduleCommand called with command:', command, 'targetId:', targetId);
     }
 
     // Validate inputs
     if (!command || typeof command !== 'string' || command.trim() === '') {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn('Invokers: Invalid command in scheduleCommand');
+        debugWarn('Invokers: Invalid command in scheduleCommand');
       }
       return;
     }
@@ -1894,14 +1931,14 @@ export class InvokerManager {
     const currentState = this.commandStates.get(commandKey);
     if (currentState === 'disabled') {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.log(`Invokers: Command "${commandKey}" is disabled, skipping`);
+        debugLog(`Invokers: Command "${commandKey}" is disabled, skipping`);
       }
       return;
     }
 
     if (currentState === 'completed') {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.log(`Invokers: Command "${commandKey}" already completed, skipping`);
+        debugLog(`Invokers: Command "${commandKey}" already completed, skipping`);
       }
       return;
     }
@@ -1917,7 +1954,7 @@ export class InvokerManager {
       targetElement = primaryTarget;
     }
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.log('scheduleCommand targetElement:', targetElement, 'for targetId:', targetId);
+      debugLog('scheduleCommand targetElement:', targetElement, 'for targetId:', targetId);
     }
     if (targetElement) {
       const mockEvent = {

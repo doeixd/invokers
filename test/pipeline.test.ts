@@ -859,8 +859,8 @@ describe('Pipeline Functionality', () => {
     it('should handle once attribute by removing step after execution', async () => {
       document.body.innerHTML = `
         <template id="once-pipeline" data-pipeline="true">
-          <pipeline-step command="--text:set:Once executed" target="pipeline-output" once="true" />
-          <pipeline-step command="--text:append: → Second run" target="pipeline-output" />
+          <pipeline-step command="--text:set:Once executed" target="pipeline-output" once="true"></pipeline-step>
+          <pipeline-step command="--text:append: → Second run" target="pipeline-output"></pipeline-step>
         </template>
 
         <button id="pipeline-btn" command="--pipeline:execute:once-pipeline" commandfor="pipeline-output">
@@ -1027,6 +1027,73 @@ describe('Pipeline Functionality', () => {
       await new Promise(resolve => setTimeout(resolve, 100));
 
       expect(target.textContent).toBe('Hello, World! How are you?');
+    });
+
+    it('should not split commas inside interpolation expressions', async () => {
+      document.body.innerHTML = `
+        <button id="interpolation-comma-btn" command="--text:set:{{ 'a,b' }}, --text:append: done" commandfor="interpolation-target">
+          Interpolation Comma Commands
+        </button>
+        <div id="interpolation-target">Initial</div>
+      `;
+
+      const button = document.getElementById('interpolation-comma-btn') as HTMLButtonElement;
+      const target = document.getElementById('interpolation-target') as HTMLElement;
+
+      button.click();
+
+      // Wait for commands to execute
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      expect(target.textContent).toBe('a,b done');
+    });
+
+    it('should not split commas inside JSON payloads in pipeline steps', async () => {
+      document.body.innerHTML = `
+        <template id="json-comma-pipeline" data-pipeline="true">
+          <pipeline-step command="--text:set:{&quot;value&quot;:&quot;a,b&quot;}, --text:append: done" target="json-pipeline-target"></pipeline-step>
+        </template>
+
+        <button id="json-pipeline-btn" command="--pipeline:execute:json-comma-pipeline">
+          Run JSON Comma Pipeline
+        </button>
+
+        <div id="json-pipeline-target">Initial</div>
+      `;
+
+      const button = document.getElementById('json-pipeline-btn') as HTMLButtonElement;
+      const target = document.getElementById('json-pipeline-target') as HTMLElement;
+
+      button.click();
+
+      // Wait for pipeline to complete
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      expect(target.textContent).toBe('{"value":"a,b"} done');
+    });
+
+    it('should ignore empty commands in pipeline comma lists', async () => {
+      document.body.innerHTML = `
+        <template id="empty-command-pipeline" data-pipeline="true">
+          <pipeline-step command=" , --text:set:One, , --text:append:Two, " target="empty-pipeline-target"></pipeline-step>
+        </template>
+
+        <button id="empty-pipeline-btn" command="--pipeline:execute:empty-command-pipeline">
+          Run Empty Command Pipeline
+        </button>
+
+        <div id="empty-pipeline-target"></div>
+      `;
+
+      const button = document.getElementById('empty-pipeline-btn') as HTMLButtonElement;
+      const target = document.getElementById('empty-pipeline-target') as HTMLElement;
+
+      button.click();
+
+      // Wait for pipeline to complete
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      expect(target.textContent).toBe('OneTwo');
     });
   });
 });

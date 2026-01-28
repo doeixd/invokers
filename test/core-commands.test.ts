@@ -167,5 +167,22 @@ describe('Core Commands', () => {
       await invokerManager.executeCommand('--toggle', 'target');
       expect(target.hasAttribute('hidden')).toBe(false);
     });
+
+    it('should not double-trigger toggle on a single click', async () => {
+      document.body.innerHTML = `
+        <button type="button" command="--toggle" commandfor="panel" aria-expanded="true">Toggle panel</button>
+        <div id="panel"></div>
+      `;
+
+      const toggleButton = document.querySelector('button') as HTMLButtonElement;
+      const panel = document.getElementById('panel') as HTMLElement;
+
+      invokerManager.ensureListenersAttached();
+
+      toggleButton.dispatchEvent(new Event('click', { bubbles: true }));
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      expect(panel.hasAttribute('hidden')).toBe(true);
+    });
   });
 });

@@ -1,5 +1,6 @@
 // src/target-resolver.ts
 
+import { debugLog, debugWarn, debugError } from './utils';
 /**
  * Resolves target elements based on a selector string and invoker element.
  * Supports contextual selectors (@closest, @child, @children), ID selectors, and CSS selectors.
@@ -23,14 +24,14 @@ export function resolveTargets(selector: string, invoker: HTMLElement): Element[
   if (trimmedSelector.startsWith('@')) {
     if (!invoker || !invoker.isConnected) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn('Invokers: Invoker element is not connected to DOM');
+        debugWarn('Invokers: Invoker element is not connected to DOM');
       }
       return [];
     }
     const match = trimmedSelector.match(/^@([a-z]+)\((.*)\)$/);
     if (!match) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(`Invokers: Invalid contextual selector syntax: "${trimmedSelector}"`);
+        debugWarn(`Invokers: Invalid contextual selector syntax: "${trimmedSelector}"`);
       }
       return [];
     }
@@ -41,7 +42,7 @@ export function resolveTargets(selector: string, invoker: HTMLElement): Element[
     // Validate inner selector is not empty
     if (!innerSelector || !innerSelector.trim()) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(`Invokers: Empty inner selector in "${trimmedSelector}"`);
+        debugWarn(`Invokers: Empty inner selector in "${trimmedSelector}"`);
       }
       return [];
     }
@@ -64,13 +65,13 @@ export function resolveTargets(selector: string, invoker: HTMLElement): Element[
 
         default:
           if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-            console.warn(`Invokers: Unknown contextual selector type "@${type}". Supported types: closest, child, children`);
+            debugWarn(`Invokers: Unknown contextual selector type "@${type}". Supported types: closest, child, children`);
           }
           return [];
       }
     } catch (error) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.error(`Invokers: Error in contextual selector "${trimmedSelector}":`, error);
+        debugError(`Invokers: Error in contextual selector "${trimmedSelector}":`, error);
       }
       return [];
     }
@@ -86,7 +87,7 @@ export function resolveTargets(selector: string, invoker: HTMLElement): Element[
         return element ? [element] : [];
       } catch (error) {
         if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-          console.warn(`Invokers: Error getting element by ID "${id}":`, error);
+          debugWarn(`Invokers: Error getting element by ID "${id}":`, error);
         }
         return [];
       }
@@ -102,7 +103,7 @@ export function resolveTargets(selector: string, invoker: HTMLElement): Element[
       }
     } catch (error) {
       if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-        console.warn(`Invokers: Error getting element by ID "${trimmedSelector}":`, error);
+        debugWarn(`Invokers: Error getting element by ID "${trimmedSelector}":`, error);
       }
     }
   }
@@ -113,7 +114,7 @@ export function resolveTargets(selector: string, invoker: HTMLElement): Element[
     return Array.from(elements);
   } catch (error) {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.error(`Invokers: Invalid CSS selector "${trimmedSelector}":`, error);
+      debugError(`Invokers: Invalid CSS selector "${trimmedSelector}":`, error);
     }
     return [];
   }

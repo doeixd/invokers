@@ -1,4 +1,5 @@
 // src/index.ts
+import { debugLog, debugWarn, debugError } from './utils';
 import './polyfill'; // Apply the command polyfill immediately
 import { InvokerManager } from './core';
 import {
@@ -139,15 +140,21 @@ export { InvokerManager, ErrorSeverity, createInvokerError, logInvokerError, par
 import type { InvokerError } from './core';
 export type { InvokerError };
 
-export function _dispatchCommandEvent(source: HTMLElement, command: string, targetElement: HTMLElement, triggeringEvent?: Event): void {
+export function _dispatchCommandEvent(
+  source: HTMLElement,
+  command: string,
+  targetElement: HTMLElement,
+  triggeringEvent?: Event,
+  resolvedTargets?: HTMLElement[]
+): void {
   if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-    console.log('Invokers: _dispatchCommandEvent called with command:', command, 'target:', targetElement?.id || targetElement);
+    debugLog('Invokers: _dispatchCommandEvent called with command:', command, 'target:', targetElement?.id || targetElement);
   }
 
   // Validate inputs
   if (!source || !command || !targetElement) {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.warn('Invokers: _dispatchCommandEvent called with invalid parameters');
+      debugWarn('Invokers: _dispatchCommandEvent called with invalid parameters');
     }
     return;
   }
@@ -155,7 +162,7 @@ export function _dispatchCommandEvent(source: HTMLElement, command: string, targ
   // Check if CommandEvent is available (polyfill should have been loaded)
   if (typeof window === 'undefined' || !(window as any).CommandEvent) {
     if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-      console.error('Invokers: CommandEvent not available. Make sure the polyfill is loaded.');
+      debugError('Invokers: CommandEvent not available. Make sure the polyfill is loaded.');
     }
     return;
   }
@@ -174,11 +181,14 @@ export function _dispatchCommandEvent(source: HTMLElement, command: string, targ
   if (triggeringEvent) {
     (commandEvent as any).triggeringEvent = triggeringEvent;
   }
+  if (resolvedTargets && resolvedTargets.length > 0) {
+    (commandEvent as any).resolvedTargets = resolvedTargets;
+  }
 
   // Dispatch the event
   const success = document.dispatchEvent(commandEvent);
   if (!success && typeof window !== 'undefined' && (window as any).Invoker?.debug) {
-    console.warn('Invokers: CommandEvent was cancelled or prevented');
+    debugWarn('Invokers: CommandEvent was cancelled or prevented');
   }
 }
 
