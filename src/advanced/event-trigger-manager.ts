@@ -1,6 +1,5 @@
 // src/event-trigger-manager.ts
-
-import { debugLog, debugWarn, debugError } from '../utils';
+import { debugLog, debugWarn } from '../utils';
 import { _dispatchCommandEvent } from '../index';
 import { parseCommaSeparatedCommands } from '../core';
 import { interpolateString } from './interpolation';
@@ -44,8 +43,8 @@ function handleTrigger(this: HTMLElement, event: Event, triggerSource: TriggerSo
      return;
    }
 
-   const dataOnEventCommand = source.getAttribute('data-on-event-command') || source.dataset.onEventCommand;
-   const dataOnEventCommandfor = source.getAttribute('data-on-event-commandfor') || source.dataset.onEventCommandfor;
+   const dataOnEventCommand = source.getAttribute('data-on-event-command') ?? source.dataset.onEventCommand ?? null;
+   const dataOnEventCommandfor = source.getAttribute('data-on-event-commandfor') ?? source.dataset.onEventCommandfor ?? null;
 
    let commandAttribute: string | null = null;
    let commandforAttribute: string | null = null;

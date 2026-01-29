@@ -2,8 +2,7 @@
  * Switch/case rendering for Invokers Control module.
  * Provides data-switch/data-case attributes for switch-case conditional rendering.
  */
-
-import { debugLog, debugWarn, debugError } from '../../utils';
+import { debugWarn } from '../../utils';
 import { getStateStore } from '../state/store';
 
 interface SwitchElement {

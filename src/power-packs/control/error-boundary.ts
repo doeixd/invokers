@@ -2,8 +2,7 @@
  * Error boundary constructs for Invokers Control module.
  * Provides data-try, data-catch, and data-finally attributes for error handling.
  */
-
-import { debugLog, debugWarn, debugError } from '../../utils';
+import { debugLog, debugWarn } from '../../utils';
 import { getStateStore } from '../state/store';
 
 interface ErrorBoundaryElement {

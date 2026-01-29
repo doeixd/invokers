@@ -52,8 +52,8 @@ Invokers will automatically call `event.preventDefault()` on form submissions to
 You can add powerful modifiers to the event name.
 
 ```html
-<!-- Show a search modal when the user presses Ctrl+K anywhere on the page -->
-<body command-on="keydown.window.ctrl.k.prevent"
+<!-- Show a search modal when the user presses K anywhere on the page -->
+<body command-on="keydown.window.k.prevent"
       command="show-modal"
       commandfor="search-dialog">
   ...
@@ -149,15 +149,11 @@ An element with `command-on` **must** also have `command` and `commandfor` attri
 | `.prevent` | Calls `event.preventDefault()`. Crucial for `submit` and `keydown` events. | `command-on="submit.prevent"` |
 | `.stop` | Calls `event.stopPropagation()`. Prevents the event from bubbling up. | `command-on="click.stop"` |
 | `.once` | The event listener will be automatically removed after it is triggered once. | `command-on="mouseenter.once"` |
-| `.window` | Attaches the listener to the global `window` object instead of the element. | `command-on="keydown.window.ctrl.s"` |
-| `.document`| Attaches the listener to the global `document` object. | `command-on="scroll.document"` |
-| `.debounce`| Waits for a pause in event firing before executing. Default is 250ms. | `command-on="input.debounce"` |
-| `.debounce.<ms>`| Debounces with a specific millisecond delay. | `command-on="input.debounce.300"` |
-| `.throttle.<ms>`| Executes the command at most once per specified interval. | `command-on="scroll.throttle.100"` |
+| `.window` | Attaches the listener to the global `window` object instead of the element. | `command-on="keydown.window.s"` |
 | `.{key}` | For `keydown` or `keyup`, only triggers if the specified key was pressed. | `command-on="keydown.enter.prevent"` |
 
 **Key-Specific Modifiers:**
-You can chain key modifiers for shortcuts: `keydown.ctrl.alt.delete`. Common aliases are supported: `enter`, `escape`, `arrow-up`, `tab`, etc.
+You can use key modifiers for shortcuts like `keydown.enter` or `keydown.k`. Common aliases are supported: `enter`, `escape`, `arrow-up`, `tab`, etc. Key chords (e.g., `ctrl` + key) are not supported yet.
 
 #### **2. The `data-on-event` Attribute**
 
@@ -182,8 +178,8 @@ Like `command-on`, it requires `command` and `commandfor`.
 ```
 
 **Key Difference from `command-on`:**
-*   `command-on` is for listening to *native DOM events* on the element itself (or `window`/`document`).
-*   `data-on-event` is for listening to *custom events* that bubble up to the element. By default, it listens on `document`, making it a global listener. Modifiers like `.self` could be added to restrict listening to the element itself.
+*   `command-on` is for listening to *native DOM events* on the element itself (or `window` with the `.window` modifier).
+*   `data-on-event` is for listening to *custom events* that bubble up to the element it is attached to.
 
 #### **3. Dynamic Data Interpolation: `{{...}}`**
 
@@ -246,7 +242,7 @@ The interpolation mechanism is **safe**. It does not use `eval()`. It performs a
 Understanding the order of operations is key:
 
 1.  An event (e.g., `input`) fires on an element with `command-on`.
-2.  The `EventManager`'s listener catches it and handles any modifiers (`.prevent`, `.debounce`, etc.).
+2.  The `EventManager`'s listener catches it and handles any modifiers (e.g., `.prevent`, `.stop`, `.once`).
 3.  The manager constructs the dynamic `interpolationContext` (`this`, `event`, `detail`).
 4.  It reads the `command` attribute string from the element (e.g., `"--fetch:get?q={{this.value}}"`).
 5.  It runs the **interpolation** step, creating the final command string (e.g., `"--fetch:get?q=my-query"`).
@@ -462,7 +458,7 @@ This module will handle attaching listeners for non-click DOM events and custom 
           'prevent': (e: Event) => e.preventDefault(),
           'stop': (e: Event) => e.stopPropagation(),
           'once': (e: Event) => e.currentTarget?.removeEventListener(e.type, handleTrigger),
-          // Add other modifiers like `self`, `capture`, `passive`, `debounce.<ms>`, `throttle.<ms>` etc. as needed
+          // Add other modifiers like `self`, `capture`, `passive` as needed
         };
 
         // Handles any DOM event that triggers a command (from command-on or data-on-event)

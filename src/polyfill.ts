@@ -8,7 +8,6 @@
  *              that do not yet natively support these features.
  *              It includes handling for popovers and dialogs, and a mechanism for custom commands.
  */
-
 import { debugLog, debugWarn, debugError } from './utils';
 export function isSupported() {
   const target = typeof window !== "undefined" ? window : globalThis;
@@ -196,8 +195,6 @@ class InvokeEventPolyfill extends Event {
     );
   }
 }
-
-
 
 const invokerAssociatedElements = new WeakMap<HTMLElement, Element>();
 
@@ -1258,7 +1255,6 @@ function applyToTarget(target: any) {
     attributeFilter: ["oncommand"],
   });
   applyOnCommandHandler(Array.from(target.document.querySelectorAll("[oncommand]")));
-
 
   // Expose the polyfilled CommandEvent globally if not already defined
   if (typeof (target as any)['CommandEvent'] === 'undefined') {

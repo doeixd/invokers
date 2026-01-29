@@ -1,5 +1,5 @@
 // src/commands/base.ts
-import { debugLog, debugWarn, debugError } from '../utils';
+import { debugWarn } from '../utils';
 import type { InvokerManager, CommandContext } from '../core';
 import { createInvokerError, ErrorSeverity, isInterpolationEnabled } from '../index';
 import { interpolateString } from '../advanced/interpolation';

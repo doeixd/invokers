@@ -352,5 +352,4 @@ element.dataset.items = JSON.stringify(items);
 <button command="--data:set:array:push:items" data-value='{"name": "New Item"}' commandfor="#data-store">
 ```
 
-This approach provides better maintainability, automatic error handling, and seamless integration with the rest of the Invokers ecosystem.</content>
-</xai:function_call">Write
+This approach provides better maintainability, automatic error handling, and seamless integration with the rest of the Invokers ecosystem.

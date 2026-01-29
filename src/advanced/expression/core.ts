@@ -2,8 +2,7 @@
  * Core expression engine without helpers
  * This provides the basic expression evaluation engine for minimal bundle size
  */
-
-import { debugLog, debugWarn, debugError } from '../../utils';
+import { debugLog } from '../../utils';
 import { InvokerManager } from '../../core';
 import { interpolateString } from '../interpolation';
 import { evaluateExpression } from './index';

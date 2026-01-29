@@ -15,7 +15,6 @@
  * registerBrowserCommands(invokerManager);
  * ```
  */
-
 import { debugLog, debugWarn, debugError } from '../utils';
 import type { InvokerManager } from '../core';
 import type { CommandCallback, CommandContext } from '../index';

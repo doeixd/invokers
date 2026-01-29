@@ -26,8 +26,7 @@
  * <div id="greeting"></div>
  * ```
  */
-
-import { debugLog, debugWarn, debugError } from '../utils';
+import { debugLog, debugWarn } from '../utils';
 import { InvokerManager } from '../core';
 import { interpolateString } from './interpolation';
 import { enableAllHelpers, enableStringHelpers, enableArrayHelpers, enableMathHelpers, enableDateHelpers, enableUtilityHelpers } from './expression/categories';

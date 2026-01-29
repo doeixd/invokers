@@ -2,8 +2,7 @@
  * Two-way data binding for Invokers State module.
  * Provides reactive binding between form elements and state using data-bind attribute.
  */
-
-import { debugLog, debugWarn, debugError } from '../../utils';
+import { debugWarn } from '../../utils';
 import { getStateStore } from './store';
 
 interface DataBinding {

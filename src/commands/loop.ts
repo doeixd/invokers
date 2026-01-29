@@ -1,5 +1,5 @@
 // src/commands/loop.ts
-import { debugLog, debugWarn, debugError } from '../utils';
+import { debugLog, debugWarn } from '../utils';
 import type { InvokerManager, CommandContext } from '../core';
 import { createInvokerError, ErrorSeverity, isInterpolationEnabled } from '../index';
 import { interpolateString } from '../advanced/interpolation';
@@ -123,11 +123,6 @@ const batchManager = new BatchManager();
 /**
  * Gets a template element by ID
  */
-
-
-
-
-
 
 /**
  * Gets a template element by ID

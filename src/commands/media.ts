@@ -15,8 +15,7 @@
  * registerMediaCommands(invokerManager);
  * ```
  */
-
-import { debugLog, debugWarn, debugError } from '../utils';
+import { debugWarn, debugError } from '../utils';
 import type { InvokerManager } from '../core';
 import type { CommandCallback, CommandContext } from '../index';
 import { createInvokerError, ErrorSeverity, validateElement } from '../index';

@@ -337,7 +337,7 @@ A classic "Markdown editor" style UI where typing in a textarea updates a previe
 ```html
 <!-- The textarea is the source of the data -->
 <textarea id="markdown-input"
-          command-on="input.debounce.200"
+          command-on="input"
           command="--bind:value"
           commandfor="#markdown-input"  <!-- The command's target is ITSELF -->
           data-bind-to="#preview-pane"
@@ -565,7 +565,12 @@ You can change *what* you bind based on another element's state.
 
 ```html
 <!-- Let the user choose what data to display -->
-<select id="property-selector">
+<select id="property-selector"
+        command-on="change"
+        command="--bind:{{this.value}}"
+        commandfor="#source-element"
+        data-bind-to="#output"
+        data-bind-as="text">
   <option value="text">Show Text</option>
   <option value="html">Show HTML</option>
   <option value="attr:data-id">Show ID</option>
@@ -573,16 +578,8 @@ You can change *what* you bind based on another element's state.
 
 <div id="source-element" data-id="xyz-123">Some <b>bold</b> text</div>
 <div id="output"></div>
-
-<button command-on="click"
-        command="--bind:{{document.getElementById('property-selector').value}}"
-        commandfor="#source-element"
-        data-bind-to="#output"
-        data-bind-as="text">
-  Bind Selected Property
-</button>
 ```
-*   **How it works:** When the button is clicked, the `command` attribute string is interpolated. If the user has "Show ID" selected, the final command becomes `--bind:attr:data-id`, and "xyz-123" is displayed in the output.
+*   **How it works:** When the selection changes, the `command` attribute string is interpolated. If the user has "Show ID" selected, the final command becomes `--bind:attr:data-id`, and "xyz-123" is displayed in the output.
 
 **B. Dynamic Destination**
 
@@ -591,17 +588,15 @@ You can change *where* you bind data to.
 ```html
 <input id="data-input" value="Important Data">
 
-<!-- Radio buttons to select the destination -->
-<input type="radio" name="dest" value="#field-a" checked> Field A
-<input type="radio" name="dest" value="#field-b"> Field B
-
-<button command-on="click"
+<!-- Select to choose the destination -->
+<select command-on="change"
         command="--bind:value"
         commandfor="#data-input"
-        data-bind-to="{{document.querySelector('input[name=dest]:checked').value}}"
+        data-bind-to="{{this.value}}"
         data-bind-as="text">
-  Bind to Selected Field
-</button>
+  <option value="#field-a">Field A</option>
+  <option value="#field-b">Field B</option>
+</select>
 
 <div id="field-a"></div>
 <div id="field-b"></div>

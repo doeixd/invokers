@@ -1,6 +1,5 @@
 // src/target-resolver.ts
-
-import { debugLog, debugWarn, debugError } from './utils';
+import { debugWarn, debugError } from './utils';
 /**
  * Resolves target elements based on a selector string and invoker element.
  * Supports contextual selectors (@closest, @child, @children), ID selectors, and CSS selectors.

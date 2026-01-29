@@ -16,8 +16,7 @@
  * // Make demo commands available for testing
  * registerDemoCommands();
  */
-
-import { debugLog, debugWarn, debugError } from './utils';
+import { debugWarn, debugError } from './utils';
 import type { CommandContext } from "./index";
 import { createInvokerError, ErrorSeverity } from "./index";
 

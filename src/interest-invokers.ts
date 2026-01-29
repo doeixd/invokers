@@ -11,8 +11,7 @@
  * @author Mason Freed (original polyfill), Patrick Glenn (TypeScript adaptation)
  * @license MIT / BSD (compatible with original polyfill license)
  */
-
-import { debugLog, debugWarn, debugError } from './utils';
+import { debugLog } from './utils';
 // --- TypeScript Interfaces and Types ---
 
 /**
@@ -646,8 +645,6 @@ class InterestInvokersPolyfill {
   }
    }
 
-
-
   /**
    * Cleanup anchor positioning
    */
@@ -748,8 +745,6 @@ class InterestInvokersPolyfill {
     (target as HTMLElement).style.margin = '0';
     (target as HTMLElement).style.transformOrigin = 'top center';
   }
-
-
 
   /**
    * Create popover toggle event listener

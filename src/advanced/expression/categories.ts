@@ -2,8 +2,7 @@
  * Category-specific expression helper enablers
  * These allow enabling only specific categories of helper functions
  */
-
-import { debugLog, debugWarn, debugError } from '../../utils';
+import { debugLog } from '../../utils';
 import { registerExpressionFunction } from '../expressions';
 import { stringHelpers } from './helpers/string';
 import { arrayHelpers } from './helpers/array';

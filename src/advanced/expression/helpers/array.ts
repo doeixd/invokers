@@ -2,8 +2,7 @@
  * Array helper functions for expressions
  * These can be imported separately to reduce bundle size
  */
-
-import { debugLog, debugWarn, debugError } from '../../../utils';
+import { debugLog } from '../../../utils';
 export const arrayHelpers = {
   // Array creation and generation
   randomChoice: (arr: any[]): any => {

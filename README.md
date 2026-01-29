@@ -2,7 +2,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/doeixd/invokers)
 
-# ✨ Invokers 
+# Invokers
 
 ### _Write Interactive HTML Without Writing JavaScript_
 
@@ -10,29 +10,29 @@
 
 
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [🚀 Quick Demo](#quick-demo)
-- [🤔 How Does This Compare?](#-how-does-this-compare)
-- [🎯 Why Invokers?](#-why-invokers)
-- [🚀 Modular Architecture](#-modular-architecture)
-- [📦 Installation & Basic Usage](#-installation--basic-usage)
-- [🎛️ Command Packs](#️-command-packs)
-- [📋 Command Cheatsheet](#-command-cheatsheet)
-- [🔧 Command Syntax Guide](#-command-syntax-guide)
-- [🎯 Comprehensive Demo](#-comprehensive-demo)
-- [🏃‍♂️ Quick Start Examples](#️-quick-start-examples)
-- [📚 Progressive Learning Guide](#-progressive-learning-guide)
-- [🔌 Plugin System](#-plugin-system)
-- [🧰 Extended Commands](#-extended-commands)
-- [🎯 Advanced `commandfor` Selectors](#-advanced-commandfor-selectors)
-- [🔄 Migration Guide](#-migration-guide)
-- [📖 Documentation](#-documentation)
-- [⚡ Performance](#-performance)
-- [🛠️ Development](#️-development)
-- [🎯 Browser Support](#-browser-support)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
+- [Quick Demo](#quick-demo)
+- [How Does This Compare?](#-how-does-this-compare)
+- [Why Invokers?](#-why-invokers)
+- [Modular Architecture](#-modular-architecture)
+- [Installation & Basic Usage](#-installation--basic-usage)
+- [Command Packs](#️-command-packs)
+- [Command Cheatsheet](#-command-cheatsheet)
+- [Command Syntax Guide](#-command-syntax-guide)
+- [Comprehensive Demo](#-comprehensive-demo)
+- [Quick Start Examples](#️-quick-start-examples)
+- [Progressive Learning Guide](#-progressive-learning-guide)
+- [Plugin System](#-plugin-system)
+- [Extended Commands](#-extended-commands)
+- [Advanced `commandfor` Selectors](#-advanced-commandfor-selectors)
+- [Migration Guide](#-migration-guide)
+- [Documentation](#-documentation)
+- [Performance](#-performance)
+- [Development](#️-development)
+- [Browser Support](#-browser-support)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ## Features
 
@@ -95,7 +95,7 @@ See Invokers in action with this copy-paste example:
 
 That's it! No event listeners, no DOM queries, no state management. The HTML describes the behavior, and Invokers makes it work.
 
-## 🌐 Platform Proposals & Standards Alignment
+## Platform Proposals & Standards Alignment
 
 Invokers is built on emerging web platform proposals from the OpenUI Community Group and WHATWG, providing a polyfill today for features that will become native browser APIs tomorrow. This section explains the underlying standards and how Invokers extends them.
 
@@ -146,9 +146,9 @@ The [Interest Invokers](https://open-ui.org/components/interest-invokers.explain
 Invokers includes a complete polyfill for Interest Invokers with additional enhancements:
 
 - **Extended Element Support**: Works on all `HTMLElement` types (spec currently limits to specific elements)
-- **Touchscreen Context Menu Integration**: Adds "Show Details" item to existing long-press menus
+- **Touchscreen Long-Press Support**: Long-press triggers interest on touch devices
 - **Advanced Delay Controls**: Full support for `interest-delay-start`/`interest-delay-end` CSS properties
-- **Pseudo-class Support**: Implements `:interest-source` and `:interest-target` pseudo-classes
+- **Styling Hooks**: Adds `interest-source`/`interest-target` classes for styling in the polyfill
 - **Combined Usage**: Works seamlessly with Invoker Commands on the same elements
 
 ### Popover API Integration
@@ -190,7 +190,7 @@ While waiting for universal browser support, Invokers provides:
 
 This standards-first approach ensures your code is future-proof while providing powerful enhancements that complement the core platform proposals.
 
-## 🤔 How Does This Compare?
+## How Does This Compare?
 
 Invokers is designed to feel like a natural extension of HTML, focusing on client-side interactions and aligning with future web standards. Here’s how its philosophy and approach differ from other popular libraries.
 
@@ -205,7 +205,7 @@ Invokers is designed to feel like a natural extension of HTML, focusing on clien
 
 <br />
 
-## 🆚 vs HTMX
+## vs HTMX
 
 **HTMX makes your server the star; Invokers makes your browser the star.**
 
@@ -333,7 +333,7 @@ Invokers can swap content from local templates or fetch from APIs, with granular
 
 
 
-## 🆚 vs Alpine.js
+## vs Alpine.js
 
 **Alpine puts JavaScript logic *in* your HTML; Invokers keeps it *out*.**
 
@@ -380,7 +380,7 @@ Invokers uses the `command-on` attribute to listen for the `input` event and the
 
 
 
-## 🆚 vs Stimulus
+## vs Stimulus
 
 **Stimulus organizes your JavaScript; Invokers helps you eliminate it.**
 
@@ -449,7 +449,7 @@ Invokers has a built-in `--clipboard:copy` command. The UI feedback is handled d
 -   **Goal**: Stimulus aims to give structure to complex applications that will inevitably have a lot of custom JS. Invokers aims to prevent you from needing to write JS in the first place for common UI patterns.
 -   **When to Choose**: Use Stimulus when you have complex, stateful client-side logic that needs organization. Use Invokers when you want to build interactive UIs quickly with minimal or no JavaScript boilerplate.
 
-## 🎯 Why Invokers?
+## Why Invokers?
 
 **Write interactive UIs without JavaScript.** Invokers transforms static HTML into dynamic, interactive interfaces using declarative attributes. Perfect for progressive enhancement, component libraries, and reducing JavaScript complexity.
 
@@ -466,7 +466,7 @@ Invokers has a built-in `--clipboard:copy` command. The UI feedback is handled d
 <div id="result"></div>
 ```
 
-## 🚀 Modular Architecture
+## Modular Architecture
 
 **Choose exactly what you need.** Invokers now features a hyper-modular architecture with four tiers:
 
@@ -475,7 +475,7 @@ Invokers has a built-in `--clipboard:copy` command. The UI feedback is handled d
 - **🔧 Tier 2**: Specialized packs (25-47 kB each) - Advanced functionality
 - **🌟 Tier 3**: Reactive engine (26-58 kB) - Dynamic templating & events
 
-## 📦 Installation & Basic Usage
+## Installation & Basic Usage
 
 ### Core Installation (25.8 kB)
 
@@ -531,7 +531,7 @@ enableControl();  // Advanced control flow
 enableForms();    // Enterprise form handling
 ```
 
-## 🎛️ Command Packs
+## Command Packs
 
 ### Tier 1: Essential Commands
 
@@ -615,7 +615,7 @@ registerFlowCommands(invokers);
 - `outerHTML`: Replace entire target element
 - `beforebegin/afterbegin/beforeend/afterend`: Insert adjacent to target
 
-#### Media & Animation (`invokers/commands/media`) - 27.7 kB  
+#### Media & Animation (`invokers/commands/media`) - 27.7 kB
 Rich media controls and interactions.
 
 ```javascript
@@ -691,7 +691,7 @@ registerAccessibilityCommands(invokers);
 <button command="--a11y:focus-trap:enable" commandfor="modal">Open Modal</button>
 ```
 
-## 📋 Command Cheatsheet
+## Command Cheatsheet
 
 ### Native Browser Commands (No `--` Prefix)
 
@@ -913,7 +913,7 @@ These commands are built into modern browsers and work without any JavaScript fr
 
 💡 **Tip:** Commands starting with `--` are Invokers extensions. Commands without prefixes are native/future browser commands.
 
-## 🔧 Command Syntax Guide
+## Command Syntax Guide
 
 ### Parameter Syntax
 Commands use colon (`:`) separated parameters:
@@ -1077,7 +1077,7 @@ enableEventTriggers();
 ```html
 <!-- Respond to any DOM event -->
 <form command-on="submit.prevent" command="--fetch:send" commandfor="result">...</form>
-<input command-on="input:debounce:300" command="--text:set:{{this.value}}" commandfor="preview">
+<input command-on="input" command="--text:set:{{this.value}}" commandfor="preview">
 ```
 
 #### Expression Engine (`invokers/advanced/expressions`) - 58.3 kB
@@ -1094,7 +1094,7 @@ enableExpressionEngine(); // Full expressions with all helpers
 <button command="--class:toggle:{{this.dataset.theme}}-mode" commandfor="body">Theme</button>
 ```
 
-### 🎯 Modular Expression Helpers - Optimize Bundle Size
+### Modular Expression Helpers - Optimize Bundle Size
 
 Import only the expression helpers you need to reduce bundle size by up to 7.7 kB:
 
@@ -1236,7 +1236,7 @@ enableAdvancedEvents();
 </form>
 ```
 
-## 🎯 Comprehensive Demo
+## Comprehensive Demo
 
 For a deeper dive into Invokers' capabilities, check out our [comprehensive demo](examples/comprehensive-demo.html) that showcases:
 
@@ -1260,7 +1260,7 @@ registerDemoCommands(); // Only for demos/testing
 
 Open `examples/comprehensive-demo.html` in your browser to explore all features interactively.
 
-## 🏃‍♂️ Quick Start Examples
+## Quick Start Examples
 
 ### Simple Tab System
 ```javascript
@@ -1300,7 +1300,7 @@ enableAdvancedEvents();
 </form>
 ```
 
-### Rich Media Experience  
+### Rich Media Experience
 ```javascript
 import invokers from 'invokers';
 import { registerBaseCommands } from 'invokers/commands/base';
@@ -1321,11 +1321,11 @@ registerMediaCommands(invokers);
 </div>
 ```
 
-## 📚 Progressive Learning Guide
+## Progressive Learning Guide
 
 Learn Invokers step by step, from basic interactions to complex workflows.
 
-### 📚 Level 1: Basic Interactions
+### Level 1: Basic Interactions
 
 Start with these essential patterns you'll use every day.
 
@@ -1429,7 +1429,7 @@ Create accessible hover cards and tooltips that work across all input methods:
 </div>
 ```
 
-### 📚 Level 2: Dynamic Content
+### Level 2: Dynamic Content
 
 Now add interactivity with text, classes, and attributes.
 
@@ -1537,7 +1537,7 @@ Now add interactivity with text, classes, and attributes.
 
 The `data-response-target` attribute specifies where to display the server response, while `data-loading-template` shows a loading indicator during submission.
 
-### 📚 Level 3: Advanced Workflows
+### Level 3: Advanced Workflows
 
 Chain multiple commands together for complex interactions.
 
@@ -1651,7 +1651,7 @@ Chain multiple commands together for complex interactions.
 </div>
 ```
 
-## 🔌 Plugin System
+## Plugin System
 
 Invokers features a powerful plugin system that allows you to extend functionality through middleware hooks. Plugins can intercept command execution at various lifecycle points, enabling features like analytics, security checks, UI enhancements, and more.
 
@@ -1800,7 +1800,7 @@ const myPlugin = {
 window.Invoker.instance.registerPlugin(myPlugin);
 ```
 
-## 🧰 Extended Commands
+## Extended Commands
 
 Invokers includes a comprehensive set of extended commands that are automatically available when you import the library. These provide advanced features for real-world applications:
 
@@ -1921,7 +1921,7 @@ registerAll(['--media:toggle', '--media:seek', '--fetch:get']);
 
 This can help reduce bundle size in applications with strict performance requirements.
 
-## 📚 Detailed Command Reference
+## Detailed Command Reference
 
 ### Storage Commands
 
@@ -2366,7 +2366,7 @@ With Invokers, your HTML becomes the single source of truth. It's clean, readabl
 
 <br />
 
-## ⚡ Advanced Events (Opt-In)
+## Advanced Events (Opt-In)
 
 Invokers includes powerful advanced event features that transform it from a click-driven library into a fully reactive framework. These features are **opt-in** to keep the core library lightweight.
 
@@ -2402,7 +2402,7 @@ Allows any element to execute a command in response to *any* DOM event, not just
 </form>
 
 <!-- Keyboard shortcuts -->
-<body command-on="keydown.window.ctrl.k.prevent"
+<body command-on="keydown.window.k.prevent"
       command="show-modal"
       commandfor="search-dialog">
   ...
@@ -2538,9 +2538,7 @@ Enhance event handling with modifiers:
 | `.prevent` | Calls `event.preventDefault()` | `command-on="submit.prevent"` |
 | `.stop` | Calls `event.stopPropagation()` | `command-on="click.stop"` |
 | `.once` | Listener removes itself after one trigger | `command-on="mouseenter.once"` |
-| `.window` | Attaches to global window object | `command-on="keydown.window.ctrl.s"` |
-| `.debounce` | Waits for pause in events (250ms default) | `command-on="input.debounce"` |
-| `.debounce.<ms>` | Custom debounce delay | `command-on="input.debounce.300"` |
+| `.window` | Attaches to global window object | `command-on="keydown.window.s"` |
 | `.{key}` | Only triggers on specific key | `command-on="keydown.enter.prevent"` |
 
 ### Command Chaining with Expressions
@@ -2607,11 +2605,11 @@ Combine expressions with command chaining for dynamic, data-driven workflows:
 
 **Keyboard Shortcuts with Context:**
 ```html
-<body command-on="keydown.window.ctrl.s.prevent"
-      command="{{ document.activeElement?.tagName === 'INPUT' ? '--emit:save-form' : '--emit:save-document' }}">
+<body command-on="keydown.window.s.prevent"
+      command="{{ event.target && event.target.tagName === 'INPUT' ? '--emit:save-form' : '--emit:save-document' }}">
 ```
 
-### ⚠️ Important Considerations & Gotchas
+### Important Considerations & Gotchas
 
 **Expression Evaluation Context:**
 - Expressions run in a sandboxed environment with no access to global objects
@@ -2649,7 +2647,7 @@ Combine expressions with command chaining for dynamic, data-driven workflows:
 - Use browser dev tools to inspect the context variables
 - Test expressions in isolation before using in production
 
-## 🎨 Declarative Templating
+## Declarative Templating
 
 Create dynamic, data-driven interfaces without JavaScript using declarative templates and data injection.
 
@@ -3037,7 +3035,7 @@ document.addEventListener('sse:message', (event) => {
 - **Server-Sent Events**: Supported in all modern browsers (IE/Edge 79+)
 - **Automatic Fallback**: Commands gracefully fail in unsupported browsers
 
-## 🎯 Advanced `commandfor` Selectors
+## Advanced `commandfor` Selectors
 
 Invokers supports powerful contextual selectors that go beyond simple IDs, enabling complex DOM targeting patterns without JavaScript.
 
@@ -3101,7 +3099,7 @@ You can also use any standard CSS selector directly:
 </div>
 ```
 
-## 🔄 Migration Guide
+## Migration Guide
 
 ### From Monolithic to Modular
 
@@ -3157,7 +3155,7 @@ The compatibility layer:
 3. **Add specialized packs**: As features are needed
 4. **Enable advanced features**: For dynamic applications
 
-## 📖 Documentation
+## Documentation
 
 ### Command Reference
 - **Base Commands**: Essential UI state management
@@ -3185,7 +3183,7 @@ window.Invoker.register(name, callback);
 window.Invoker.executeCommand(command, targetId, source);
 ```
 
-## ⚡ Performance
+## Performance
 
 ### Bundle Size Comparison
 - **Core only**: 25.8 kB (polyfill + engine)
@@ -3200,7 +3198,7 @@ window.Invoker.executeCommand(command, targetId, source);
 - Enable advanced features only when needed
 - Leverage browser caching for separate chunks
 
-## 🛠️ Development
+## Development
 
 ### Build Requirements
 - Node.js 16+
@@ -3260,7 +3258,7 @@ beforeEach(() => {
 });
 ```
 
-## 🎯 Browser Support
+## Browser Support
 
 - **Modern browsers**: Full feature support
 - **Legacy browsers**: Graceful degradation
@@ -3337,7 +3335,7 @@ Generate random data without JavaScript:
 
 
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
@@ -3350,11 +3348,11 @@ npm run build
 npm test
 ```
 
-## 📄 License
+## License
 
 MIT © [Patrick Glenn](https://github.com/doeixd)
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - W3C/WHATWG for the Invoker Commands proposal
 - The web standards community

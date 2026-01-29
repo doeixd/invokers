@@ -2,8 +2,7 @@
  * @file storage.ts
  * @description Storage command implementations for localStorage and sessionStorage
  */
-
-import { debugLog, debugWarn, debugError } from '../utils';
+import { debugLog, debugWarn } from '../utils';
 import type { InvokerManager } from '../core';
 import { createInvokerError, ErrorSeverity } from '../index';
 

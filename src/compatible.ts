@@ -18,7 +18,6 @@
  * // InvokerManager comes pre-loaded with all commands
  * ```
  */
-
 import { debugLog, debugWarn, debugError } from './utils';
 // Import the core system
 import { InvokerManager, HookPoint } from './core';
@@ -122,8 +121,6 @@ const registerCompatibleCommands = (force = false): boolean => {
 };
 
 const didRegister = registerCompatibleCommands();
-
-
 
 // Setup the global for CDN users and backward compatibility FIRST (same as index.ts but with all commands)
 if (typeof window !== 'undefined' && !compatState.windowSetup) {

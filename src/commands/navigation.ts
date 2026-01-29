@@ -14,8 +14,7 @@
  * registerNavigationCommands(invokerManager);
  * ```
  */
-
-import { debugLog, debugWarn, debugError } from '../utils';
+import { debugWarn, debugError } from '../utils';
 import type { InvokerManager } from '../core';
 import { parseCommaSeparatedCommands } from '../core';
 import type { CommandCallback, CommandContext } from '../index';
@@ -462,7 +461,6 @@ const navigationCommands: Record<string, CommandCallback> = {
           step.parentNode.removeChild(step);
         }
       });
-
 
     } catch (error) {
       throw createInvokerError('--pipeline:execute failed', ErrorSeverity.ERROR, {

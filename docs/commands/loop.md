@@ -97,18 +97,6 @@ Sets the increment between iterations.
 </button>
 ```
 
-### `data-reverse`
-
-Reverses the iteration order.
-
-```html
-<button command="--dom:repeat-append:3"
-        data-reverse="true"
-        data-template-id="item">
-  Items 2, 1, 0
-</button>
-```
-
 ## Batching
 
 Large operations (>100 items) are automatically batched using `requestAnimationFrame` for better performance.
@@ -145,8 +133,4 @@ Works seamlessly with:
 - Expression interpolation (`{{...}}`)
 - Command chaining (`<and-then>`)
 - View Transitions API
-- Template processing</content>
-</xai:function_call"> 
-
-<xai:function_call name="todowrite">
-<parameter name="todos">[{"content":"Create docs/commands/loop.md with examples and performance guide","status":"completed","priority":"medium","id":"create-loop-docs"}]
+- Template processing

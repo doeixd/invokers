@@ -1,5 +1,5 @@
 // src/commands/random.ts
-import { debugLog, debugWarn, debugError } from '../utils';
+import { debugLog } from '../utils';
 import type { InvokerManager, CommandContext } from '../core';
 import { createInvokerError, ErrorSeverity } from '../index';
 

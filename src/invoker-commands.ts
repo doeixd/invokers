@@ -20,7 +20,7 @@ import type { CommandContext, CommandCallback } from "./index";
 import { createInvokerError, ErrorSeverity, validateElement, sanitizeHTML, isInterpolationEnabled } from "./index";
 import { interpolateString, setDataContext, getDataContext, updateDataContext } from "./advanced/interpolation";
 import { resolveTargets } from "./target-resolver";
-import { generateUid, debugLog, debugWarn, debugError } from './utils';
+import { generateUid, debugWarn, debugError } from './utils';
 import { InvokerManager } from './core';
 
 type CommandRegistry = Record<string, CommandCallback>;
@@ -623,8 +623,6 @@ export const commands: CommandRegistry = {
       const hasChildren = targetElement.children.length > 0;
       targetElement.classList.toggle(className, !hasChildren);
     },
-
-
 
     /**
      * `--data:set`: Sets a data attribute on the target element.
@@ -1315,8 +1313,6 @@ export const commands: CommandRegistry = {
        URL.revokeObjectURL(url);
      },
 
-
-
      /**
       * `--cookie:set`: Sets a browser cookie.
       * @example `<button command="--cookie:set:theme:dark" data-cookie-expires="365">Set Dark Theme</button>`
@@ -1550,8 +1546,6 @@ export const commands: CommandRegistry = {
        targetElement.textContent = textToCopy;
    },
 
-
-
    /**
     * `--attr:set`: Sets an attribute on the target element.
     * @example `<button command="--attr:set:disabled:true" commandfor="button">Disable</button>`
@@ -1570,7 +1564,6 @@ export const commands: CommandRegistry = {
        const attr = params[0];
        targetElement.removeAttribute(attr);
    },
-
 
   // --- Fetch and Navigation Commands ---
 
@@ -1712,8 +1705,6 @@ export const commands: CommandRegistry = {
     }
   },
 
-
-
   /**
    * `--navigate:to`: Navigates to a new URL using the History API.
    *
@@ -1777,8 +1768,6 @@ export const commands: CommandRegistry = {
   },
 
   // --- Template Commands ---
-
-
 
   /**
    * `--template:render`: Renders a template with data interpolation and inserts it into the DOM.
@@ -2079,9 +2068,6 @@ export const commands: CommandRegistry = {
 
   // --- Template Commands ---
 
-
-
-
 };
 
 /**
@@ -2168,8 +2154,6 @@ function getFormData(form: HTMLFormElement): Record<string, string> {
   }
   return data;
 }
-
-
 
 function parseHTML(html: string): DocumentFragment {
   const sanitizedHTML = sanitizeHTML(html);
@@ -2289,8 +2273,6 @@ function getHeadersFromAttributes(invoker: HTMLButtonElement): HeadersInit {
   }
   return headers;
 }
-
-
 
 // --- Template Processing with Data ---
 

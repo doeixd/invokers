@@ -20,8 +20,7 @@ import type { InvokerManager } from '../core';
 import type { CommandCallback, CommandContext } from '../index';
 import { createInvokerError, ErrorSeverity, isInterpolationEnabled, logInvokerError } from '../index';
 import { interpolateString, setDataContext, getDataContext, updateDataContext } from '../advanced/interpolation';
-import { generateUid, debugLog, debugWarn, debugError } from '../utils';
-
+import { generateUid, debugWarn, debugError } from '../utils';
 /**
  * DOM manipulation commands for dynamic UI updates.
  * Includes element manipulation, templating, and data context management.
@@ -1034,7 +1033,6 @@ function processUidAndSelectors(fragment: DocumentFragment): void {
       }
     }
   }
-
 
 }
 

@@ -2,7 +2,6 @@
  * Loop constructs for Invokers Control module.
  * Provides data-for-each, data-while, and data-repeat attributes for iterative rendering.
  */
-
 import { debugLog, debugWarn, debugError } from '../../utils';
 import { getStateStore } from '../state/store';
 import { enableExpressionEngine } from '../../advanced/expressions';
@@ -259,7 +258,7 @@ class LoopRenderer {
         let text = node.textContent || '';
 
         // Replace {{expression}} with evaluated expressions
-        text = text.replace(/\{\{([^}]+)\}\}/g, (match, expression) => {
+        text = text.replace(/\{\{([^}]+)\}\}/g, (_match, expression) => {
           try {
             const result = evaluateExpressionWithHelpers(expression.trim(), context);
             return result !== undefined && result !== null ? String(result) : '';
