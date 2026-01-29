@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.1.1](https://github.com/doeixd/invokers/compare/v2.1.0...v2.1.1) (2026-01-29)
+
+
+### Bug Fixes
+
+* **ci:** correct workflow indentation ([f46a640](https://github.com/doeixd/invokers/commit/f46a640221cd4b33b85e62b363c468605bf917aa))
+
 ## [2.1.0](https://github.com/doeixd/invokers/compare/v1.8.0...v2.1.0) (2026-01-29)
 
 
