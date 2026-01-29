@@ -2,28 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## [Unreleased]
+## [2.1.0](https://github.com/doeixd/invokers/compare/v1.8.0...v2.1.0) (2026-01-29)
+
+
+### Features
+
+* Add advanced modules for state management, control flow, components, and forms ([fb7b715](https://github.com/doeixd/invokers/commit/fb7b715e7f08c2121decd09b12ba5324e13e0b84))
+
 
 ### Bug Fixes
 
-* Prevent `command-on` / `data-on-event` from double-dispatching same click events by respecting trigger source priority, rebinding listeners after attribute mutations, and skipping redundant listeners when `command-on` matches the event name. ([src/advanced/event-trigger-manager.ts](src/advanced/event-trigger-manager.ts))
-* Ensure native commands still bypass the polyfill’s click guard while custom `--` commands and `_dispatchCommandEvent` pipe resolved targets through to the manager for correct multi-target handling. ([src/polyfill.ts](src/polyfill.ts), [src/index.ts](src/index.ts), [src/core.ts](src/core.ts))
-* Add `--dom:clear` for explicit container resets and update the README/docs to describe its usage and the new debug gating behavior. ([src/commands/dom.ts](src/commands/dom.ts), [README.md](README.md))
-
-### Enhancements
-
-* Gate every console output behind `window.Invoker.debug` and move logging helpers into `src/utils.ts`, keeping production bundles quiet without needing source stripping. ([src/utils.ts](src/utils.ts), [src/core.ts](src/core.ts))
-* Improve target resolution/two-way data binding support for `command-on`, `commandfor`, and `data-on-event` by honoring dataset overrides, parsed comma-separated commands, and resolved target context propagation. ([src/target-resolver.ts](src/target-resolver.ts), [src/core.ts](src/core.ts))
-* Document the new behaviors (command+commandfor requirement, `--dom:clear`, compatibility build size, opt-in logging) and clarify examples that previously failed under the new modular workflow. ([README.md](README.md))
-
-### Testing
-
-* Added comprehensive tests for command deduplication, `command-on` binding, `_dispatchCommandEvent` compatibility, native command handling, interval commands, pipeline chaining, and the new `--bind` flows plus multi-target/`and-then` interactions. ([test/advanced-events.test.ts](test/advanced-events.test.ts), [test/bind-command-on.test.ts](test/bind-command-on.test.ts), [test/native-commandevent.test.ts](test/native-commandevent.test.ts), [test/on-interval.test.ts](test/on-interval.test.ts), [test/pipeline.test.ts](test/pipeline.test.ts), others)
-
-### Testing Status
-
-* `volta run --node 20 npm test -- -t "multi-target"`
-* `volta run --node 20 npm test`
+* **event-trigger:** dedupe command-on/data-on-event listeners and propagate resolved targets ([d2d6d65](https://github.com/doeixd/invokers/commit/d2d6d65ce551d9661fc7c4136eae00d3ab7a17a5))
 
 ## [2.0.0](https://github.com/doeixd/invokers/compare/v1.9.0...v2.0.0) (2025-10-14)
 
