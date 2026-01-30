@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.2.0](https://github.com/doeixd/invokers/compare/v2.1.1...v2.2.0) (2026-01-30)
+
+
+### Features
+
+* **adapters:** add optional anchor invokers ([ead7d59](https://github.com/doeixd/invokers/commit/ead7d5920ebdb03d7b6b2e0a6f8da7db918722d6))
+* **fetch:** add HTML response selection ([5bdb13b](https://github.com/doeixd/invokers/commit/5bdb13b6266e06815df22f7ae04d5ef4efcdca6d))
+
 ### [2.1.1](https://github.com/doeixd/invokers/compare/v2.1.0...v2.1.1) (2026-01-29)
 
 

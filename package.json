@@ -1,6 +1,6 @@
 {
   "name": "invokers",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "A powerful, platform-first JavaScript library for creating modern user interfaces with declarative HTML. Features universal command chaining, conditional execution, and declarative workflow orchestration via `data-and-then` attributes and `<and-then>` elements. Use the native `command` attribute to build accessible, interactive UIs with sophisticated multi-step workflows, all with zero custom JavaScript. Includes View Transition API support, Interest Invokers (hover cards, tooltips) polyfill, and 40+ built-in expression functions for reactive computations.",
   "author": "Patrick Glenn",
   "license": "MIT",
