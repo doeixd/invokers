@@ -544,19 +544,49 @@ async function handleResponse(
         if (!targetElement.isConnected) return;
 
         try {
+          const select = invoker.dataset.select;
+          const selectAll = invoker.dataset.selectAll;
+          const hasSelection = Boolean(select || selectAll);
+          const selectedNodes = hasSelection ? (extractSelectedNodes(html, select, selectAll) || []) : [];
+
+          if (hasSelection && selectedNodes.length === 0) {
+            if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+              debugWarn(`No matches found for ${selectAll ? 'data-select-all' : 'data-select'} selector.`);
+            }
+            return;
+          }
+
           if (strategy === "innerHTML") {
-            const newContent = parseHTML(html);
-            targetElement.replaceChildren(newContent);
+            if (hasSelection) {
+              const fragment = createFragmentFromNodes(selectedNodes);
+              targetElement.replaceChildren(fragment);
+            } else {
+              const newContent = parseHTML(html);
+              targetElement.replaceChildren(newContent);
+            }
           } else if (strategy === "outerHTML") {
-            const newContent = parseHTML(html);
-            targetElement.replaceWith(newContent);
+            if (hasSelection) {
+              const fragment = createFragmentFromNodes(selectedNodes);
+              targetElement.replaceWith(fragment);
+            } else {
+              const newContent = parseHTML(html);
+              targetElement.replaceWith(newContent);
+            }
           } else if (/(before|after)(begin|end)/.test(strategy)) {
-            const fragment = new DOMParser().parseFromString(html, "text/html").body.children[0];
-            if (fragment) {
-              targetElement.insertAdjacentElement(strategy as InsertPosition, fragment);
+            if (hasSelection) {
+              insertNodesRelativeToTarget(targetElement, selectedNodes, strategy as InsertPosition);
+            } else {
+              const fragment = new DOMParser().parseFromString(html, "text/html").body.children[0];
+              if (fragment) {
+                targetElement.insertAdjacentElement(strategy as InsertPosition, fragment);
+              }
             }
           } else if (strategy === "text") {
-            targetElement.textContent = html;
+            if (hasSelection) {
+              targetElement.textContent = selectedNodes.map((node) => node.textContent ?? '').join('');
+            } else {
+              targetElement.textContent = html;
+            }
           } else {
             if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
               debugError(`Invalid replace strategy: ${strategy}. Use "innerHTML", "outerHTML", "text", or "beforebegin"/"afterbegin"/"beforeend"/"afterend"`);
@@ -660,6 +690,59 @@ function getHeadersFromAttributes(element: HTMLElement): HeadersInit {
       debugError('Failed to get headers from attributes:', error);
     }
     return {};
+  }
+}
+
+function extractSelectedNodes(html: string, select?: string, selectAll?: string): Element[] | null {
+  if (!select && !selectAll) {
+    return null;
+  }
+
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    if (selectAll) {
+      return Array.from(doc.querySelectorAll(selectAll));
+    }
+    if (select) {
+      const match = doc.querySelector(select);
+      return match ? [match] : [];
+    }
+    return [];
+  } catch (error) {
+    if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+      debugWarn('Failed to parse selection from HTML response:', error);
+    }
+    return [];
+  }
+}
+
+function createFragmentFromNodes(nodes: Element[]): DocumentFragment {
+  const fragment = document.createDocumentFragment();
+  nodes.forEach((node) => {
+    fragment.appendChild(node.cloneNode(true));
+  });
+  return fragment;
+}
+
+function insertNodesRelativeToTarget(targetElement: HTMLElement, nodes: Element[], strategy: InsertPosition): void {
+  if (strategy === 'beforebegin' || strategy === 'afterend') {
+    const parent = targetElement.parentNode;
+    if (!parent) {
+      return;
+    }
+    const referenceNode = strategy === 'beforebegin' ? targetElement : targetElement.nextSibling;
+    nodes.forEach((node) => {
+      parent.insertBefore(node.cloneNode(true), referenceNode);
+    });
+    return;
+  }
+
+  const fragment = createFragmentFromNodes(nodes);
+  if (strategy === 'afterbegin') {
+    targetElement.insertBefore(fragment, targetElement.firstChild);
+  } else {
+    targetElement.appendChild(fragment);
   }
 }
 

@@ -317,10 +317,16 @@ Invokers can swap content from local templates or fetch from APIs, with granular
           commandfor="#content-area" data-replace-strategy="beforeend">
     Add Sidebar
   </button>
-
+ 
   <button command="--fetch:get" data-url="/api/header"
           commandfor="#content-area" data-replace-strategy="afterbegin">
     Prepend Header
+  </button>
+
+  <!-- Swap only a specific element from the response -->
+  <button command="--fetch:get" data-url="/posts?page=2"
+          commandfor="#tbody" data-select="#tbody">
+    Next Page
   </button>
 </div>
 ```
@@ -614,6 +620,11 @@ registerFlowCommands(invokers);
 - `innerHTML` (default): Replace target element's content
 - `outerHTML`: Replace entire target element
 - `beforebegin/afterbegin/beforeend/afterend`: Insert adjacent to target
+
+**Selection Options (HTML responses):**
+- `data-select`: Replace with the first matching element from the response
+- `data-select-all`: Replace with all matching elements from the response
+
 
 #### Media & Animation (`invokers/commands/media`) - 27.7 kB
 Rich media controls and interactions.

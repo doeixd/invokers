@@ -658,3 +658,35 @@ This is a classic, complex UI pattern that becomes declarative with this integra
     4.  The `<and-then>` chain fires the final `--dom:swap:outer` command. It replaces `#item-view-1` with the *already pre-populated* form from the template.
 
 The user sees a seamless transition from a static view to an edit form that is correctly filled with the item's data, all orchestrated declaratively. This demonstrates how `--bind` acts as a powerful data-staging tool for other commands.
+
+---
+
+### **Fetch HTML Selection (`data-select`, `data-select-all`)**
+
+When using `--fetch:get` (or other fetch commands) with HTML responses, you can now target specific parts of the returned HTML before swapping.
+
+**Use `data-select` to swap a single match:**
+
+```html
+<button command="--fetch:get"
+        data-url="/posts?page=2"
+        commandfor="#tbody"
+        data-select="#tbody">
+  Next Page
+</button>
+```
+
+**Use `data-select-all` to swap multiple matches:**
+
+```html
+<button command="--fetch:get"
+        data-url="/widgets"
+        commandfor="#widget-list"
+        data-select-all=".widget">
+  Refresh Widgets
+</button>
+```
+
+**Notes:**
+- `data-select` uses the first matching element from the response.
+- `data-select-all` uses all matching elements and inserts them using the current replace strategy.

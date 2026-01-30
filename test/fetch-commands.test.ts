@@ -474,6 +474,53 @@ describe('Fetch Commands - All HTTP Verbs', () => {
     });
   });
 
+  describe('HTML selection', () => {
+    it('should replace with selected element content', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        headers: new Map(),
+        text: () => Promise.resolve('<table><tbody id="tbody"><tr><td>Row</td></tr></tbody></table>')
+      });
+
+      const target = document.createElement('tbody');
+      target.id = 'tbody';
+      target.innerHTML = '<tr><td>Old</td></tr>';
+      document.body.appendChild(target);
+
+      const button = document.createElement('button');
+      button.setAttribute('data-url', '/api/data');
+      button.setAttribute('data-select', '#tbody');
+      document.body.appendChild(button);
+
+      await invokerManager.executeCommand('--fetch:get', '#tbody', button);
+
+      expect(target.innerHTML).toBe('<tr><td>Row</td></tr>');
+    });
+
+    it('should replace outerHTML using selected elements', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        headers: new Map(),
+        text: () => Promise.resolve('<div class="row">A</div><div class="row">B</div>')
+      });
+
+      const target = document.createElement('div');
+      target.id = 'target';
+      document.body.appendChild(target);
+
+      const button = document.createElement('button');
+      button.setAttribute('data-url', '/api/data');
+      button.setAttribute('data-select-all', '.row');
+      button.setAttribute('data-replace-strategy', 'outerHTML');
+      document.body.appendChild(button);
+
+      await invokerManager.executeCommand('--fetch:get', '#target', button);
+
+      expect(document.getElementById('target')).toBeNull();
+      expect(document.querySelectorAll('.row')).toHaveLength(2);
+    });
+  });
+
   describe('Error handling', () => {
     it('should handle HTTP errors gracefully', async () => {
       (global.fetch as any).mockResolvedValueOnce({
