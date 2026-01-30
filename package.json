@@ -248,6 +248,15 @@
       "require": "./dist/cjs/production/interest.js",
       "import": "./dist/esm/production/interest.js"
     },
+    "./anchors": {
+      "types": "./dist/types/anchors.d.ts",
+      "development": {
+        "require": "./dist/cjs/development/anchors.js",
+        "import": "./dist/esm/development/anchors.js"
+      },
+      "require": "./dist/cjs/production/anchors.js",
+      "import": "./dist/esm/production/anchors.js"
+    },
     "./advanced": {
       "types": "./dist/types/advanced/index.d.ts",
       "development": {
@@ -462,6 +471,9 @@
       ],
       "interest": [
         "./dist/types/interest-invokers.d.ts"
+      ],
+      "anchors": [
+        "./dist/types/anchors.d.ts"
       ],
       "advanced": [
         "./dist/types/advanced/index.d.ts"

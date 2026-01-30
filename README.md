@@ -537,6 +537,24 @@ enableControl();  // Advanced control flow
 enableForms();    // Enterprise form handling
 ```
 
+### Optional Enhancements: Anchor Invokers
+
+Enable progressive enhancement for anchors so `href` can be used with `commandfor` and optional `data-select` attributes.
+
+```javascript
+import { enableAnchorInvokers } from 'invokers/anchors';
+
+enableAnchorInvokers();
+```
+
+```html
+<a href="/posts?page=2" commandfor="#tbody" data-select="#tbody">
+  Next Page
+</a>
+```
+
+For custom elements, register a `InvokerAdapter` via `registerInvokerAdapter` and call `enableAdapterInvokers` from the same module.
+
 ## Command Packs
 
 ### Tier 1: Essential Commands
@@ -3182,6 +3200,8 @@ The compatibility layer:
 - **Expression Engine**: `{{expression}}` syntax for dynamic parameters
 - **Command Chaining**: `data-and-then` for complex workflows
 - **Interest Invokers**: `interestfor` for hover interactions
+- **Adapter Invokers**: `docs/adapters.md` for custom elements
+
 
 ### API Reference
 ```javascript

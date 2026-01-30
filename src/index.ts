@@ -135,6 +135,8 @@ export function createCommandString(...parts: string[]): string {
 // Re-export types and utilities from core
 export type { CommandContext, CommandCallback };
 export { InvokerManager, ErrorSeverity, createInvokerError, logInvokerError, parseCommandString, parseCommaSeparatedCommands };
+export type { InvokerAdapter } from './adapter-registry';
+export { registerInvokerAdapter, getInvokerAdapters } from './adapter-registry';
 
 // Import and re-export InvokerError type
 import type { InvokerError } from './core';

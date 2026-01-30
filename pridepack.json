@@ -22,6 +22,7 @@
     "./compatible": "./src/compatible.ts",
     "./demo-commands": "./src/demo-commands.ts",
     "./interest": "./src/interest-invokers.ts",
+    "./anchors": "./src/anchors.ts",
     "./advanced": "./src/advanced/index.ts",
     "./advanced/events": "./src/advanced/events.ts",
     "./advanced/expressions": "./src/advanced/expressions.ts",

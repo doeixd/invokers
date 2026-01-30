@@ -690,3 +690,23 @@ When using `--fetch:get` (or other fetch commands) with HTML responses, you can 
 **Notes:**
 - `data-select` uses the first matching element from the response.
 - `data-select-all` uses all matching elements and inserts them using the current replace strategy.
+
+---
+
+### **Anchor Invokers (Optional)**
+
+Use anchors as invokers by enabling the anchor adapter. This infers `--fetch:get` when no `command` is present and uses `href` as `data-url`.
+
+```javascript
+import { enableAnchorInvokers } from 'invokers/anchors';
+
+enableAnchorInvokers();
+```
+
+```html
+<a href="/posts?page=2" commandfor="#tbody" data-select="#tbody">
+  Next Page
+</a>
+```
+
+For custom elements, register an adapter with `registerInvokerAdapter` and call `enableAdapterInvokers` to attach the delegated listener.
