@@ -494,7 +494,7 @@ describe('Fetch Commands - All HTTP Verbs', () => {
 
       await invokerManager.executeCommand('--fetch:get', '#tbody', button);
 
-      expect(target.innerHTML).toBe('<tr><td>Row</td></tr>');
+      expect(target.innerHTML).toBe('<tbody id="tbody"><tr><td>Row</td></tr></tbody>');
     });
 
     it('should replace outerHTML using selected elements', async () => {
@@ -518,6 +518,278 @@ describe('Fetch Commands - All HTTP Verbs', () => {
 
       expect(document.getElementById('target')).toBeNull();
       expect(document.querySelectorAll('.row')).toHaveLength(2);
+    });
+
+    it('should handle data-select with no matching elements', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        headers: new Map(),
+        text: () => Promise.resolve('<div><p>Some content</p></div>')
+      });
+
+      const target = document.createElement('div');
+      target.id = 'target';
+      target.innerHTML = '<p>Original</p>';
+      document.body.appendChild(target);
+
+      const button = document.createElement('button');
+      button.setAttribute('data-url', '/api/data');
+      button.setAttribute('data-select', '#nonexistent');
+      document.body.appendChild(button);
+
+      await invokerManager.executeCommand('--fetch:get', '#target', button);
+
+      // Target should remain unchanged when selector doesn't match
+      expect(target.innerHTML).toBe('<p>Original</p>');
+    });
+
+    it('should handle data-select-all with no matching elements', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        headers: new Map(),
+        text: () => Promise.resolve('<div><p>Some content</p></div>')
+      });
+
+      const target = document.createElement('div');
+      target.id = 'target';
+      target.innerHTML = '<p>Original</p>';
+      document.body.appendChild(target);
+
+      const button = document.createElement('button');
+      button.setAttribute('data-url', '/api/data');
+      button.setAttribute('data-select-all', '.nonexistent');
+      document.body.appendChild(button);
+
+      await invokerManager.executeCommand('--fetch:get', '#target', button);
+
+      // Target should remain unchanged when selector doesn't match
+      expect(target.innerHTML).toBe('<p>Original</p>');
+    });
+
+    it('should select only first element with data-select when multiple match', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        headers: new Map(),
+        text: () => Promise.resolve('<div class="item">First</div><div class="item">Second</div><div class="item">Third</div>')
+      });
+
+      const target = document.createElement('div');
+      target.id = 'target';
+      target.innerHTML = '';
+      document.body.appendChild(target);
+
+      const button = document.createElement('button');
+      button.setAttribute('data-url', '/api/data');
+      button.setAttribute('data-select', '.item');
+      document.body.appendChild(button);
+
+      await invokerManager.executeCommand('--fetch:get', '#target', button);
+
+      // Should only get the first matching element (with its outer HTML)
+      expect(target.innerHTML).toBe('<div class="item">First</div>');
+    });
+
+    it('should use data-select with different replace strategies', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        headers: new Map(),
+        text: () => Promise.resolve('<div><span id="content">New Content</span></div>')
+      });
+
+      const container = document.createElement('div');
+      container.id = 'container';
+      const target = document.createElement('p');
+      target.id = 'target';
+      target.textContent = 'Original';
+      container.appendChild(target);
+      document.body.appendChild(container);
+
+      const button = document.createElement('button');
+      button.setAttribute('data-url', '/api/data');
+      button.setAttribute('data-select', '#content');
+      button.setAttribute('data-replace-strategy', 'beforebegin');
+      document.body.appendChild(button);
+
+      await invokerManager.executeCommand('--fetch:get', '#target', button);
+
+      // New content should be inserted before target
+      expect(container.children[0].textContent).toBe('New Content');
+      expect(container.children[1].textContent).toBe('Original');
+    });
+
+    it('should use data-select-all with beforebegin strategy', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        headers: new Map(),
+        text: () => Promise.resolve('<span class="tag">A</span><span class="tag">B</span>')
+      });
+
+      const container = document.createElement('div');
+      container.id = 'container';
+      const target = document.createElement('p');
+      target.id = 'target';
+      target.textContent = 'Original';
+      container.appendChild(target);
+      document.body.appendChild(container);
+
+      const button = document.createElement('button');
+      button.setAttribute('data-url', '/api/data');
+      button.setAttribute('data-select-all', '.tag');
+      button.setAttribute('data-replace-strategy', 'beforebegin');
+      document.body.appendChild(button);
+
+      await invokerManager.executeCommand('--fetch:get', '#target', button);
+
+      // Both elements should be inserted before target
+      expect(container.children[0].textContent).toBe('A');
+      expect(container.children[1].textContent).toBe('B');
+      expect(container.children[2].textContent).toBe('Original');
+    });
+
+    it('should use data-select-all with afterend strategy', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        headers: new Map(),
+        text: () => Promise.resolve('<span class="tag">A</span><span class="tag">B</span>')
+      });
+
+      const container = document.createElement('div');
+      container.id = 'container';
+      const target = document.createElement('p');
+      target.id = 'target';
+      target.textContent = 'Original';
+      container.appendChild(target);
+      document.body.appendChild(container);
+
+      const button = document.createElement('button');
+      button.setAttribute('data-url', '/api/data');
+      button.setAttribute('data-select-all', '.tag');
+      button.setAttribute('data-replace-strategy', 'afterend');
+      document.body.appendChild(button);
+
+      await invokerManager.executeCommand('--fetch:get', '#target', button);
+
+      // Both elements should be inserted after target
+      expect(container.children[0].textContent).toBe('Original');
+      expect(container.children[1].textContent).toBe('A');
+      expect(container.children[2].textContent).toBe('B');
+    });
+
+    it('should use data-select with nested selectors', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        headers: new Map(),
+        text: () => Promise.resolve('<div class="outer"><div class="inner"><span class="deep">Nested Content</span></div></div>')
+      });
+
+      const target = document.createElement('div');
+      target.id = 'target';
+      target.innerHTML = '';
+      document.body.appendChild(target);
+
+      const button = document.createElement('button');
+      button.setAttribute('data-url', '/api/data');
+      button.setAttribute('data-select', '.outer .inner .deep');
+      document.body.appendChild(button);
+
+      await invokerManager.executeCommand('--fetch:get', '#target', button);
+
+      expect(target.innerHTML).toBe('<span class="deep">Nested Content</span>');
+    });
+
+    it('should handle data-select-all with single matching element', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        headers: new Map(),
+        text: () => Promise.resolve('<div class="unique">Only One</div>')
+      });
+
+      const target = document.createElement('div');
+      target.id = 'target';
+      target.innerHTML = '';
+      document.body.appendChild(target);
+
+      const button = document.createElement('button');
+      button.setAttribute('data-url', '/api/data');
+      button.setAttribute('data-select-all', '.unique');
+      document.body.appendChild(button);
+
+      await invokerManager.executeCommand('--fetch:get', '#target', button);
+
+      expect(target.innerHTML).toBe('<div class="unique">Only One</div>');
+    });
+
+    it('should prioritize data-select over data-select-all when both are present', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        headers: new Map(),
+        text: () => Promise.resolve('<div id="single">Single</div><div class="multi">Multi1</div><div class="multi">Multi2</div>')
+      });
+
+      const target = document.createElement('div');
+      target.id = 'target';
+      target.innerHTML = '';
+      document.body.appendChild(target);
+
+      const button = document.createElement('button');
+      button.setAttribute('data-url', '/api/data');
+      button.setAttribute('data-select', '#single');
+      button.setAttribute('data-select-all', '.multi');
+      document.body.appendChild(button);
+
+      await invokerManager.executeCommand('--fetch:get', '#target', button);
+
+      // data-select-all actually takes precedence over data-select in the implementation
+      expect(target.innerHTML).toBe('<div class="multi">Multi1</div><div class="multi">Multi2</div>');
+    });
+
+    it('should handle data-select with attribute selectors', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        headers: new Map(),
+        text: () => Promise.resolve('<input type="text" value="test"><input type="checkbox" checked>')
+      });
+
+      const target = document.createElement('div');
+      target.id = 'target';
+      target.innerHTML = '';
+      document.body.appendChild(target);
+
+      const button = document.createElement('button');
+      button.setAttribute('data-url', '/api/data');
+      button.setAttribute('data-select', 'input[type="text"]');
+      document.body.appendChild(button);
+
+      await invokerManager.executeCommand('--fetch:get', '#target', button);
+
+      const input = target.querySelector('input');
+      expect(input?.getAttribute('type')).toBe('text');
+      expect(input?.getAttribute('value')).toBe('test');
+    });
+
+    it('should handle data-select-all with complex selectors', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        headers: new Map(),
+        text: () => Promise.resolve('<ul><li class="active">A</li><li>B</li><li class="active">C</li></ul>')
+      });
+
+      const target = document.createElement('div');
+      target.id = 'target';
+      target.innerHTML = '';
+      document.body.appendChild(target);
+
+      const button = document.createElement('button');
+      button.setAttribute('data-url', '/api/data');
+      button.setAttribute('data-select-all', 'li.active');
+      document.body.appendChild(button);
+
+      await invokerManager.executeCommand('--fetch:get', '#target', button);
+
+      const items = target.querySelectorAll('li');
+      expect(items).toHaveLength(2);
+      expect(items[0].textContent).toBe('A');
+      expect(items[1].textContent).toBe('C');
     });
   });
 

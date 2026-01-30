@@ -1,3 +1,8 @@
+// Polyfill for webidl-conversions issue with "get" property
+if (typeof globalThis !== 'undefined' && typeof globalThis.get === 'undefined') {
+  globalThis.get = function() {};
+}
+
 const abResizable = Object.getOwnPropertyDescriptor(ArrayBuffer.prototype, 'resizable');
 if (!abResizable) {
   Object.defineProperty(ArrayBuffer.prototype, 'resizable', {

@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./test/setup.ts'],
+    setupFiles: ['./test/vitest-preload.cjs', './test/setup.ts'],
     onConsoleLog(log, type) {
       // Suppress jsdom import warnings that are treated as unhandled errors
       if (log.includes('Cannot find package \'jsdom\'') ||

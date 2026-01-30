@@ -518,5 +518,8 @@
         "./dist/types/power-packs/forms/index.d.ts"
       ]
     }
+  },
+  "volta": {
+    "node": "20.20.0"
   }
 }

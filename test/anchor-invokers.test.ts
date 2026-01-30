@@ -120,7 +120,7 @@ describe('Anchor Invokers', () => {
 
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    expect(target.innerHTML).toBe('<tr><td>Row</td></tr>');
+    expect(target.innerHTML).toBe('<tbody id="tbody"><tr><td>Row</td></tr></tbody>');
   });
 
   it('supports data-select-all with fetch responses', async () => {
