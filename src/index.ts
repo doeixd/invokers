@@ -187,8 +187,9 @@ export function _dispatchCommandEvent(
     (commandEvent as any).resolvedTargets = resolvedTargets;
   }
 
-  // Dispatch the event
-  const success = document.dispatchEvent(commandEvent);
+  // Dispatch on the command target so target-level listeners, cancellation, and
+  // event propagation match the native command event shape.
+  const success = targetElement.dispatchEvent(commandEvent);
   if (!success && typeof window !== 'undefined' && (window as any).Invoker?.debug) {
     debugWarn('Invokers: CommandEvent was cancelled or prevented');
   }

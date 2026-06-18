@@ -17,7 +17,7 @@
 import { debugWarn, debugError } from '../utils';
 import type { InvokerManager } from '../core';
 import type { CommandCallback, CommandContext } from '../index';
-import { createInvokerError, ErrorSeverity } from '../index';
+import { createInvokerError, ErrorSeverity, validateElement } from '../index';
 import { interpolateString } from '../advanced/interpolation';
 
 /**
@@ -183,6 +183,27 @@ const fetchCommands: Record<string, CommandCallback> = {
    */
   "--fetch:options": async ({ invoker, targetElement }: CommandContext) => {
     return executeFetch({ invoker, targetElement, method: 'OPTIONS', command: '--fetch:options' });
+  },
+
+  /**
+   * `--fetch:send`: Submits the target `<form>` via fetch.
+   * Uses the form's `action` and `method` by default, and writes the response to
+   * `data-response-target` when present or back into the form otherwise.
+   *
+   * @example
+   * ```html
+   * <form id="contact-form" action="/api/contact" method="post"></form>
+   * <button type="button"
+   *   command="--fetch:send"
+   *   commandfor="contact-form"
+   *   data-response-target="#response"
+   * >
+   *   Send
+   * </button>
+   * ```
+   */
+  "--fetch:send": async ({ invoker, targetElement }: CommandContext) => {
+    return executeFormFetch({ invoker, targetElement });
   }
 };
 
@@ -369,6 +390,149 @@ async function executeFetch({
     if (invoker?.isConnected) {
       setBusyState(invoker, false);
     }
+  }
+}
+
+async function executeFormFetch({
+  invoker,
+  targetElement
+}: {
+  invoker: HTMLElement;
+  targetElement: HTMLElement;
+}): Promise<void> {
+  const command = '--fetch:send';
+  const validationErrors = validateElement(targetElement, { tagName: ['form'] });
+  if (validationErrors.length > 0) {
+    throw createInvokerError(`Fetch send failed: ${validationErrors.join(', ')}`, ErrorSeverity.ERROR, {
+      command,
+      element: invoker,
+      recovery: 'Ensure commandfor points to a <form> element.'
+    });
+  }
+
+  const form = targetElement as HTMLFormElement;
+  const responseSelector = invoker.dataset.responseTarget;
+  const responseTarget = responseSelector
+    ? document.querySelector<HTMLElement>(responseSelector)
+    : form;
+
+  if (!responseTarget || !responseTarget.isConnected) {
+    throw createInvokerError(`Response target "${responseSelector}" not found`, ErrorSeverity.ERROR, {
+      command,
+      element: invoker,
+      recovery: 'Ensure data-response-target matches an existing element.'
+    });
+  }
+
+  let url = invoker.dataset.url || form.action;
+  if (!url) {
+    throw createInvokerError(`${command} requires a form action or data-url attribute`, ErrorSeverity.ERROR, {
+      command,
+      element: invoker,
+      recovery: 'Add action="/your/endpoint" to the form or data-url to the button.'
+    });
+  }
+
+  try {
+    new URL(url, window.location.origin);
+  } catch {
+    throw createInvokerError(`${command} failed: Invalid URL format`, ErrorSeverity.ERROR, {
+      command,
+      element: invoker,
+      context: { url },
+      recovery: 'Ensure the form action or data-url is properly formatted.'
+    });
+  }
+
+  try {
+    url = interpolateString(url, {
+      this: {
+        ...invoker,
+        value: (invoker as any).value || ''
+      },
+      event: (invoker as any).triggeringEvent
+    });
+  } catch (error) {
+    throw createInvokerError(`${command} failed: URL interpolation error`, ErrorSeverity.ERROR, {
+      command,
+      element: invoker,
+      cause: error as Error,
+      recovery: 'Check URL template syntax.'
+    });
+  }
+
+  const method = (invoker.dataset.method || form.method || 'POST').toUpperCase();
+  const fetchEvent = new CustomEvent('fetch:before', {
+    detail: { url, method, invoker, form },
+    cancelable: true
+  });
+  window.dispatchEvent(fetchEvent);
+  if (fetchEvent.defaultPrevented) {
+    return;
+  }
+
+  setBusyState(invoker, true);
+  showFeedbackState(invoker, responseTarget, "data-loading-template");
+
+  const controller = new AbortController();
+  const timeout = parseInt(invoker.dataset.timeout || '30000', 10);
+  if (isNaN(timeout) || timeout <= 0) {
+    setBusyState(invoker, false);
+    throw createInvokerError(`${command} failed: Invalid timeout value`, ErrorSeverity.ERROR, {
+      command,
+      element: invoker,
+      recovery: 'Use a positive number for data-timeout (milliseconds).'
+    });
+  }
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      method,
+      body: method === 'GET' || method === 'HEAD' ? undefined : new FormData(form),
+      headers: buildHeaders(invoker, method),
+      signal: controller.signal,
+      credentials: (invoker.dataset.credentials as RequestCredentials) || 'same-origin',
+      mode: (invoker.dataset.mode as RequestMode) || 'cors'
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const error = createInvokerError(`HTTP Error: ${response.status} ${response.statusText}`, ErrorSeverity.ERROR, {
+        command,
+        element: invoker,
+        context: { url, status: response.status }
+      });
+
+      showFeedbackState(invoker, responseTarget, "data-error-template");
+      window.dispatchEvent(new CustomEvent('fetch:error', {
+        detail: { url, method, error, invoker, form }
+      }));
+
+      if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+        debugError(`${command} failed:`, error);
+      }
+      return;
+    }
+
+    const responseType = invoker.dataset.responseType || 'html';
+    await handleResponse(response, responseType, responseTarget, invoker);
+
+    window.dispatchEvent(new CustomEvent('fetch:success', {
+      detail: { url, method, response, invoker, form }
+    }));
+  } catch (error) {
+    showFeedbackState(invoker, responseTarget, "data-error-template");
+    window.dispatchEvent(new CustomEvent('fetch:error', {
+      detail: { url, method, error, invoker, form }
+    }));
+
+    if (typeof window !== 'undefined' && (window as any).Invoker?.debug) {
+      debugError(`${command} failed:`, error);
+    }
+  } finally {
+    clearTimeout(timeoutId);
+    setBusyState(invoker, false);
   }
 }
 

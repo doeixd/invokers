@@ -197,14 +197,14 @@
 
   <!-- Load Invokers -->
   <script type="module">
-    import { enableStatePowerPack } from './dist/esm/production/state.js';
-    import { enableControlPowerPack } from './dist/esm/production/control.js';
-    import { enableFormsPowerPack } from './dist/esm/production/forms.js';
+    import { enableState } from '../dist/esm/production/state.js';
+    import { enableControl } from '../dist/esm/production/control.js';
+    import { enableForms } from '../dist/esm/production/forms.js';
 
     // Enable all power packs
-    enableStatePowerPack();
-    enableControlPowerPack();
-    enableFormsPowerPack();
+    enableState();
+    enableControl();
+    enableForms();
 
     // Custom form submit handler
     window.handleTaskSubmit = async function(formData, formName) {

@@ -375,6 +375,36 @@ describe('Fetch Commands - All HTTP Verbs', () => {
     });
   });
 
+  describe('--fetch:send', () => {
+    it('should submit a form and update the response target', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        headers: new Map([['content-type', 'text/html']]),
+        text: () => Promise.resolve('<p>Form submitted</p>')
+      });
+
+      document.body.innerHTML = `
+        <form id="contact-form" method="post">
+          <input name="email" value="test@example.com">
+        </form>
+        <div id="response"></div>
+      `;
+
+      const button = document.createElement('button');
+      button.setAttribute('data-url', '/api/contact');
+      button.setAttribute('data-response-target', '#response');
+      document.body.appendChild(button);
+
+      await invokerManager.executeCommand('--fetch:send', '#contact-form', button);
+
+      expect(global.fetch).toHaveBeenCalledWith('/api/contact', expect.objectContaining({
+        method: 'POST',
+        body: expect.any(FormData)
+      }));
+      expect(document.querySelector('#response')!.innerHTML).toBe('<p>Form submitted</p>');
+    });
+  });
+
   describe('CORS and credentials', () => {
     it('should support credentials option', async () => {
       (global.fetch as any).mockResolvedValueOnce({

@@ -125,7 +125,7 @@ Register only the packs your app needs:
 | `invokers/commands/base` | `registerBaseCommands(manager)` | `--toggle`, `--show`, `--hide`, `--class:*`, `--attr:*` |
 | `invokers/commands/form` | `registerFormCommands(manager)` | `--text:*`, `--value:*`, `--focus`, `--disabled:*`, `--form:*`, `--input:step` |
 | `invokers/commands/dom` | `registerDomCommands(manager)` | `--dom:*`, `--template:*` |
-| `invokers/commands/fetch` | `registerFetchCommands(manager)` | `--fetch:get`, `--fetch:post`, `--fetch:put`, `--fetch:patch`, `--fetch:delete`, `--fetch:head`, `--fetch:options` |
+| `invokers/commands/fetch` | `registerFetchCommands(manager)` | `--fetch:get`, `--fetch:post`, `--fetch:put`, `--fetch:patch`, `--fetch:delete`, `--fetch:head`, `--fetch:options`, `--fetch:send` |
 | `invokers/commands/navigation` | `registerNavigationCommands(manager)` | `--navigate:to`, `--emit`, `--bind`, `--command:trigger`, `--command:delay`, `--pipeline:execute` |
 | `invokers/commands/websocket` | `registerWebSocketCommands(manager)` | `--websocket:*` |
 | `invokers/commands/sse` | `registerSSECommands(manager)` | `--sse:*` |
